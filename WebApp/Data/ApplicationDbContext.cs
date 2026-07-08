@@ -16,8 +16,42 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        modelBuilder.Entity<Questions>()
+            .HasOne<Surveys>()
+            .WithMany()
+            .HasForeignKey(q => q.SurveyId);
+        
+        modelBuilder.Entity<Answers>()
+            .HasOne<Questions>()
+            .WithMany()
+            .HasForeignKey(a => a.QuestionId);
+        
+        modelBuilder.Entity<Answers>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(a => a.UserId);
+    
+        modelBuilder.Entity<SurveyAssignments>()
+            .HasOne<Surveys>()
+            .WithMany()
+            .HasForeignKey(sa => sa.SurveyId);
+        
+        modelBuilder.Entity<SurveyAssignments>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(sa => sa.ReviewerId);
+            
+        modelBuilder.Entity<SurveyAssignments>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(sa => sa.TargetId);
     }
 
     // Тут указываются все сущности БД, с которыми нужно уметь работать
-    public DbSet<SimpleEntity> SimpleEntities { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<Surveys> Surveys { get; set; }
+    public DbSet<Questions> Questions { get; set; }
+    public DbSet<Answers> Answers { get; set; }
+    public DbSet<SurveyAssignments> SurveyAssignments { get; set; }
 }
