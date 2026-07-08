@@ -219,5 +219,3 @@ project.lock.json
 *.Specs_*.html
 
 .ionide/
-
-survey.db*
