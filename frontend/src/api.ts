@@ -45,3 +45,33 @@ export const settingsApi = {
 export const servicesApi = {
   lifecycle: () => sendRequest<LifecycleDemo>(`${API}/services/lifecycle`),
 }
+
+export const surveysApi = {
+  list: () => sendRequest<any[]>(`${API}/surveys`),
+  get: (id: number) => sendRequest<any>(`${API}/surveys/${id}`),
+
+  create: (payload: {
+    title: string
+    description: string
+    startDate: string
+    endDate: string
+  }) => {
+    // TODO: заменить тип/эндпоинт после согласования с backend
+    return sendRequest<number>(`${API}/surveys`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
+  },
+
+  update: (id: number, payload: any) =>
+    sendRequest<void>(`${API}/surveys/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+
+  submit: (id: number, payload: { answers: any[] }) =>
+    sendRequest<void>(`${API}/surveys/${id}/submit`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+}

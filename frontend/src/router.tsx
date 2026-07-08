@@ -5,6 +5,11 @@ function matchEntityRoute(path: string): number | null {
   return match ? Number(match[1]) : null
 }
 
+function matchSurveyFillRoute(path: string): number | null {
+  const match = path.match(/^\/surveys\/survey\/(\d+)$/)
+  return match ? Number(match[1]) : null
+}
+
 export function useRouter() {
   const [path, setPath] = useState(() => window.location.pathname)
 
@@ -19,7 +24,7 @@ export function useRouter() {
     setPath(to)
   }, [])
 
-  return { path, navigate, entityId: matchEntityRoute(path) }
+  return { path, navigate, entityId: matchEntityRoute(path), surveyFillId: matchSurveyFillRoute(path) }
 }
 
 interface LinkProps {

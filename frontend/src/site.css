@@ -67,3 +67,104 @@ a {
   white-space: nowrap;
   line-height: 60px;
 }
+
+/* ===== Опрос 360 (Directum-style) ===== */
+.surveys-admin__grid {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (max-width: 992px) {
+  .surveys-admin__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.surveys-admin__leftHeader {
+  position: sticky;
+  top: 70px;
+  z-index: 2;
+  margin-bottom: 12px;
+}
+
+.surveys-admin__list .list-group-item {
+  border-left: 3px solid transparent;
+  transition: border-color 0.15s ease;
+}
+
+.surveys-admin__list .list-group-item:hover {
+  border-left-color: rgba(27, 110, 194, 0.35);
+}
+
+.surveys-admin__list .list-group-item.active {
+  border-left-color: #1861ac;
+}
+
+.surveys-editor__title {
+  font-size: 1.05rem;
+}
+
+.surveys-editor__desc {
+  margin-top: 4px;
+  max-height: 3.6em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* Drawer */
+.surveys-drawer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1050;
+}
+
+.surveys-drawer--open {
+  pointer-events: auto;
+}
+
+.surveys-drawer__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.surveys-drawer--open .surveys-drawer__overlay {
+  opacity: 1;
+}
+
+.surveys-drawer__panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  width: 480px;
+  transform: translateX(100%);
+  transition: transform 0.25s ease;
+  border-radius: 0;
+}
+
+.surveys-drawer--open .surveys-drawer__panel {
+  transform: translateX(0);
+}
+
+.surveys-drawer__body {
+  overflow: auto;
+  height: calc(100% - 56px);
+}
+
+/* Page fill */
+.surveys-fill__question {
+  padding-bottom: 8px;
+  border-bottom: 1px dashed rgba(0, 0, 0, 0.12);
+}
+
+.surveys-fill__question:last-child {
+  border-bottom: none;
+}

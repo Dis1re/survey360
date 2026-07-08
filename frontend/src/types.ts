@@ -23,3 +23,30 @@ export interface LifecycleDemo {
 }
 
 export type EntityInput = Omit<SimpleEntity, 'id'>
+
+export type SurveyStatus = 'черновик' | 'активен' | 'закрыт'
+
+export interface SurveyAdmin {
+  id: number
+  title: string
+  description: string
+  startDate: string // yyyy-mm-dd
+  endDate: string // yyyy-mm-dd
+  status: SurveyStatus
+  remainingTimeLabel: string
+}
+
+export type SurveyQuestionType = 'choice' | 'text'
+
+export interface SurveyQuestion {
+  id: number
+  number: number
+  text: string
+  type: SurveyQuestionType
+  options?: string[]
+}
+
+export interface SurveySubmitAnswer {
+  questionId: number
+  value: string
+}

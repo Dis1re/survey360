@@ -4,12 +4,18 @@ import { EntityPage } from './pages/EntityPage'
 import { HelpPage } from './pages/HelpPage'
 import { HomePage } from './pages/HomePage'
 import { ServicesPage } from './pages/ServicesPage'
+import { SurveysAdminPage } from './pages/SurveysAdminPage'
+import { SurveyFillPage } from './pages/SurveyFillPage'
 
 export default function App() {
-  const { path, entityId } = useRouter()
+  const { path, entityId, surveyFillId } = useRouter()
 
   if (entityId !== null) {
     return <EntityPage id={entityId} />
+  }
+
+  if (surveyFillId !== null) {
+    return <SurveyFillPage id={surveyFillId} />
   }
 
   switch (path) {
@@ -19,6 +25,8 @@ export default function App() {
       return <EntitiesPage />
     case '/services':
       return <ServicesPage />
+    case '/surveys':
+      return <SurveysAdminPage />
     case '/':
     default:
       return <HomePage />
