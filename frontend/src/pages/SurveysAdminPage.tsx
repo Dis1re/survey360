@@ -1,21 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Layout } from '../components/Layout'
 import type { SurveysAdminStatus } from '../components/Surveys/SurveysAdminLeftColumn'
+import type { SurveysAdminSurvey } from '../components/Surveys/SurveysAdminLeftColumn'
 import { SurveysAdminLeftColumn } from '../components/Surveys/SurveysAdminLeftColumn'
 import { SurveysCreateDrawer } from '../components/Surveys/SurveysCreateDrawer'
 import { SurveysEditor } from '../components/Surveys/SurveysEditor'
 import type { SurveysCreateDrawerValues } from '../components/Surveys/SurveysCreateDrawer'
 import type { SurveysEditorValues } from '../components/Surveys/SurveysEditor'
 
-type Survey = {
-  id: number
-  title: string
-  description: string
-  startDate: string
-  endDate: string
-  status: SurveysAdminStatus
-  remainingTimeLabel: string
-}
+type Survey = SurveysAdminSurvey
 
 function calcStatusAndRemaining(startDate: string, endDate: string): {
   status: SurveysAdminStatus
@@ -101,6 +94,12 @@ export function SurveysAdminPage() {
     [surveys, selectedId],
   )
 
+  console.log('[SurveysAdminPage] render', {
+    selectedId,
+    hasSelected: selected !== null,
+    selectedTitle: selected?.title ?? null,
+  })
+
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [savingCreate, setSavingCreate] = useState(false)
   const [editorSaving, setEditorSaving] = useState(false)
@@ -113,8 +112,9 @@ export function SurveysAdminPage() {
     matrixRowsCount: 2,
   }))
 
-  useMemo(() => {
+  useEffect(() => {
     if (!selected) return
+    console.log('[SurveysAdminPage] setEditorValues from selected', selected)
     setEditorValues({
       title: selected.title,
       description: selected.description,
@@ -164,15 +164,7 @@ export function SurveysAdminPage() {
       <div className="surveys-admin">
         <div className="surveys-admin__grid">
           <SurveysAdminLeftColumn
-            surveys={surveys.map((s) => ({
-              id: s.id,
-              title: s.title,
-              description: s.description,
-              startDate: s.startDate,
-              endDate: s.endDate,
-              status: s.status,
-              remainingTimeLabel: s.remainingTimeLabel,
-            }))}
+            surveys={surveys}
             selectedId={selectedId}
             onSelect={(id) => setSelectedId(id)}
             onCreateClick={() => setDrawerOpen(true)}
@@ -210,9 +202,6 @@ export function SurveysAdminPage() {
                         <a href={`/surveys/survey/${selected.id}`} className="btn btn-outline-primary">
                           Открыть опрос
                         </a>
-                        <button type="button" className="btn btn-outline-secondary" disabled>
-                          Сохранить (пока нет API)
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -240,7 +229,6 @@ export function SurveysAdminPage() {
           open={drawerOpen}
           onClose={() => setDrawerOpen(false)}
           onCreate={async (values) => handleCreate(values)}
-          saving={savingCreate}
         />
       </div>
     </Layout>

@@ -60,7 +60,7 @@ export function SurveysCreateDrawer({ open, onClose, onCreate }: SurveysCreateDr
               Название
               <input
                 type="text"
-                className="form-control"
+                className="form-control surveys-title-input"
                 value={values.title}
                 onChange={(e) => setValues({ ...values, title: e.target.value })}
                 required

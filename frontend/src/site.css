@@ -13,7 +13,7 @@ html {
 .btn-link.nav-link:focus,
 .form-control:focus,
 .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #FF8600;
 }
 
 html {
@@ -37,15 +37,15 @@ a {
 
 .btn-primary {
   color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+  background-color: #FF8600;
+  border-color: #FF8600;
 }
 
 .nav-pills .nav-link.active,
 .nav-pills .show > .nav-link {
   color: #fff;
-  background-color: #1b6ec2;
-  border-color: #1861ac;
+  background-color: #FF8600;
+  border-color: #FF8600;
 }
 
 .border-top {
@@ -99,7 +99,33 @@ a {
 }
 
 .surveys-admin__list .list-group-item.active {
-  border-left-color: #1861ac;
+  border-left-color: #FF8600;
+}
+
+/* Directum brand in header */
+.surveys-brand__logo {
+  height: 22px;
+  width: auto;
+}
+
+.surveys-brand__text {
+  color: #FF8600;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+/* убрать синие дефолты/hover в шапке */
+nav.navbar .nav-link {
+  color: #1861ac;
+}
+
+nav.navbar .nav-link:hover,
+nav.navbar .nav-link:focus {
+  color: #FF8600;
+}
+
+nav.navbar .navbar-brand.surveys-brand .surveys-brand__text {
+  color: #FF8600;
 }
 
 .surveys-editor__title {

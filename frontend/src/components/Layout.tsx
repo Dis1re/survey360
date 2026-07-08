@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { Link } from '../router'
+import directumLogo from '../assets/Directum_logo.png'
 
 interface LayoutProps {
   title: string
@@ -15,10 +16,11 @@ export function Layout({ title, children }: LayoutProps) {
     <>
       <header>
         <nav className="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-          <div className="container-fluid">
-            <Link className="navbar-brand" to="/">
-              Опросы
-            </Link>
+            <div className="container-fluid">
+              <Link className="navbar-brand surveys-brand" to="/">
+                <img className="surveys-brand__logo" src={directumLogo} alt="Directum" />
+                <span className="surveys-brand__text">Опросы 360</span>
+              </Link>
             <button
               className="navbar-toggler"
               type="button"

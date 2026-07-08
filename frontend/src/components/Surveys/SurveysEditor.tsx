@@ -27,18 +27,16 @@ export function SurveysEditor({ values, onChange, onSave, saving }: SurveysEdito
     [],
   )
 
+
   const [local, setLocal] = useState<SurveysEditorValues>(values)
 
   useEffect(() => {
     setLocal(values)
   }, [values])
 
-  useEffect(() => {
-    onChange(local)
-  }, [local, onChange])
-
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault()
+    onChange(local)
     await onSave()
   }
 
