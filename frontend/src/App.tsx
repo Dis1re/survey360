@@ -1,38 +1,26 @@
-import { useEffect, useState } from 'react'
-import { apiGet, type SimpleEntity } from './api/client'
-import './App.css'
+import { useRouter } from './router'
+import { EntitiesPage } from './pages/EntitiesPage'
+import { EntityPage } from './pages/EntityPage'
+import { HelpPage } from './pages/HelpPage'
+import { HomePage } from './pages/HomePage'
+import { ServicesPage } from './pages/ServicesPage'
 
-function App() {
-  const [entities, setEntities] = useState<SimpleEntity[]>([])
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
+export default function App() {
+  const { path, entityId } = useRouter()
 
-  useEffect(() => {
-    apiGet<SimpleEntity[]>('/entities')
-      .then(setEntities)
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false))
-  }, [])
+  if (entityId !== null) {
+    return <EntityPage id={entityId} />
+  }
 
-  return (
-    <main className="app">
-      <header>
-        <h1>Survey360</h1>
-        <p>Frontend (React + TypeScript) · Backend (.NET API)</p>
-      </header>
-
-      <section className="status">
-        <h2>API connection</h2>
-        {loading && <p>Loading…</p>}
-        {error && <p className="error">Backend unavailable: {error}</p>}
-        {!loading && !error && (
-          <p className="ok">
-            Connected — {entities.length} entities from <code>/api/entities</code>
-          </p>
-        )}
-      </section>
-    </main>
-  )
+  switch (path) {
+    case '/help':
+      return <HelpPage />
+    case '/entities':
+      return <EntitiesPage />
+    case '/services':
+      return <ServicesPage />
+    case '/':
+    default:
+      return <HomePage />
+  }
 }
-
-export default App
