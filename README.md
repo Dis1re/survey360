@@ -67,3 +67,86 @@ cd frontend && npm run build
 # backend
 cd WebApp && dotnet build
 ```
+
+## База данных
+
+Схема: **C#-класс** → `ApplicationDbContext` → **миграция** → `WebApp/survay.db`
+
+### Добавить новую сущность (например, `Employee`)
+
+**1. Создать класс в `Models/`**
+
+```csharp
+public class Employee
+{
+    public int Id { get; set; }
+    public string FullName { get; set; } = "";
+    public string Email { get; set; } = "";
+}
+```
+
+**2. Зарегистрировать в `ApplicationDbContext`**
+
+```csharp
+public DbSet<Employee> Employees { get; set; }
+```
+
+Если нужны связи, уникальность email, индексы — настраиваете в `OnModelCreating`.
+
+**3. Создать миграцию**
+
+Из папки `WebApp/`:
+
+```bash
+dotnet ef migrations add AddEmployees
+```
+
+EF сравнит модели с текущей БД и сгенерирует файл в `Migrations/`.
+
+**4. Применить миграцию**
+
+Вариант A — просто запустить backend:
+
+```bash
+dotnet run
+```
+
+Вариант B — вручную:
+
+```bash
+dotnet ef database update
+```
+
+В `survay.db` появится таблица `Employees`.
+
+**5. Сделать API**
+
+Контроллер по образцу `Areas/Api/EntitiesController.cs` — CRUD через `ApplicationDbContext`.
+
+### Изменить структуру существующей таблицы
+
+| Что меняете | Что делаете |
+|-------------|-------------|
+| Новое поле | Добавляете свойство в класс → `dotnet ef migrations add ...` |
+| Связь 1-N | Navigation properties + `OnModelCreating` → миграция |
+| Уникальный email | `modelBuilder.Entity<Employee>().HasIndex(e => e.Email).IsUnique()` |
+| Переименование поля | Меняете в классе → миграция (иногда EF не угадает — смотрите сгенерированный файл) |
+| Удаление таблицы | Убираете `DbSet` и класс → миграция с `DropTable` |
+
+> **Важно:** не правьте `survay.db` руками и не удаляйте старые миграции.  
+> Меняете код → новая миграция → применяете.
+
+### Добавить данные (записи, не структуру)
+
+**1. Через API** (основной для MVP)
+
+`POST /api/entities` в Swagger — как сейчас с `SimpleEntity`.
+
+**2. Seed при старте**
+
+В `Program.cs` или отдельном классе — при первом запуске создаёте тестовых сотрудников и шаблон опроса (см. `backend_structure.txt`).
+
+**3. Вручную**
+
+[DB Browser for SQLite](https://sqlitebrowser.org/) — открыть `WebApp/survay.db` и смотреть/править данные. Для разработки ок, в проде — нет.
+
