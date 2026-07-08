@@ -220,4 +220,4 @@ project.lock.json
 
 .ionide/
 
-survay.db*
+survey.db*

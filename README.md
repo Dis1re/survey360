@@ -33,7 +33,7 @@ dotnet run --launch-profile https
 # https://localhost:7126 и http://localhost:5175
 ```
 
-Миграции БД применяются автоматически при старте. SQLite-файл: `WebApp/survay.db`.
+Миграции БД применяются автоматически при старте. SQLite-файл: `WebApp/survey.db`.
 
 `dotnet-ef` нужен только если вы **создаёте** новые миграции:
 
@@ -70,7 +70,7 @@ cd WebApp && dotnet build
 
 ## База данных
 
-Схема: **C#-класс** → `ApplicationDbContext` → **миграция** → `WebApp/survay.db`
+Схема: **C#-класс** → `ApplicationDbContext` → **миграция** → `WebApp/survey.db`
 
 ### Добавить новую сущность (например, `Employee`)
 
@@ -117,7 +117,7 @@ dotnet run
 dotnet ef database update
 ```
 
-В `survay.db` появится таблица `Employees`.
+В `survey.db` появится таблица `Employees`.
 
 **5. Сделать API**
 
@@ -133,7 +133,7 @@ dotnet ef database update
 | Переименование поля | Меняете в классе → миграция (иногда EF не угадает — смотрите сгенерированный файл) |
 | Удаление таблицы | Убираете `DbSet` и класс → миграция с `DropTable` |
 
-> **Важно:** не правьте `survay.db` руками и не удаляйте старые миграции.  
+> **Важно:** не правьте `survey.db` руками и не удаляйте старые миграции.  
 > Меняете код → новая миграция → применяете.
 
 ### Добавить данные (записи, не структуру)
@@ -148,5 +148,5 @@ dotnet ef database update
 
 **3. Вручную**
 
-[DB Browser for SQLite](https://sqlitebrowser.org/) — открыть `WebApp/survay.db` и смотреть/править данные. Для разработки ок, в проде — нет.
+[DB Browser for SQLite](https://sqlitebrowser.org/) — открыть `WebApp/survey.db` и смотреть/править данные. Для разработки ок, в проде — нет.
 
