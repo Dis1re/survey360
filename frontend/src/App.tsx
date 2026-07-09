@@ -2,6 +2,7 @@ import { Sidebar } from './components/Sidebar'
 import type { Survey } from './types'
 import { MainPage } from './pages/MainPage'
 
+
 const mockSurveys: Survey[] = [
   {
     id: 1,
@@ -13,7 +14,7 @@ const mockSurveys: Survey[] = [
   {
     id: 2,
     title: 'Опрос по условиям труда 2026',
-    description: 'Сбор обратной связи от лаборантов',
+    description: 'Сбор оvbnkvvhjlбратной связи от лаборантов',
     status: 'draft',
     date: '02.07',
   },
@@ -37,7 +38,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar surveys={mockSurveys} onCreateClick={handleCreateClick} onSearch={handleSearch} />
+      <Sidebar onCreateClick={handleCreateClick} onSearch={handleSearch} />
       <main className="flex-1 overflow-y-auto">
         <MainPage />
       </main>

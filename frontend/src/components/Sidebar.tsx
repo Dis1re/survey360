@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { Survey } from '../types'
+import { surveysApi } from '../api'
 
 interface SidebarProps {
-  surveys: Survey[]
   onCreateClick: () => void
   onSearch: (query: string) => void
 }
@@ -60,12 +60,82 @@ function SurveyCard({ survey, isActive }: { survey: Survey; isActive: boolean })
   )
 }
 
-export function Sidebar({ surveys, onCreateClick, onSearch }: SidebarProps) {
+export function Sidebar({ onCreateClick, onSearch }: SidebarProps) {
+  const [surveys, setSurveys] = useState<Survey[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+
+  useEffect(() => {
+    const loadSurveys = async () => {
+      try {
+        setLoading(true)
+        setError(null)
+        const data = await surveysApi.list()
+        setSurveys(data || [])
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Не удалось загрузить опросы'
+        setError(errorMessage)
+        setSurveys([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadSurveys()
+  }, [])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSearch(query)
+  }
+
+  // Состояние загрузки
+  if (loading) {
+    return (
+      <aside className="w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 h-screen">
+        <div className="p-4 border-b border-gray-100">
+          <div className="w-full h-10 bg-gray-200 rounded-xl animate-pulse" />
+          <div className="mt-3 w-full h-9 bg-gray-200 rounded-lg animate-pulse" />
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="p-3 rounded-xl bg-gray-100 animate-pulse h-20" />
+          ))}
+        </div>
+      </aside>
+    )
+  }
+
+  // Состояние ошибки
+  if (error) {
+    return (
+      <aside className="w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 h-screen">
+        <div className="p-4 border-b border-gray-100">
+          <button
+            onClick={onCreateClick}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-sm cursor-pointer"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            Создать опрос
+          </button>
+        </div>
+        <div className="flex-1 flex items-center justify-center p-4">
+          <div className="text-center">
+            <div className="text-red-500 text-sm font-medium mb-2">⚠️ Ошибка загрузки</div>
+            <div className="text-gray-600 text-sm">{error}</div>
+            <button
+              onClick={() => window.location.reload()}
+              className="mt-3 text-blue-600 text-sm hover:text-blue-700"
+            >
+              Попробовать снова
+            </button>
+          </div>
+        </div>
+      </aside>
+    )
   }
 
   return (
@@ -106,9 +176,15 @@ export function Sidebar({ surveys, onCreateClick, onSearch }: SidebarProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {surveys.map((survey) => (
-          <SurveyCard key={survey.id} survey={survey} isActive={survey.status === 'active'} />
-        ))}
+        {surveys.length === 0 ? (
+          <div className="text-center text-gray-500 text-sm mt-8">
+            Нет доступных опросов
+          </div>
+        ) : (
+          surveys.map((survey) => (
+            <SurveyCard key={survey.id} survey={survey} isActive={survey.status === 'active'} />
+          ))
+        )}
       </div>
     </aside>
   )
