@@ -3,7 +3,8 @@ import { SurveyHeader } from '../components/SurveyHeader'
 import { TabBar, type Tab } from '../components/TabBar'
 import { QuestionList } from '../components/QuestionList'
 import { QuestionEditor } from '../components/QuestionEditor'
-import type { Question } from '../types'
+import { MatrixTable } from '../components/MatrixTable'
+import type { Participant, Question } from '../types'
 
 const mockQuestions: Question[] = [
   {
@@ -19,6 +20,19 @@ const mockQuestions: Question[] = [
   { id: 3, text: '3. Тайм-менеджмент и спринты', type: 'text' },
 ]
 
+const mockParticipants: Participant[] = [
+  { id: 1, name: 'Алексей', role: 'PM', initial: 'А', color: 'bg-blue-100 text-blue-600' },
+  { id: 2, name: 'Дмитрий', role: 'Backend', initial: 'Д', color: 'bg-green-100 text-green-600' },
+  { id: 3, name: 'Мария', role: 'Frontend', initial: 'М', color: 'bg-purple-100 text-purple-600' },
+  { id: 4, name: 'Иван', role: 'QA', initial: 'И', color: 'bg-orange-100 text-orange-600' },
+]
+
+const initialAssignments: Record<string, Record<string, boolean>> = {
+  '1': { '2': true, '3': true },
+  '2': { '1': true, '3': true, '4': true },
+  '3': { '1': true, '2': true, '4': true },
+}
+
 export function MainPage() {
   const [activeTab, setActiveTab] = useState<Tab>('editor')
   const [questions, setQuestions] = useState<Question[]>(mockQuestions)
@@ -26,8 +40,12 @@ export function MainPage() {
 
   const activeQuestion = questions.find((q) => q.id === activeQuestionId) ?? null
 
-  const handleSave = (updated: Question) => {
+  const handleSaveQuestion = (updated: Question) => {
     setQuestions((prev) => prev.map((q) => (q.id === updated.id ? updated : q)))
+  }
+
+  const handleSaveMatrix = (_assignments: Record<string, Record<string, boolean>>) => {
+    // TODO: сохранить через API
   }
 
   return (
@@ -52,7 +70,7 @@ export function MainPage() {
               />
             </div>
             <div className="lg:col-span-2">
-              <QuestionEditor question={activeQuestion} onSave={handleSave} />
+              <QuestionEditor question={activeQuestion} onSave={handleSaveQuestion} />
             </div>
           </div>
         </div>
@@ -60,7 +78,14 @@ export function MainPage() {
 
       {activeTab === 'matrix' && (
         <div className="p-6">
-          <div className="max-w-6xl mx-auto" />
+          <div className="max-w-6xl mx-auto">
+            <MatrixTable
+              respondents={mockParticipants}
+              targets={mockParticipants}
+              initialAssignments={initialAssignments}
+              onSave={handleSaveMatrix}
+            />
+          </div>
         </div>
       )}
     </>

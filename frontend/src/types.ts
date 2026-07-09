@@ -12,3 +12,11 @@ export interface Question {
   type: 'radio' | 'scale' | 'text'
   options?: { value: number; label: string }[]
 }
+
+export interface Participant {
+  id: number
+  name: string
+  role: string
+  initial: string
+  color: string
+}
