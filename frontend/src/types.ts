@@ -9,4 +9,6 @@ export interface Survey {
 export interface Question {
   id: number
   text: string
+  type: 'radio' | 'scale' | 'text'
+  options?: { value: number; label: string }[]
 }
