@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { DevConsole } from './pages/DevConsole'
-import { SurveyDetail } from './pages/SurveyDetail'
 import { MainPage } from './pages/MainPage'
 import { surveyApi } from './api'
-import type { ApiSurvey, Survey } from './types'
+import type { ApiSurvey, ApiSurveyDetails, Survey } from './types'
 
 const statusMap: Record<string, Survey['status']> = {
   'Черновик': 'draft',
@@ -35,6 +34,8 @@ export default function App() {
   const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(null)
   const [surveys, setSurveys] = useState<Survey[]>([])
   const [loading, setLoading] = useState(true)
+  const [surveyDetails, setSurveyDetails] = useState<ApiSurveyDetails | null>(null)
+  const [surveyLoading, setSurveyLoading] = useState(false)
 
   useEffect(() => {
     surveyApi
@@ -43,6 +44,19 @@ export default function App() {
       .catch(() => setSurveys([]))
       .finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    if (selectedSurveyId === null) {
+      setSurveyDetails(null)
+      return
+    }
+    setSurveyLoading(true)
+    surveyApi
+      .get(selectedSurveyId)
+      .then(setSurveyDetails)
+      .catch(() => setSurveyDetails(null))
+      .finally(() => setSurveyLoading(false))
+  }, [selectedSurveyId])
 
   const handleCreateClick = () => {
     // TODO: открыть форму создания нового опроса
@@ -53,19 +67,32 @@ export default function App() {
   }
 
   let content
-  if (selectedSurveyId !== null) {
-    content = (
-      <SurveyDetail id={selectedSurveyId} onBack={() => setSelectedSurveyId(null)} />
-    )
-  } else if (page === 'surveys') {
+  if (page === 'surveys') {
     content = (
       <DevConsole
         onBack={() => setPage('main')}
-        onOpenSurvey={(id) => setSelectedSurveyId(id)}
+        onOpenSurvey={(id) => { setSelectedSurveyId(id); setPage('main') }}
       />
     )
+  } else if (selectedSurveyId !== null && surveyDetails) {
+    content = (
+      <MainPage
+        survey={surveyDetails.survey}
+        questions={surveyDetails.questions}
+        assignments={surveyDetails.assignments}
+        loading={surveyLoading}
+      />
+    )
+  } else if (selectedSurveyId !== null && surveyLoading) {
+    content = (
+      <div className="flex items-center justify-center h-full text-gray-400 text-sm">Загрузка…</div>
+    )
   } else {
-    content = <MainPage />
+    content = (
+      <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+        Выберите опрос из списка
+      </div>
+    )
   }
 
   return (
