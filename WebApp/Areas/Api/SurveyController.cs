@@ -12,6 +12,14 @@ public record SurveyDetailsDto(
     List<SurveyAssignment> Assignments
 );
 
+public record UpdateSurveyRequest(
+    string Name,
+    string Description,
+    string Status,
+    DateTime? StartedAt,
+    DateTime? ClosedAt
+);
+
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
@@ -55,6 +63,7 @@ public class SurveyController(ApplicationDbContext context) : Controller
         var questions = await context.Questions
             .AsNoTracking()
             .Where(q => q.SurveyId == id)
+            .OrderBy(q => q.Id)
             .ToListAsync(ct);
 
         var questionIds = questions.Select(q => q.Id).ToList();
@@ -71,6 +80,23 @@ public class SurveyController(ApplicationDbContext context) : Controller
             .ToListAsync(ct);
 
         return new SurveyDetailsDto(survey, questions, answers, assignments);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<Survey>> Update(int id, [FromBody] UpdateSurveyRequest request, CancellationToken ct)
+    {
+        var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == id, ct);
+        if (survey is null)
+            return NotFound();
+
+        survey.Name = request.Name;
+        survey.Description = request.Description;
+        survey.Status = request.Status;
+        survey.StartedAt = request.StartedAt ?? default;
+        survey.ClosedAt = request.ClosedAt ?? default;
+
+        await context.SaveChangesAsync(ct);
+        return survey;
     }
 
     [HttpDelete("{id:int}")]

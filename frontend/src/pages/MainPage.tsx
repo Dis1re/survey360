@@ -1,79 +1,232 @@
-import { useState } from 'react'
-import { SurveyHeader } from '../components/SurveyHeader'
-import { TabBar, type Tab } from '../components/TabBar'
-import { QuestionList } from '../components/QuestionList'
-import { QuestionEditor } from '../components/QuestionEditor'
+import { useEffect, useMemo, useState } from 'react'
+import { questionApi, surveyApi, userApi } from '../api'
 import { MatrixTable } from '../components/MatrixTable'
-import type { Participant, Question } from '../types'
+import { QuestionEditor } from '../components/QuestionEditor'
+import { QuestionList } from '../components/QuestionList'
+import { SurveyHeader, type SurveyHeaderForm } from '../components/SurveyHeader'
+import { TabBar, type Tab } from '../components/TabBar'
+import {
+  apiDateToInput,
+  apiQuestionToQuestion,
+  apiUserToParticipant,
+  assignmentsToMatrix,
+  inputDateToApi,
+  mapQuestionTypeToApi,
+  mapSurveyStatus,
+  getUniqueUserIds,
+} from '../mappers'
+import type { ApiSurvey, ApiUser, Participant, Question } from '../types'
 
 interface MainPageProps {
-  onOpenSurveys: () => void
+  surveyId: number | null
+  onSurveyUpdated?: () => void
 }
 
-const mockQuestions: Question[] = [
-  {
-    id: 1,
-    surveyId: 1,
-    text: '1. Оценка навыков архитектуры',
-    type: 'scale',
-    options: [
-      { value: 1, label: 'Критически слабый уровень, требует менторства' },
-      { value: 5, label: 'Эксперт, может выступать архитектором крупных модулей' },
-    ],
-  },
-  { id: 2, surveyId: 1, text: '2. Командная работа и Soft Skills', type: 'radio' },
-  { id: 3, surveyId: 1, text: '3. Тайм-менеджмент и спринты', type: 'text' },
-]
-
-const mockParticipants: Participant[] = [
-  { id: 1, name: 'Алексей', role: 'PM', initial: 'А', color: 'bg-blue-100 text-blue-600' },
-  { id: 2, name: 'Дмитрий', role: 'Backend', initial: 'Д', color: 'bg-green-100 text-green-600' },
-  { id: 3, name: 'Мария', role: 'Frontend', initial: 'М', color: 'bg-purple-100 text-purple-600' },
-  { id: 4, name: 'Иван', role: 'QA', initial: 'И', color: 'bg-orange-100 text-orange-600' },
-]
-
-const initialAssignments: Record<string, Record<string, boolean>> = {
-  '1': { '2': true, '3': true },
-  '2': { '1': true, '3': true, '4': true },
-  '3': { '1': true, '2': true, '4': true },
-}
-
-export function MainPage({ onOpenSurveys }: MainPageProps) {
+export function MainPage({ surveyId, onSurveyUpdated }: MainPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('editor')
-  const [questions, setQuestions] = useState<Question[]>(mockQuestions)
-  const [activeQuestionId, setActiveQuestionId] = useState<number | null>(1)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [survey, setSurvey] = useState<ApiSurvey | null>(null)
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [participants, setParticipants] = useState<Participant[]>([])
+  const [assignments, setAssignments] = useState<Record<string, Record<string, boolean>>>({})
+  const [activeQuestionId, setActiveQuestionId] = useState<number | null>(null)
+  const [savingSurvey, setSavingSurvey] = useState(false)
+  const [creatingQuestion, setCreatingQuestion] = useState(false)
+  const [savingQuestion, setSavingQuestion] = useState(false)
 
-  const activeQuestion = questions.find((q) => q.id === activeQuestionId) ?? null
+  useEffect(() => {
+    if (surveyId === null) {
+      setSurvey(null)
+      setQuestions([])
+      setParticipants([])
+      setAssignments({})
+      setActiveQuestionId(null)
+      setError(null)
+      return
+    }
 
-  const handleSaveQuestion = (updated: Question) => {
-    setQuestions((prev) => prev.map((q) => (q.id === updated.id ? updated : q)))
+    let cancelled = false
+    setLoading(true)
+    setError(null)
+
+    surveyApi
+      .get(surveyId)
+      .then(async (details) => {
+        if (cancelled) return
+
+        setSurvey(details.survey)
+        const mappedQuestions = details.questions.map(apiQuestionToQuestion)
+        setQuestions(mappedQuestions)
+        setActiveQuestionId((prev) => {
+          if (prev !== null && mappedQuestions.some((question) => question.id === prev)) return prev
+          return mappedQuestions[0]?.id ?? null
+        })
+        setAssignments(assignmentsToMatrix(details.assignments))
+
+        const userIds = getUniqueUserIds(details.assignments)
+        if (userIds.length === 0) {
+          setParticipants([])
+          return
+        }
+
+        const users = await Promise.all(
+          userIds.map((id) => userApi.get(id).catch(() => null)),
+        )
+        if (cancelled) return
+
+        const validUsers = users.filter((user): user is ApiUser => user !== null)
+        setParticipants(validUsers.map(apiUserToParticipant))
+      })
+      .catch((err: Error) => {
+        if (!cancelled) setError(err.message)
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [surveyId])
+
+  const surveyHeaderInitial = useMemo<SurveyHeaderForm>(
+    () => ({
+      title: survey?.name ?? '',
+      description: survey?.description ?? '',
+      startDate: apiDateToInput(survey?.startedAt ?? ''),
+      endDate: apiDateToInput(survey?.closedAt ?? ''),
+    }),
+    [survey],
+  )
+
+  const surveyStatus = survey ? mapSurveyStatus(survey.status) : 'draft'
+
+  const activeQuestion = questions.find((question) => question.id === activeQuestionId) ?? null
+
+  const handleSaveSurvey = async (data: SurveyHeaderForm) => {
+    if (surveyId === null) return
+
+    setSavingSurvey(true)
+    setError(null)
+    try {
+      const updated = await surveyApi.update(surveyId, {
+        name: data.title.trim(),
+        description: data.description.trim(),
+        status: survey.status,
+        startedAt: inputDateToApi(data.startDate),
+        closedAt: inputDateToApi(data.endDate),
+      })
+      setSurvey(updated)
+      onSurveyUpdated?.()
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Не удалось сохранить опрос'
+      setError(message)
+      throw err
+    } finally {
+      setSavingSurvey(false)
+    }
   }
 
-  const handleSaveMatrix = (_assignments: Record<string, Record<string, boolean>>) => {
+  const handleCreateQuestion = async (text: string) => {
+    if (surveyId === null) return
+
+    setCreatingQuestion(true)
+    setError(null)
+    try {
+      const id = await questionApi.create({
+        surveyId,
+        text,
+        type: 'rating',
+      })
+      const newQuestion = apiQuestionToQuestion({
+        id,
+        surveyId,
+        text,
+        type: 'rating',
+      })
+      setQuestions((prev) => [...prev, newQuestion])
+      setActiveQuestionId(id)
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Не удалось добавить вопрос'
+      setError(message)
+      throw err
+    } finally {
+      setCreatingQuestion(false)
+    }
+  }
+
+  const handleSaveQuestion = async (updated: Question) => {
+    setSavingQuestion(true)
+    setError(null)
+    try {
+      const saved = await questionApi.update(updated.id, {
+        text: updated.text,
+        type: mapQuestionTypeToApi(updated.type),
+      })
+      const mapped = apiQuestionToQuestion(saved)
+      const nextQuestion = { ...mapped, options: updated.options }
+      setQuestions((prev) =>
+        prev.map((question) => (question.id === updated.id ? nextQuestion : question)),
+      )
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Не удалось сохранить вопрос'
+      setError(message)
+      throw err
+    } finally {
+      setSavingQuestion(false)
+    }
+  }
+
+  const handleSaveMatrix = (_nextAssignments: Record<string, Record<string, boolean>>) => {
     // TODO: сохранить через API
   }
 
-  return (
-    <>
-      <SurveyHeader
-        title="Оценка компетенций 360 (Middle+)"
-        description="Регулярное исследование профессиональных навыков сотрудников, кросс-оценка внутри команд и выявление точек роста."
-        status="active"
-        startDate="01.07.2026"
-        endDate="15.07.2026"
-      />
-      <div className="bg-amber-50 border-b border-amber-200 px-6 py-2">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
-          <span className="text-xs text-amber-800">Временная ссылка для разработки</span>
-          <button
-            type="button"
-            onClick={onOpenSurveys}
-            className="text-xs font-medium text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-lg transition cursor-pointer"
-          >
-            Тест API / БД
-          </button>
+  if (surveyId === null) {
+    return (
+      <div className="flex items-center justify-center h-full p-6">
+        <p className="text-sm text-gray-500">
+          {loading ? 'Загрузка опросов…' : 'Нет опросов. Создайте первый опрос в боковой панели.'}
+        </p>
+      </div>
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-full p-6">
+        <p className="text-sm text-gray-500">Загрузка опроса…</p>
+      </div>
+    )
+  }
+
+  if (error && !survey) {
+    return (
+      <div className="flex items-center justify-center h-full p-6">
+        <div className="text-center space-y-2">
+          <p className="text-sm text-gray-900 font-medium">Не удалось загрузить опрос</p>
+          <p className="text-sm text-red-600">{error}</p>
         </div>
       </div>
+    )
+  }
+
+  if (!survey) return null
+
+  return (
+    <>
+      {error && (
+        <div className="mx-6 mt-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+          {error}
+        </div>
+      )}
+
+      <SurveyHeader
+        initial={surveyHeaderInitial}
+        status={surveyStatus}
+        saving={savingSurvey}
+        onSave={handleSaveSurvey}
+      />
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 'editor' && (
@@ -83,11 +236,17 @@ export function MainPage({ onOpenSurveys }: MainPageProps) {
               <QuestionList
                 questions={questions}
                 activeQuestionId={activeQuestionId}
+                creating={creatingQuestion}
                 onQuestionSelect={setActiveQuestionId}
+                onQuestionCreate={handleCreateQuestion}
               />
             </div>
             <div className="lg:col-span-2">
-              <QuestionEditor question={activeQuestion} onSave={handleSaveQuestion} />
+              <QuestionEditor
+                question={activeQuestion}
+                saving={savingQuestion}
+                onSave={handleSaveQuestion}
+              />
             </div>
           </div>
         </div>
@@ -96,12 +255,19 @@ export function MainPage({ onOpenSurveys }: MainPageProps) {
       {activeTab === 'matrix' && (
         <div className="p-6">
           <div className="max-w-6xl mx-auto">
-            <MatrixTable
-              respondents={mockParticipants}
-              targets={mockParticipants}
-              initialAssignments={initialAssignments}
-              onSave={handleSaveMatrix}
-            />
+            {participants.length === 0 ? (
+              <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-500 shadow-sm">
+                Нет назначений респондентов для этого опроса
+              </div>
+            ) : (
+              <MatrixTable
+                key={surveyId}
+                respondents={participants}
+                targets={participants}
+                initialAssignments={assignments}
+                onSave={handleSaveMatrix}
+              />
+            )}
           </div>
         </div>
       )}

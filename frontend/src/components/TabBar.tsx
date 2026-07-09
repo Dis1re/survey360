@@ -12,19 +12,19 @@ const tabs: { id: Tab; label: string }[] = [
 
 export function TabBar({ activeTab, onTabChange }: TabBarProps) {
   return (
-    <div className="bg-white border-b border-gray-200 px-6 flex-shrink-0">
-      <div className="max-w-6xl mx-auto flex gap-6">
+    <div className="px-6 flex-shrink-0" style={{ background: '#fff' }}>
+      <div className="max-w-6xl mx-auto flex gap-6 border-b" style={{ borderColor: 'rgba(255,134,0,0.25)' }}>
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab
           return (
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`py-3 text-sm font-semibold border-b-2 flex items-center gap-2 transition focus:outline-none cursor-pointer ${
-                isActive
-                  ? 'border-blue-600 text-blue-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700'
-              }`}
+              className="py-3 text-sm font-semibold flex items-center gap-2 transition focus:outline-none cursor-pointer"
+              style={{
+                color: isActive ? '#FF8600' : 'rgba(17,24,39,0.55)',
+                borderBottom: isActive ? '3px solid #FF8600' : '3px solid transparent',
+              }}
             >
               {tab.id === 'editor' ? (
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

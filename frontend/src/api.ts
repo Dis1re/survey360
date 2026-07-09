@@ -7,6 +7,8 @@ import type {
   CreateAnswerRequest,
   CreateQuestionRequest,
   CreateUserRequest,
+  UpdateQuestionRequest,
+  UpdateSurveyRequest,
 } from './types'
 
 async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
@@ -38,6 +40,12 @@ export const surveyApi = {
 
   get: (id: number) => sendRequest<ApiSurveyDetails>(`${API}/survey/${id}`),
 
+  update: (id: number, data: UpdateSurveyRequest) =>
+    sendRequest<ApiSurvey>(`${API}/survey/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
   delete: (id: number) =>
     sendRequest<void>(`${API}/survey/${id}`, { method: 'DELETE' }),
 }
@@ -60,6 +68,12 @@ export const questionApi = {
     }),
 
   get: (id: number) => sendRequest<ApiQuestionDetails>(`${API}/question/${id}`),
+
+  update: (id: number, data: UpdateQuestionRequest) =>
+    sendRequest<ApiQuestionDetails['question']>(`${API}/question/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 
   delete: (id: number) =>
     sendRequest<void>(`${API}/question/${id}`, { method: 'DELETE' }),

@@ -7,6 +7,8 @@ namespace WebApp.Areas.Api;
 
 public record CreateQuestionRequest(int SurveyId, string Text, string Type);
 
+public record UpdateQuestionRequest(string Text, string Type);
+
 public record QuestionDetailsDto(Question Question, List<Answer> Answers);
 
 [Area("api")]
@@ -48,6 +50,20 @@ public class QuestionController(ApplicationDbContext context) : Controller
             .ToListAsync(ct);
 
         return new QuestionDetailsDto(question, answers);
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult<Question>> Update(int id, [FromBody] UpdateQuestionRequest request, CancellationToken ct)
+    {
+        var question = await context.Questions.FirstOrDefaultAsync(q => q.Id == id, ct);
+        if (question is null)
+            return NotFound();
+
+        question.Text = request.Text;
+        question.Type = request.Type;
+
+        await context.SaveChangesAsync(ct);
+        return question;
     }
 
     [HttpDelete("{id:int}")]
