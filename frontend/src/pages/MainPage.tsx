@@ -9,6 +9,7 @@ import type { Participant, Question } from '../types'
 const mockQuestions: Question[] = [
   {
     id: 1,
+    surveyId: 1,
     text: '1. Оценка навыков архитектуры',
     type: 'scale',
     options: [
@@ -16,8 +17,8 @@ const mockQuestions: Question[] = [
       { value: 5, label: 'Эксперт, может выступать архитектором крупных модулей' },
     ],
   },
-  { id: 2, text: '2. Командная работа и Soft Skills', type: 'radio' },
-  { id: 3, text: '3. Тайм-менеджмент и спринты', type: 'text' },
+  { id: 2, surveyId: 1, text: '2. Командная работа и Soft Skills', type: 'radio' },
+  { id: 3, surveyId: 1, text: '3. Тайм-менеджмент и спринты', type: 'text' },
 ]
 
 const mockParticipants: Participant[] = [
