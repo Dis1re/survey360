@@ -18,20 +18,18 @@ export function QuestionList({
 }: QuestionListProps) {
   const [newQuestionText, setNewQuestionText] = useState('')
   const [showInput, setShowInput] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     const text = newQuestionText.trim()
     if (!text) return
 
-    setError(null)
     try {
       await onQuestionCreate(text)
       setNewQuestionText('')
       setShowInput(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось добавить вопрос')
+      console.error(err)
     }
   }
 
@@ -70,10 +68,6 @@ export function QuestionList({
         )}
       </div>
 
-      {error && (
-        <p className="mt-3 text-xs text-red-600">{error}</p>
-      )}
-
       {showInput ? (
         <form onSubmit={handleSubmit} className="mt-4 space-y-2">
           <input
@@ -98,7 +92,6 @@ export function QuestionList({
               onClick={() => {
                 setShowInput(false)
                 setNewQuestionText('')
-                setError(null)
               }}
               disabled={creating}
               className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-lg transition cursor-pointer"
