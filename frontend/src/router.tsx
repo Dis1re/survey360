@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 
-function matchEntityRoute(path: string): number | null {
-  const match = path.match(/^\/entities\/entity\/(\d+)$/)
+function matchSurveyRoute(path: string): number | null {
+  const match = path.match(/^\/surveys\/(\d+)$/)
   return match ? Number(match[1]) : null
 }
 
@@ -19,7 +19,7 @@ export function useRouter() {
     setPath(to)
   }, [])
 
-  return { path, navigate, entityId: matchEntityRoute(path) }
+  return { path, navigate, surveyId: matchSurveyRoute(path) }
 }
 
 interface LinkProps {

@@ -21,6 +21,14 @@ cd WebApp
 dotnet run --launch-profile http
 ```
 
+или
+
+```bash
+dotnet watch run --launch-profile http
+```
+
+(сервер пересобирается автоматически при изменении .cs файлов)
+
 - API: http://localhost:5175
 - Swagger: http://localhost:5175/swagger
 
@@ -52,11 +60,12 @@ npm run dev
 
 - UI: http://localhost:5173
 - Запросы к `/api/*` проксируются на backend (см. `frontend/vite.config.ts`)
+- Тест API: http://localhost:5173/surveys
 
 ### Проверка
 
-1. Откройте http://localhost:5173 — должно быть «Connected».
-2. Или вручную: http://localhost:5175/api/entities → `[]` (пустой массив, если нет данных).
+1. Откройте http://localhost:5173 — главная страница с дизайном опросов.
+2. Или вручную: http://localhost:5175/api/survey → `[]` (пустой массив, если нет данных).
 
 ## Сборка
 
@@ -121,7 +130,7 @@ dotnet ef database update
 
 **5. Сделать API**
 
-Контроллер по образцу `Areas/Api/EntitiesController.cs` — CRUD через `ApplicationDbContext`.
+Контроллер по образцу `Areas/Api/SurveyController.cs` — CRUD через `ApplicationDbContext`.
 
 ### Изменить структуру существующей таблицы
 
@@ -140,13 +149,12 @@ dotnet ef database update
 
 **1. Через API** (основной для MVP)
 
-`POST /api/entities` в Swagger — как сейчас с `SimpleEntity`.
+`POST /api/survey` в Swagger — создать черновик опроса.
 
 **2. Seed при старте**
 
-В `Program.cs` или отдельном классе — при первом запуске создаёте тестовых сотрудников и шаблон опроса (см. `backend_structure.txt`).
+В `Program.cs` или отдельном классе — при первом запуске создаёте тестовых сотрудников и шаблон опроса (см. `BACKEND_STRUCTURE.md`).
 
 **3. Вручную**
 
 [DB Browser for SQLite](https://sqlitebrowser.org/) — открыть `WebApp/survey.db` и смотреть/править данные. Для разработки ок, в проде — нет.
-

@@ -43,8 +43,8 @@ export function Layout({ title, children }: LayoutProps) {
                   </Link>
                 </li>
                 <li className="nav-item">
-                  <Link className="nav-link text-dark" to="/entities">
-                    Сущности
+                  <Link className="nav-link text-dark" to="/surveys">
+                    Тест API
                   </Link>
                 </li>
               </ul>

@@ -1,4 +1,13 @@
-import type { EntityInput, LifecycleDemo, MySettings, SimpleEntity } from './types'
+import type {
+  ApiAnswer,
+  ApiQuestionDetails,
+  ApiSurvey,
+  ApiSurveyDetails,
+  ApiUser,
+  CreateAnswerRequest,
+  CreateQuestionRequest,
+  CreateUserRequest,
+} from './types'
 
 async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
@@ -21,27 +30,51 @@ async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T
 
 const API = '/api'
 
-export const entitiesApi = {
-  list: () => sendRequest<SimpleEntity[]>(`${API}/entities`),
-  get: (id: number) => sendRequest<SimpleEntity>(`${API}/entities/${id}`),
-  create: (entity: EntityInput) =>
-    sendRequest<number>(`${API}/entities`, {
-      method: 'POST',
-      body: JSON.stringify(entity),
-    }),
-  update: (id: number, entity: EntityInput) =>
-    sendRequest<void>(`${API}/entities/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(entity),
-    }),
+export const surveyApi = {
+  create: () =>
+    sendRequest<number>(`${API}/survey`, { method: 'POST' }),
+
+  list: () => sendRequest<ApiSurvey[]>(`${API}/survey`),
+
+  get: (id: number) => sendRequest<ApiSurveyDetails>(`${API}/survey/${id}`),
+
   delete: (id: number) =>
-    sendRequest<void>(`${API}/entities/${id}`, { method: 'DELETE' }),
+    sendRequest<void>(`${API}/survey/${id}`, { method: 'DELETE' }),
 }
 
-export const settingsApi = {
-  get: () => sendRequest<MySettings>(`${API}/settings`),
+export const userApi = {
+  create: (data: CreateUserRequest) =>
+    sendRequest<number>(`${API}/user`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  get: (id: number) => sendRequest<ApiUser>(`${API}/user/${id}`),
 }
 
-export const servicesApi = {
-  lifecycle: () => sendRequest<LifecycleDemo>(`${API}/services/lifecycle`),
+export const questionApi = {
+  create: (data: CreateQuestionRequest) =>
+    sendRequest<number>(`${API}/question`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  get: (id: number) => sendRequest<ApiQuestionDetails>(`${API}/question/${id}`),
+
+  delete: (id: number) =>
+    sendRequest<void>(`${API}/question/${id}`, { method: 'DELETE' }),
+}
+
+export const answerApi = {
+  create: (data: CreateAnswerRequest) =>
+    sendRequest<number>(`${API}/answer`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  get: (id: number) => sendRequest<ApiAnswer>(`${API}/answer/${id}`),
+}
+
+export const databaseApi = {
+  clearAll: () => sendRequest<void>(`${API}/database`, { method: 'DELETE' }),
 }
