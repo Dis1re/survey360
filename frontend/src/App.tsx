@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { DevConsole } from './pages/DevConsole'
 import { MainPage } from './pages/MainPage'
+import { SurveyDetail } from './pages/SurveyDetail'
 import { surveyApi } from './api'
 import type { ApiSurvey, ApiSurveyDetails, Survey } from './types'
 
@@ -27,7 +28,7 @@ function toSurvey(api: ApiSurvey): Survey {
   }
 }
 
-type Page = 'main' | 'surveys'
+type Page = 'main' | 'surveys' | 'detail'
 
 export default function App() {
   const [page, setPage] = useState<Page>('main')
@@ -67,11 +68,15 @@ export default function App() {
   }
 
   let content
-  if (page === 'surveys') {
+  if (page === 'detail' && selectedSurveyId !== null) {
+    content = (
+      <SurveyDetail id={selectedSurveyId} onBack={() => setPage('surveys')} />
+    )
+  } else if (page === 'surveys') {
     content = (
       <DevConsole
         onBack={() => setPage('main')}
-        onOpenSurvey={(id) => { setSelectedSurveyId(id); setPage('main') }}
+        onOpenSurvey={(id) => { setSelectedSurveyId(id); setPage('detail') }}
       />
     )
   } else if (selectedSurveyId !== null && surveyDetails) {
