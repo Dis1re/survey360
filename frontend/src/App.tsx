@@ -3,7 +3,11 @@ import { surveyApi } from './api'
 import { Sidebar } from './components/Sidebar'
 import { apiSurveyToSurvey } from './mappers'
 import { MainPage } from './pages/MainPage'
+import { EntitiesPage } from './pages/DevPage'
+import { EntityPage } from './pages/SurveyDetails'
 import type { Survey } from './types'
+
+type View = 'main' | 'dev' | 'details'
 
 export default function App() {
   const [surveys, setSurveys] = useState<Survey[]>([])
@@ -12,6 +16,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [creating, setCreating] = useState(false)
+  const [view, setView] = useState<View>('main')
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -38,6 +43,15 @@ export default function App() {
       )
     : surveys
 
+  const handleOpenDev = () => setView('dev')
+
+  const handleOpenDetails = () => setView('details')
+
+  const handleBack = () => {
+    setView('main')
+    loadSurveys()
+  }
+
   const handleCreateClick = async () => {
     setCreating(true)
     setError(null)
@@ -62,6 +76,8 @@ export default function App() {
         onSurveySelect={setSelectedSurveyId}
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
+        onOpenDev={handleOpenDev}
+        onOpenDetails={handleOpenDetails}
       />
       <main className="flex-1 overflow-y-auto">
         {error && (
@@ -69,7 +85,13 @@ export default function App() {
             {error}
           </div>
         )}
-        <MainPage surveyId={selectedSurveyId} onSurveyUpdated={loadSurveys} />
+        {view === 'dev' ? (
+          <EntitiesPage onBack={handleBack} onOpenSurvey={setSelectedSurveyId} />
+        ) : view === 'details' ? (
+          <EntityPage id={selectedSurveyId ?? 0} onBack={handleBack} />
+        ) : (
+          <MainPage surveyId={selectedSurveyId} onSurveyUpdated={loadSurveys} />
+        )}
       </main>
     </div>
   )
