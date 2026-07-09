@@ -17,6 +17,7 @@ public class DatabaseController(ApplicationDbContext context, IWebHostEnvironmen
 
         await context.Answers.ExecuteDeleteAsync(ct);
         await context.SurveyAssignments.ExecuteDeleteAsync(ct);
+        await context.Set<WebApp.Models.SurveyParticipant>().ExecuteDeleteAsync(ct);
         await context.Questions.ExecuteDeleteAsync(ct);
         await context.Surveys.ExecuteDeleteAsync(ct);
         await context.Users.ExecuteDeleteAsync(ct);

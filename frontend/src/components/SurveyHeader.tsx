@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
+import { userApi } from '../api'
 import type { Survey } from '../types'
 
 export interface SurveyHeaderForm {
@@ -13,6 +14,8 @@ interface SurveyHeaderProps {
   status: Survey['status']
   saving?: boolean
   onSave: (data: SurveyHeaderForm) => Promise<void>
+  onUserCreated?: () => void | Promise<void>
+  onDelete?: () => Promise<void>
 }
 
 const statusConfig = {
@@ -29,10 +32,15 @@ const dateInputClass = `${inputClass} survey-header-date`
 const DESCRIPTION_MIN_ROWS = 3
 const DESCRIPTION_MAX_HEIGHT = 168
 
-export function SurveyHeader({ initial, status, saving = false, onSave }: SurveyHeaderProps) {
+export function SurveyHeader({ initial, status, saving = false, onSave, onUserCreated, onDelete }: SurveyHeaderProps) {
   const [form, setForm] = useState(initial)
   const [dirty, setDirty] = useState(false)
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
+  const [userModalOpen, setUserModalOpen] = useState(false)
+  const [userName, setUserName] = useState('')
+  const [userEmail, setUserEmail] = useState('')
+  const [userSaving, setUserSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   useEffect(() => {
     setForm(initial)
@@ -64,6 +72,40 @@ export function SurveyHeader({ initial, status, saving = false, onSave }: Survey
     if (!form.title.trim()) return
     await onSave(form)
     setDirty(false)
+  }
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const name = userName.trim()
+    const email = userEmail.trim()
+    if (!name || !email) return
+
+    setUserSaving(true)
+    try {
+      await userApi.create({ name, email })
+      setUserModalOpen(false)
+      setUserName('')
+      setUserEmail('')
+      await onUserCreated?.()
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setUserSaving(false)
+    }
+  }
+
+  const handleDeleteSurvey = async () => {
+    const title = form.title.trim() || 'этот опрос'
+    if (!confirm(`Удалить опрос «${title}»?`)) return
+
+    setDeleting(true)
+    try {
+      await onDelete?.()
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
@@ -140,39 +182,102 @@ export function SurveyHeader({ initial, status, saving = false, onSave }: Survey
             )}
           </div>
 
-          <div
-            className="flex items-center gap-3 text-xs border p-3 rounded-xl self-start shrink-0"
-            style={{
-              backgroundColor: 'rgba(255,255,255,0.12)',
-              borderColor: 'rgba(255,255,255,0.25)',
-            }}
-          >
-            <svg className="w-4 h-4 text-white/70 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-            <div className="space-y-2">
-              <span className="block text-white/70 font-medium">Период проведения</span>
-              <div className="flex items-center gap-2">
-                <input
-                  type="date"
-                  className={dateInputClass}
-                  style={{ color: '#fff' }}
-                  value={form.startDate}
-                  onChange={(e) => updateField('startDate', e.target.value)}
-                />
-                <span className="text-white">—</span>
-                <input
-                  type="date"
-                  className={dateInputClass}
-                  style={{ color: '#fff' }}
-                  value={form.endDate}
-                  onChange={(e) => updateField('endDate', e.target.value)}
-                />
+          <div className="flex flex-col gap-3 self-start shrink-0">
+            <div
+              className="flex items-center gap-3 text-xs border p-3 rounded-xl"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.12)',
+                borderColor: 'rgba(255,255,255,0.25)',
+              }}
+            >
+              <svg className="w-4 h-4 text-white/70 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <div className="space-y-2">
+                <span className="block text-white/70 font-medium">Период проведения</span>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="date"
+                    className={dateInputClass}
+                    style={{ color: '#fff' }}
+                    value={form.startDate}
+                    onChange={(e) => updateField('startDate', e.target.value)}
+                  />
+                  <span className="text-white">—</span>
+                  <input
+                    type="date"
+                    className={dateInputClass}
+                    style={{ color: '#fff' }}
+                    value={form.endDate}
+                    onChange={(e) => updateField('endDate', e.target.value)}
+                  />
+                </div>
               </div>
             </div>
+            <button
+              type="button"
+              onClick={() => setUserModalOpen(true)}
+              className="w-full px-3 py-2 text-xs font-medium text-white border rounded-xl transition cursor-pointer hover:bg-white/10"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.12)',
+                borderColor: 'rgba(255,255,255,0.25)',
+              }}
+            >
+              + Добавить пользователя
+            </button>
+            {onDelete && (
+              <button
+                type="button"
+                onClick={handleDeleteSurvey}
+                disabled={deleting}
+                className="w-full px-3 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl transition cursor-pointer border border-red-700"
+              >
+                {deleting ? 'Удаление…' : 'Удалить опрос'}
+              </button>
+            )}
           </div>
         </div>
       </form>
+
+      {userModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => !userSaving && setUserModalOpen(false)}>
+          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-5" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-base font-bold text-gray-900 mb-4">Новый пользователь</h2>
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Имя</label>
+                <input
+                  type="text"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  placeholder="Иван Иванов"
+                  autoFocus
+                  disabled={userSaving}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email</label>
+                <input
+                  type="email"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  placeholder="ivan@example.com"
+                  disabled={userSaving}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={userSaving || !userName.trim() || !userEmail.trim()}
+                className="w-full py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition cursor-pointer"
+              >
+                {userSaving ? 'Добавление…' : 'Добавить'}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </header>
   )
 }

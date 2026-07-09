@@ -47,6 +47,20 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .HasOne<User>()
             .WithMany()
             .HasForeignKey(sa => sa.TargetId);
+
+        modelBuilder.Entity<SurveyParticipant>()
+            .HasOne<Survey>()
+            .WithMany()
+            .HasForeignKey(sp => sp.SurveyId);
+
+        modelBuilder.Entity<SurveyParticipant>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(sp => sp.UserId);
+
+        modelBuilder.Entity<SurveyParticipant>()
+            .HasIndex(sp => new { sp.SurveyId, sp.UserId })
+            .IsUnique();
     }
 
     // Тут указываются все сущности БД, с которыми нужно уметь работать
@@ -55,4 +69,5 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Question> Questions { get; set; }
     public DbSet<Answer> Answers { get; set; }
     public DbSet<SurveyAssignment> SurveyAssignments { get; set; }
+    public DbSet<SurveyParticipant> SurveyParticipants => Set<SurveyParticipant>();
 }

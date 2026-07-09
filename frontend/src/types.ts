@@ -125,3 +125,20 @@ export interface ApiSurveyDetails {
   answers: ApiAnswer[]
   assignments: ApiSurveyAssignment[]
 }
+
+export interface ApiSurveyMatrix {
+  targets: ApiUser[]
+  respondents: ApiUser[]
+  assignments: ApiSurveyAssignment[]
+}
+
+export interface AddSurveyParticipantRequest {
+  userId: number
+  role: 'target' | 'respondent'
+}
+
+export interface AssignmentEntry {
+  reviewerId: number
+  targetId: number
+  isAssigned: boolean
+}

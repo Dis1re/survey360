@@ -1,28 +1,52 @@
-# API Reference
+# REST API Survey360
 
-Base URL: `http://localhost:5175/api`
+Backend отдаёт JSON по адресу **`http://localhost:5175/api`**.
+
+Frontend в dev-режиме ходит на **`/api/...`** — Vite проксирует запросы на порт 5175 (см. `frontend/vite.config.ts`).
+
+## Как пользоваться этим документом
+
+- **Метод + путь** — что вызывать (`GET`, `POST`, `PUT`, `DELETE`).
+- **Тело запроса** — JSON в теле (для POST/PUT).
+- **Ответ** — что вернёт сервер; коды `200`, `204`, `404`, `400`.
+- Имена полей в JSON — **camelCase** (`surveyId`, `createdAt`).
+
+Swagger (интерактивная документация): http://localhost:5175/swagger — только в Development.
 
 ---
 
-## Survey
+## Обзор: что за чем идёт
+
+Типичный сценарий настройки опроса 360°:
+
+1. `POST /api/survey` — создать черновик.
+2. `PUT /api/survey/{id}` — задать название, описание, статус.
+3. `POST /api/question` — добавить вопросы.
+4. `POST /api/user` — завести пользователей (если ещё нет).
+5. `POST /api/survey/{id}/participants` — добавить targets и respondents.
+6. `GET /api/survey/{id}/matrix` — получить матрицу для UI.
+7. `PUT /api/survey/{id}/assignments` — сохранить галочки «кто кого оценивает».
+8. `POST /api/answer` — сохранить ответы (когда респондент заполняет форму).
+
+---
+
+## Survey — опросы
 
 ### `POST /api/survey`
 
-Создаёт новый опрос-черновик. Тело запроса не требуется.
+Создаёт новый опрос-черновик. Тело запроса **не нужно**.
 
-**Response** `200 OK`
+**Response** `200 OK` — id нового опроса (число, не JSON-объект):
 
 ```
 42
 ```
 
-Возвращает `id` созданного опроса.
-
 ---
 
 ### `GET /api/survey`
 
-Список всех опросов, отсортированных по дате создания (сначала новые).
+Список всех опросов, **сначала новые** (по `createdAt`).
 
 **Response** `200 OK`
 
@@ -44,13 +68,21 @@ Base URL: `http://localhost:5175/api`
 
 ### `GET /api/survey/{id}`
 
-Детальная информация об опросе: вопросы, ответы, назначения.
+Полная карточка опроса: сам опрос + все вопросы + все ответы на эти вопросы + все назначения.
 
 **Response** `200 OK`
 
 ```json
 {
-  "survey": { ... },
+  "survey": {
+    "id": 42,
+    "name": "Оценка Q2 2026",
+    "description": "Квартальный 360",
+    "status": "Черновик",
+    "createdAt": "2026-07-09T10:00:00Z",
+    "startedAt": "0001-01-01T00:00:00",
+    "closedAt": "0001-01-01T00:00:00"
+  },
   "questions": [
     {
       "id": 1,
@@ -59,14 +91,71 @@ Base URL: `http://localhost:5175/api`
       "type": "rating"
     }
   ],
-  "answers": [
+  "answers": [],
+  "assignments": [
     {
       "id": 1,
-      "questionId": 1,
-      "userId": 1,
-      "text": "5",
-      "type": "rating"
+      "surveyId": 42,
+      "reviewerId": 1,
+      "targetId": 2,
+      "isAssigned": true,
+      "isCompleted": false
     }
+  ]
+}
+```
+
+**Response** `404` — опрос не найден.
+
+---
+
+### `PUT /api/survey/{id}`
+
+Обновляет метаданные опроса (название, описание, статус, даты).
+
+**Request body**
+
+```json
+{
+  "name": "Оценка Q2 2026",
+  "description": "Квартальный 360",
+  "status": "Активный",
+  "startedAt": "2026-07-10T09:00:00Z",
+  "closedAt": null
+}
+```
+
+`startedAt` / `closedAt` можно передать `null` — тогда в БД запишется пустая дата (`0001-01-01`).
+
+**Response** `200 OK` — обновлённый объект опроса.
+
+**Response** `404` — опрос не найден.
+
+---
+
+### `DELETE /api/survey/{id}`
+
+Удаляет опрос. Связанные вопросы, участники, назначения удаляются каскадом на уровне БД.
+
+**Response** `204 No Content`
+
+**Response** `404` — опрос не найден.
+
+---
+
+### `GET /api/survey/{id}/matrix`
+
+Данные для **матрицы назначений** на UI: списки targets, respondents и текущие назначения.
+
+**Response** `200 OK`
+
+```json
+{
+  "targets": [
+    { "id": 2, "name": "Пётр Петров", "email": "petr@company.ru", "createdAt": "...", "updatedAt": "..." }
+  ],
+  "respondents": [
+    { "id": 1, "name": "Иван Иванов", "email": "ivan@company.ru", "createdAt": "...", "updatedAt": "..." }
   ],
   "assignments": [
     {
@@ -81,21 +170,59 @@ Base URL: `http://localhost:5175/api`
 }
 ```
 
-**Response** `404 Not Found`
+**Response** `404` — опрос не найден.
 
 ---
 
-### `DELETE /api/survey/{id}`
+### `POST /api/survey/{id}/participants`
 
-Удаляет опрос по id (каскадно удаляются связанные вопросы, ответы, назначения).
+Добавляет пользователя в опрос с ролью **target** (оцениваемый) или **respondent** (оценивающий).
+
+Если пользователь уже есть в опросе — обновляется соответствующий флаг (`isTarget` / `isRespondent`).
+
+**Request body**
+
+```json
+{
+  "userId": 2,
+  "role": "target"
+}
+```
+
+`role` — строка `"target"` или `"respondent"` (регистр не важен).
 
 **Response** `204 No Content`
 
-**Response** `404 Not Found`
+**Response** `404` — опрос или пользователь не найден.
+
+**Response** `400` — неверный `role`.
 
 ---
 
-## User
+### `PUT /api/survey/{id}/assignments`
+
+Сохраняет матрицу назначений. **Полностью заменяет** все назначения опроса: старые удаляются, записываются только пары с `isAssigned: true`.
+
+Пары проверяются: reviewer должен быть respondent, target — target в этом опросе. Невалидные пары **молча пропускаются**.
+
+**Request body**
+
+```json
+{
+  "entries": [
+    { "reviewerId": 1, "targetId": 2, "isAssigned": true },
+    { "reviewerId": 1, "targetId": 3, "isAssigned": false }
+  ]
+}
+```
+
+**Response** `204 No Content`
+
+**Response** `404` — опрос не найден.
+
+---
+
+## User — пользователи
 
 ### `POST /api/user`
 
@@ -110,37 +237,45 @@ Base URL: `http://localhost:5175/api`
 }
 ```
 
-**Response** `200 OK`
+**Response** `200 OK` — id (число):
 
 ```
 1
 ```
 
-Возвращает `id` созданного пользователя.
+---
+
+### `GET /api/user`
+
+Список всех пользователей, отсортирован по имени.
+
+**Response** `200 OK`
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Иван Иванов",
+    "email": "ivan@company.ru",
+    "createdAt": "2026-07-09T10:00:00Z",
+    "updatedAt": "2026-07-09T10:00:00Z"
+  }
+]
+```
 
 ---
 
 ### `GET /api/user/{id}`
 
-Получить пользователя по id.
+Один пользователь по id.
 
-**Response** `200 OK`
+**Response** `200 OK` — объект пользователя.
 
-```json
-{
-  "id": 1,
-  "name": "Иван Иванов",
-  "email": "ivan@company.ru",
-  "createdAt": "2026-07-09T10:00:00Z",
-  "updatedAt": "2026-07-09T10:00:00Z"
-}
-```
-
-**Response** `404 Not Found`
+**Response** `404` — не найден.
 
 ---
 
-## Question
+## Question — вопросы
 
 ### `POST /api/question`
 
@@ -156,19 +291,15 @@ Base URL: `http://localhost:5175/api`
 }
 ```
 
-**Response** `200 OK`
+**Response** `200 OK` — id вопроса (число).
 
-```
-1
-```
-
-**Response** `404 Not Found` — опрос не найден
+**Response** `404` — опрос не найден.
 
 ---
 
 ### `GET /api/question/{id}`
 
-Детальная информация о вопросе с ответами.
+Вопрос и все ответы на него.
 
 **Response** `200 OK`
 
@@ -184,7 +315,26 @@ Base URL: `http://localhost:5175/api`
 }
 ```
 
-**Response** `404 Not Found`
+**Response** `404` — не найден.
+
+---
+
+### `PUT /api/question/{id}`
+
+Обновляет текст и тип вопроса.
+
+**Request body**
+
+```json
+{
+  "text": "Оцените взаимодействие с коллегой",
+  "type": "scale"
+}
+```
+
+**Response** `200 OK` — обновлённый вопрос.
+
+**Response** `404` — не найден.
 
 ---
 
@@ -194,15 +344,15 @@ Base URL: `http://localhost:5175/api`
 
 **Response** `204 No Content`
 
-**Response** `404 Not Found`
+**Response** `404` — не найден.
 
 ---
 
-## Answer
+## Answer — ответы
 
 ### `POST /api/answer`
 
-Создаёт ответ на вопрос от пользователя.
+Создаёт ответ пользователя на вопрос.
 
 **Request body**
 
@@ -215,19 +365,15 @@ Base URL: `http://localhost:5175/api`
 }
 ```
 
-**Response** `200 OK`
+**Response** `200 OK` — id ответа (число).
 
-```
-1
-```
-
-**Response** `404 Not Found` — вопрос или пользователь не найден
+**Response** `404` — вопрос или пользователь не найден.
 
 ---
 
 ### `GET /api/answer/{id}`
 
-Получить ответ по id.
+Один ответ по id.
 
 **Response** `200 OK`
 
@@ -241,28 +387,27 @@ Base URL: `http://localhost:5175/api`
 }
 ```
 
-**Response** `404 Not Found`
+**Response** `404` — не найден.
 
 ---
 
-## Database
+## Database — служебное (только Development)
 
 ### `DELETE /api/database`
 
-Удаляет **все** данные из БД (ответы → назначения → вопросы → опросы → пользователи).  
-Работает **только в Development** окружении.
+Удаляет **все** данные из всех таблиц. Удобно для сброса при локальной разработке.
 
 **Response** `204 No Content`
 
-**Response** `404 Not Found` — вне Development
+**Response** `404` — если backend **не** в Development (защита от случайного сноса на проде).
 
 ---
 
-## Settings
+## Settings — демо конфигурации
 
 ### `GET /api/settings`
 
-Возвращает содержимое секции `MySettings` из `appsettings.json`.
+Возвращает секцию `MySettings` из `appsettings.json` (учебный пример чтения конфига).
 
 **Response** `200 OK`
 
@@ -276,11 +421,11 @@ Base URL: `http://localhost:5175/api`
 
 ---
 
-## Services (demo DI)
+## Services — демо DI (не бизнес-логика)
 
 ### `GET /api/services/lifecycle`
 
-Демонстрация времени жизни DI-сервисов. Возвращает `DateTime` из Transient, Scoped и Singleton сервисов (каждый инжектится дважды — в контроллер и во view).
+Показывает, как работают **Transient**, **Scoped** и **Singleton** в ASP.NET DI: для каждого типа возвращаются два timestamp (из «контроллера» и «view»).
 
 **Response** `200 OK`
 
@@ -291,3 +436,24 @@ Base URL: `http://localhost:5175/api`
   "singleton": { "controller": "...", "view": "..." }
 }
 ```
+
+---
+
+## Коды ответов
+
+| Код | Когда |
+|-----|--------|
+| `200` | Успех, в теле данные или id |
+| `204` | Успех, тела нет (удаление, сохранение без возврата) |
+| `400` | Неверные данные в запросе |
+| `404` | Сущность не найдена или эндпoинт недоступен (например, очистка БД вне Dev) |
+
+Ошибки авторизации (`401` / `403`) пока не используются — API открыто.
+
+---
+
+## Связь с frontend
+
+Клиентские обёртки над API: `frontend/src/api.ts` (`surveyApi`, `userApi`, `questionApi`, `answerApi`, `databaseApi`).
+
+Типы запросов/ответов: `frontend/src/types.ts`.
