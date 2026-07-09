@@ -2,7 +2,7 @@ import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { answerApi, databaseApi, questionApi, surveyApi, userApi } from '../api'
 import type { ApiAnswer, ApiQuestion, ApiQuestionDetails, ApiSurvey, ApiUser } from '../types'
 
-interface EntitiesPageProps {
+interface DevConsoleProps {
   onBack: () => void
   onOpenSurvey: (id: number) => void
 }
@@ -13,8 +13,6 @@ const btnPrimary =
   'px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition shadow-sm disabled:opacity-50 cursor-pointer'
 const btnSecondary =
   'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition disabled:opacity-50 cursor-pointer'
-const btnDanger =
-  'px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition disabled:opacity-50 cursor-pointer'
 const btnDangerOutline =
   'px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-xl transition disabled:opacity-50 cursor-pointer'
 
@@ -76,7 +74,7 @@ function Section({
   )
 }
 
-export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
+export function DevConsole({ onBack, onOpenSurvey }: DevConsoleProps) {
   const [surveys, setSurveys] = useState<ApiSurvey[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Sidebar } from './components/Sidebar'
-import { EntitiesPage } from './pages/EntitiesPage'
-import { EntityPage } from './pages/EntityPage'
+import { DevConsole } from './pages/DevConsole'
+import { SurveyDetail } from './pages/SurveyDetail'
 import { MainPage } from './pages/MainPage'
 import { surveyApi } from './api'
 import type { ApiSurvey, Survey } from './types'
@@ -55,22 +55,22 @@ export default function App() {
   let content
   if (selectedSurveyId !== null) {
     content = (
-      <EntityPage id={selectedSurveyId} onBack={() => setSelectedSurveyId(null)} />
+      <SurveyDetail id={selectedSurveyId} onBack={() => setSelectedSurveyId(null)} />
     )
   } else if (page === 'surveys') {
     content = (
-      <EntitiesPage
+      <DevConsole
         onBack={() => setPage('main')}
         onOpenSurvey={(id) => setSelectedSurveyId(id)}
       />
     )
   } else {
-    content = <MainPage onOpenSurveys={() => setPage('surveys')} />
+    content = <MainPage />
   }
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar surveys={surveys} loading={loading} onCreateClick={handleCreateClick} onSearch={handleSearch} />
+      <Sidebar surveys={surveys} loading={loading} onCreateClick={handleCreateClick} onSearch={handleSearch} onOpenSurveys={() => setPage('surveys')} />
       <main className="flex-1 overflow-y-auto">{content}</main>
     </div>
   )

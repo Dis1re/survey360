@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DevBanner } from './DevBanner'
 import type { Survey } from '../types'
 
 interface SidebarProps {
@@ -6,6 +7,7 @@ interface SidebarProps {
   loading?: boolean
   onCreateClick: () => void
   onSearch: (query: string) => void
+  onOpenSurveys: () => void
 }
 
 const statusConfig = {
@@ -61,7 +63,7 @@ function SurveyCard({ survey, isActive }: { survey: Survey; isActive: boolean })
   )
 }
 
-export function Sidebar({ surveys, loading, onCreateClick, onSearch }: SidebarProps) {
+export function Sidebar({ surveys, loading, onCreateClick, onSearch, onOpenSurveys }: SidebarProps) {
   const [query, setQuery] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -117,6 +119,7 @@ export function Sidebar({ surveys, loading, onCreateClick, onSearch }: SidebarPr
           ))
         )}
       </div>
+      <DevBanner onOpenSurveys={onOpenSurveys} />
     </aside>
   )
 }

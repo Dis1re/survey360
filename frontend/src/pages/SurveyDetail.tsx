@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { surveyApi } from '../api'
 import type { ApiSurveyDetails } from '../types'
 
-interface EntityPageProps {
+interface SurveyDetailProps {
   id: number
   onBack: () => void
 }
@@ -20,7 +20,7 @@ const thClass =
   'text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider'
 const tdClass = 'px-4 py-3 text-sm text-gray-600'
 
-export function EntityPage({ id, onBack }: EntityPageProps) {
+export function SurveyDetail({ id, onBack }: SurveyDetailProps) {
   const [details, setDetails] = useState<ApiSurveyDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
