@@ -1,10 +1,9 @@
 namespace WebApp.Models;
 
-public class Answers
+public class Question
 {
     public int Id { get; set; }
-    public int QuestionId { get; set; }
-    public int UserId { get; set; }
+    public int SurveyId { get; set; }
     public string Text { get; set; } = "";
     public string Type { get; set; } = "";
 }

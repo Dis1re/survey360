@@ -1,3 +1,4 @@
+// UI types (дизайн-компоненты)
 export interface Survey {
   id: number
   title: string
@@ -37,4 +38,77 @@ export interface Participant {
 
 export interface Assignments {
   [respondentId: string]: Record<string, boolean>
+}
+
+// API types (backend /api/*)
+export interface ApiUser {
+  id: number
+  name: string
+  email: string
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateUserRequest {
+  name: string
+  email: string
+}
+
+export interface CreateQuestionRequest {
+  surveyId: number
+  text: string
+  type: string
+}
+
+export interface CreateAnswerRequest {
+  questionId: number
+  userId: number
+  text: string
+  type: string
+}
+
+export interface ApiSurvey {
+  id: number
+  name: string
+  description: string
+  status: string
+  createdAt: string
+  startedAt: string
+  closedAt: string
+}
+
+export interface ApiQuestion {
+  id: number
+  surveyId: number
+  text: string
+  type: string
+}
+
+export interface ApiQuestionDetails {
+  question: ApiQuestion
+  answers: ApiAnswer[]
+}
+
+export interface ApiAnswer {
+  id: number
+  questionId: number
+  userId: number
+  text: string
+  type: string
+}
+
+export interface ApiSurveyAssignment {
+  id: number
+  surveyId: number
+  reviewerId: number
+  targetId: number
+  isAssigned: boolean
+  isCompleted: boolean
+}
+
+export interface ApiSurveyDetails {
+  survey: ApiSurvey
+  questions: ApiQuestion[]
+  answers: ApiAnswer[]
+  assignments: ApiSurveyAssignment[]
 }

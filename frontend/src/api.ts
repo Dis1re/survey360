@@ -1,73 +1,80 @@
-import type { Assignments, Participant, Question, QuestionInput, Survey, SurveyInput } from './types'
+import type {
+  ApiAnswer,
+  ApiQuestionDetails,
+  ApiSurvey,
+  ApiSurveyDetails,
+  ApiUser,
+  CreateAnswerRequest,
+  CreateQuestionRequest,
+  CreateUserRequest,
+} from './types'
 
-const API = '/api'
-
-async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API}${url}`, {
+async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
+  const response = await fetch(url, {
     ...options,
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
-      ...options?.headers,
+      ...options.headers,
     },
   })
 
   if (!response.ok) {
-    const text = await response.text()
-    throw new Error(`[${response.status}] ${text || response.statusText}`)
+    const errorText = await response.text()
+    throw new Error(`Ошибка API [${response.status}]: ${errorText || response.statusText}`)
   }
 
   const text = await response.text()
-  return text ? JSON.parse(text) : (undefined as T)
+  return (text ? JSON.parse(text) : null) as T
 }
 
-export const surveysApi = {
-  list: () => request<Survey[]>('/surveys'),
+const API = '/api'
 
-  get: (id: number) => request<Survey>(`/surveys/${id}`),
+export const surveyApi = {
+  create: () =>
+    sendRequest<number>(`${API}/survey`, { method: 'POST' }),
 
-  create: (data: SurveyInput) =>
-    request<number>('/surveys', { method: 'POST', body: JSON.stringify(data) }),
+  list: () => sendRequest<ApiSurvey[]>(`${API}/survey`),
 
-  update: (id: number, data: SurveyInput) =>
-    request<void>(`/surveys/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  get: (id: number) => sendRequest<ApiSurveyDetails>(`${API}/survey/${id}`),
 
   delete: (id: number) =>
-    request<void>(`/surveys/${id}`, { method: 'DELETE' }),
+    sendRequest<void>(`${API}/survey/${id}`, { method: 'DELETE' }),
 }
 
-export const questionsApi = {
-  list: (surveyId: number) => request<Question[]>(`/surveys/${surveyId}/questions`),
-
-  get: (surveyId: number, id: number) =>
-    request<Question>(`/surveys/${surveyId}/questions/${id}`),
-
-  create: (surveyId: number, data: QuestionInput) =>
-    request<number>(`/surveys/${surveyId}/questions`, {
+export const userApi = {
+  create: (data: CreateUserRequest) =>
+    sendRequest<number>(`${API}/user`, {
       method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  update: (surveyId: number, id: number, data: QuestionInput) =>
-    request<void>(`/surveys/${surveyId}/questions/${id}`, {
-      method: 'PUT',
+  get: (id: number) => sendRequest<ApiUser>(`${API}/user/${id}`),
+}
+
+export const questionApi = {
+  create: (data: CreateQuestionRequest) =>
+    sendRequest<number>(`${API}/question`, {
+      method: 'POST',
       body: JSON.stringify(data),
     }),
 
-  delete: (surveyId: number, id: number) =>
-    request<void>(`/surveys/${surveyId}/questions/${id}`, { method: 'DELETE' }),
+  get: (id: number) => sendRequest<ApiQuestionDetails>(`${API}/question/${id}`),
+
+  delete: (id: number) =>
+    sendRequest<void>(`${API}/question/${id}`, { method: 'DELETE' }),
 }
 
-export const participantsApi = {
-  list: (surveyId: number) => request<Participant[]>(`/surveys/${surveyId}/participants`),
-}
-
-export const assignmentsApi = {
-  get: (surveyId: number) => request<Assignments>(`/surveys/${surveyId}/assignments`),
-
-  save: (surveyId: number, data: Assignments) =>
-    request<void>(`/surveys/${surveyId}/assignments`, {
-      method: 'PUT',
+export const answerApi = {
+  create: (data: CreateAnswerRequest) =>
+    sendRequest<number>(`${API}/answer`, {
+      method: 'POST',
       body: JSON.stringify(data),
     }),
+
+  get: (id: number) => sendRequest<ApiAnswer>(`${API}/answer/${id}`),
+}
+
+export const databaseApi = {
+  clearAll: () => sendRequest<void>(`${API}/database`, { method: 'DELETE' }),
 }

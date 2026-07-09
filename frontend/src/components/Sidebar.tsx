@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import type { Survey } from '../types'
-import { surveysApi } from '../api'
+import type { ApiSurvey } from '../types'
+import { surveyApi } from '../api'
 
 interface SidebarProps {
   onCreateClick: () => void
@@ -28,8 +28,18 @@ const statusConfig = {
   },
 }
 
-function SurveyCard({ survey, isActive }: { survey: Survey; isActive: boolean }) {
-  const cfg = statusConfig[survey.status]
+const getStatusConfig = (status: string) => {
+  const normalized = status?.toLowerCase() || ''
+  
+  if (normalized === 'active') return statusConfig.active
+  if (normalized === 'draft') return statusConfig.draft
+  if (normalized === 'closed') return statusConfig.closed
+  
+  return statusConfig.draft
+}
+
+function SurveyCard({ survey, isActive }: { survey: ApiSurvey; isActive: boolean }) {
+  const cfg = getStatusConfig(survey.status)
 
   return (
     <div
@@ -46,14 +56,16 @@ function SurveyCard({ survey, isActive }: { survey: Survey; isActive: boolean })
           <span className={`w-1.5 h-1.5 rounded-full ${cfg.dotClass}`} />
           {cfg.label}
         </span>
-        <span className="text-xs text-gray-400">{survey.date}</span>
+        <span className="text-xs text-gray-400">
+          {survey.startedAt || survey.createdAt || 'Дата не указана'}
+        </span>
       </div>
       <h4
         className={`font-medium text-sm truncate ${
           isActive ? 'text-gray-900' : 'text-gray-700'
         }`}
       >
-        {survey.title}
+        {survey.name}
       </h4>
       <p className="text-xs text-gray-500 truncate mt-0.5">{survey.description}</p>
     </div>
@@ -61,7 +73,7 @@ function SurveyCard({ survey, isActive }: { survey: Survey; isActive: boolean })
 }
 
 export function Sidebar({ onCreateClick, onSearch }: SidebarProps) {
-  const [surveys, setSurveys] = useState<Survey[]>([])
+  const [surveys, setSurveys] = useState<ApiSurvey[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [query, setQuery] = useState('')
@@ -71,7 +83,7 @@ export function Sidebar({ onCreateClick, onSearch }: SidebarProps) {
       try {
         setLoading(true)
         setError(null)
-        const data = await surveysApi.list()
+        const data = await surveyApi.list()
         setSurveys(data || [])
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Не удалось загрузить опросы'
@@ -90,7 +102,6 @@ export function Sidebar({ onCreateClick, onSearch }: SidebarProps) {
     onSearch(query)
   }
 
-  // Состояние загрузки
   if (loading) {
     return (
       <aside className="w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 h-screen">
@@ -107,7 +118,6 @@ export function Sidebar({ onCreateClick, onSearch }: SidebarProps) {
     )
   }
 
-  // Состояние ошибки
   if (error) {
     return (
       <aside className="w-80 bg-white border-r border-gray-200 flex flex-col flex-shrink-0 h-screen">
@@ -182,7 +192,11 @@ export function Sidebar({ onCreateClick, onSearch }: SidebarProps) {
           </div>
         ) : (
           surveys.map((survey) => (
-            <SurveyCard key={survey.id} survey={survey} isActive={survey.status === 'active'} />
+            <SurveyCard 
+              key={survey.id} 
+              survey={survey} 
+              isActive={survey.status === 'active'} 
+            />
           ))
         )}
       </div>
