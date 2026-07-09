@@ -162,7 +162,10 @@ export function Sidebar({
               placeholder="Поиск опроса..."
               className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:border-blue-500"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                onSearch(e.target.value)
+              }}
             />
             <svg
               className="w-4 h-4 text-gray-400 absolute left-3 top-2.5"
