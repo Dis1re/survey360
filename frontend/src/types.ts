@@ -5,3 +5,8 @@ export interface Survey {
   status: 'active' | 'draft' | 'closed'
   date: string
 }
+
+export interface Question {
+  id: number
+  text: string
+}
