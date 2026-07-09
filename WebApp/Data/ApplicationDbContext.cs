@@ -17,32 +17,32 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     {
         base.OnModelCreating(modelBuilder);
 
-        modelBuilder.Entity<Questions>()
-            .HasOne<Surveys>()
+        modelBuilder.Entity<Question>()
+            .HasOne<Survey>()
             .WithMany()
             .HasForeignKey(q => q.SurveyId);
         
-        modelBuilder.Entity<Answers>()
-            .HasOne<Questions>()
+        modelBuilder.Entity<Answer>()
+            .HasOne<Question>()
             .WithMany()
             .HasForeignKey(a => a.QuestionId);
         
-        modelBuilder.Entity<Answers>()
+        modelBuilder.Entity<Answer>()
             .HasOne<User>()
             .WithMany()
             .HasForeignKey(a => a.UserId);
     
-        modelBuilder.Entity<SurveyAssignments>()
-            .HasOne<Surveys>()
+        modelBuilder.Entity<SurveyAssignment>()
+            .HasOne<Survey>()
             .WithMany()
             .HasForeignKey(sa => sa.SurveyId);
         
-        modelBuilder.Entity<SurveyAssignments>()
+        modelBuilder.Entity<SurveyAssignment>()
             .HasOne<User>()
             .WithMany()
             .HasForeignKey(sa => sa.ReviewerId);
             
-        modelBuilder.Entity<SurveyAssignments>()
+        modelBuilder.Entity<SurveyAssignment>()
             .HasOne<User>()
             .WithMany()
             .HasForeignKey(sa => sa.TargetId);
@@ -50,8 +50,8 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
 
     // Тут указываются все сущности БД, с которыми нужно уметь работать
     public DbSet<User> Users { get; set; }
-    public DbSet<Surveys> Surveys { get; set; }
-    public DbSet<Questions> Questions { get; set; }
-    public DbSet<Answers> Answers { get; set; }
-    public DbSet<SurveyAssignments> SurveyAssignments { get; set; }
+    public DbSet<Survey> Surveys { get; set; }
+    public DbSet<Question> Questions { get; set; }
+    public DbSet<Answer> Answers { get; set; }
+    public DbSet<SurveyAssignment> SurveyAssignments { get; set; }
 }
