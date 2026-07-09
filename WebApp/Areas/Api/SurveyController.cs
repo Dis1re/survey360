@@ -5,6 +5,13 @@ using WebApp.Models;
 
 namespace WebApp.Areas.Api;
 
+public record UpdateSurveyRequest(
+    string Name,
+    string Description,
+    DateTime StartedAt,
+    DateTime ClosedAt
+);
+
 public record SurveyDetailsDto(
     Survey Survey,
     List<Question> Questions,
@@ -32,6 +39,22 @@ public class SurveyController(ApplicationDbContext context) : Controller
         await context.Surveys.AddAsync(survey, ct);
         await context.SaveChangesAsync(ct);
         return survey.Id;
+    }
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(int id, UpdateSurveyRequest request, CancellationToken ct)
+    {
+        var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == id, ct);
+        if (survey is null)
+            return NotFound();
+
+        survey.Name = request.Name;
+        survey.Description = request.Description;
+        survey.StartedAt = request.StartedAt;
+        survey.ClosedAt = request.ClosedAt;
+
+        await context.SaveChangesAsync(ct);
+        return NoContent();
     }
 
     [HttpGet]

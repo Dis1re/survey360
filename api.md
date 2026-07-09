@@ -95,6 +95,27 @@ Base URL: `http://localhost:5175/api`
 
 ---
 
+### `PUT /api/survey/{id}`
+
+Обновляет основные поля опроса (название, описание, даты начала/завершения).
+
+**Request body**
+
+```json
+{
+  "name": "Новое название",
+  "description": "Новое описание",
+  "startedAt": "2026-08-01T00:00:00Z",
+  "closedAt": "2026-08-15T00:00:00Z"
+}
+```
+
+**Response** `204 No Content`
+
+**Response** `404 Not Found`
+
+---
+
 ## User
 
 ### `POST /api/user`
