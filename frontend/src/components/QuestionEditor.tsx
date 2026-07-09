@@ -3,7 +3,8 @@ import type { Question } from '../types'
 
 interface QuestionEditorProps {
   question: Question | null
-  onSave: (question: Question) => void
+  saving?: boolean
+  onSave: (question: Question) => Promise<void>
 }
 
 const typeLabels: Record<Question['type'], string> = {
@@ -12,23 +13,35 @@ const typeLabels: Record<Question['type'], string> = {
   text: 'Развернутый текстовый ответ',
 }
 
-export function QuestionEditor({ question, onSave }: QuestionEditorProps) {
+export function QuestionEditor({ question, saving = false, onSave }: QuestionEditorProps) {
   const [text, setText] = useState('')
   const [type, setType] = useState<Question['type']>('scale')
   const [options, setOptions] = useState<{ value: number; label: string }[]>([])
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (question) {
       setText(question.text)
       setType(question.type)
       setOptions(question.options ?? [])
+      setError(null)
     }
   }, [question])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!question || !text.trim()) return
-    onSave({ ...question, text, type, options: type === 'scale' || type === 'radio' ? options : undefined })
+    setError(null)
+    try {
+      await onSave({
+        ...question,
+        text,
+        type,
+        options: type === 'scale' || type === 'radio' ? options : undefined,
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось сохранить вопрос')
+    }
   }
 
   const handleReset = () => {
@@ -102,19 +115,25 @@ export function QuestionEditor({ question, onSave }: QuestionEditorProps) {
         </div>
       )}
 
+      {error && (
+        <p className="text-sm text-red-600">{error}</p>
+      )}
+
       <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
         <button
           type="button"
           onClick={handleReset}
+          disabled={saving}
           className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
         >
           Сбросить
         </button>
         <button
           type="submit"
-          className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition shadow-sm cursor-pointer"
+          disabled={saving || !text.trim()}
+          className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
         >
-          Сохранить изменения
+          {saving ? 'Сохранение…' : 'Сохранить изменения'}
         </button>
       </div>
     </form>

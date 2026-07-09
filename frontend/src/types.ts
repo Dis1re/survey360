@@ -54,8 +54,21 @@ export interface CreateUserRequest {
   email: string
 }
 
+export interface UpdateSurveyRequest {
+  name: string
+  description: string
+  status: string
+  startedAt: string | null
+  closedAt: string | null
+}
+
 export interface CreateQuestionRequest {
   surveyId: number
+  text: string
+  type: string
+}
+
+export interface UpdateQuestionRequest {
   text: string
   type: string
 }

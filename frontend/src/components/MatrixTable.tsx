@@ -73,7 +73,7 @@ export function MatrixTable({ respondents, targets, initialAssignments = {}, onS
                         type="checkbox"
                         checked={isChecked(String(r.id), String(t.id))}
                         onChange={() => toggle(String(r.id), String(t.id))}
-                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
+                        className="w-4 h-4 text-[#FF8600] border-gray-300 rounded focus:ring-[#FF8600] cursor-pointer"
                       />
                     </td>
                   ))}
@@ -87,7 +87,7 @@ export function MatrixTable({ respondents, targets, initialAssignments = {}, onS
       <div className="flex justify-end mt-4">
         <button
           type="submit"
-          className="px-5 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition shadow-sm cursor-pointer"
+          className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition shadow-sm cursor-pointer"
         >
           Сохранить матрицу
         </button>
