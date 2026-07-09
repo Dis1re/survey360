@@ -1,5 +1,5 @@
 
-ebApp/
+WebApp/
 ├── Areas/Api/          ← REST API (JSON) — сюда пишем SurveysController
 ├── Models/             ← EF-сущности (Surveys, Questions, ...)
 ├── Data/               ← ApplicationDbContext (DAL)
