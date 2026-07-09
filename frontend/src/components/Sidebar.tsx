@@ -5,9 +5,11 @@ import type { Survey } from '../types'
 interface SidebarProps {
   surveys: Survey[]
   loading?: boolean
+  selectedId: number | null
   onCreateClick: () => void
   onSearch: (query: string) => void
   onOpenSurveys: () => void
+  onSelect: (id: number) => void
 }
 
 const statusConfig = {
@@ -31,11 +33,12 @@ const statusConfig = {
   },
 }
 
-function SurveyCard({ survey, isActive }: { survey: Survey; isActive: boolean }) {
+function SurveyCard({ survey, isActive, onClick }: { survey: Survey; isActive: boolean; onClick: () => void }) {
   const cfg = statusConfig[survey.status]
 
   return (
     <div
+      onClick={onClick}
       className={`p-3 rounded-xl cursor-pointer transition ${
         isActive
           ? 'bg-blue-50/60 border border-blue-100'
@@ -63,7 +66,7 @@ function SurveyCard({ survey, isActive }: { survey: Survey; isActive: boolean })
   )
 }
 
-export function Sidebar({ surveys, loading, onCreateClick, onSearch, onOpenSurveys }: SidebarProps) {
+export function Sidebar({ surveys, loading, selectedId, onCreateClick, onSearch, onOpenSurveys, onSelect }: SidebarProps) {
   const [query, setQuery] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -115,7 +118,7 @@ export function Sidebar({ surveys, loading, onCreateClick, onSearch, onOpenSurve
           <div className="p-4 text-sm text-gray-400 text-center">Нет опросов</div>
         ) : (
           surveys.map((survey) => (
-            <SurveyCard key={survey.id} survey={survey} isActive={survey.status === 'active'} />
+            <SurveyCard key={survey.id} survey={survey} isActive={survey.id === selectedId} onClick={() => onSelect(survey.id)} />
           ))
         )}
       </div>
