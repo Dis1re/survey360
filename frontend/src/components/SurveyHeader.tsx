@@ -4,6 +4,7 @@ interface SurveyHeaderProps {
   status: 'active' | 'draft' | 'closed'
   startDate: string
   endDate: string
+  onEdit?: () => void
 }
 
 const statusConfig = {
@@ -12,7 +13,7 @@ const statusConfig = {
   closed: { label: 'Завершен', text: 'text-red-700', bg: 'bg-red-50', border: 'border-red-200', dot: 'bg-red-500' },
 }
 
-export function SurveyHeader({ title, description, status, startDate, endDate }: SurveyHeaderProps) {
+export function SurveyHeader({ title, description, status, startDate, endDate, onEdit }: SurveyHeaderProps) {
   const cfg = statusConfig[status]
 
   return (
@@ -21,6 +22,18 @@ export function SurveyHeader({ title, description, status, startDate, endDate }:
         <div>
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+            {onEdit && (
+              <button
+                type="button"
+                onClick={onEdit}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition cursor-pointer"
+                title="Редактировать"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+              </button>
+            )}
             <span
               className={`px-2.5 py-1 text-xs font-medium ${cfg.text} ${cfg.bg} rounded-md border ${cfg.border} flex items-center gap-1.5`}
             >

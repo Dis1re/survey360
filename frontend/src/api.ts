@@ -40,6 +40,12 @@ export const surveyApi = {
 
   delete: (id: number) =>
     sendRequest<void>(`${API}/survey/${id}`, { method: 'DELETE' }),
+
+  update: (id: number, data: { name: string; description: string; startedAt: string; closedAt: string }) =>
+    sendRequest<void>(`${API}/survey/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
 }
 
 export const userApi = {

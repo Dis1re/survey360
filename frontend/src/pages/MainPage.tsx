@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { SurveyHeader } from '../components/SurveyHeader'
+import { SurveyEditModal } from '../components/SurveyEditModal'
 import { TabBar, type Tab } from '../components/TabBar'
 import { QuestionList } from '../components/QuestionList'
 import { QuestionEditor } from '../components/QuestionEditor'
 import { MatrixTable } from '../components/MatrixTable'
+import { surveyApi } from '../api'
 import type { ApiQuestion, ApiSurvey, ApiSurveyAssignment, Participant, Question } from '../types'
 
 interface MainPageProps {
@@ -11,6 +13,7 @@ interface MainPageProps {
   questions: ApiQuestion[]
   assignments: ApiSurveyAssignment[]
   loading: boolean
+  onUpdate: () => void
 }
 
 const statusMap: Record<string, 'active' | 'draft' | 'closed'> = {
@@ -56,10 +59,12 @@ function toMatrixAssignments(assignments: ApiSurveyAssignment[]): Record<string,
   return result
 }
 
-export function MainPage({ survey, questions: apiQuestions, assignments, loading }: MainPageProps) {
+export function MainPage({ survey, questions: apiQuestions, assignments, loading, onUpdate }: MainPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('editor')
   const [questions, setQuestions] = useState<Question[]>([])
   const [activeQuestionId, setActiveQuestionId] = useState<number | null>(null)
+  const [editOpen, setEditOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
     setQuestions(apiQuestions.map(toQuestion))
@@ -79,6 +84,19 @@ export function MainPage({ survey, questions: apiQuestions, assignments, loading
     // TODO: сохранить через API
   }
 
+  const handleEditSave = async (data: { name: string; description: string; startedAt: string; closedAt: string }) => {
+    setSaving(true)
+    try {
+      await surveyApi.update(survey.id, data)
+      setEditOpen(false)
+      onUpdate()
+    } catch {
+      // ignore
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center h-full text-gray-400 text-sm">Загрузка…</div>
   }
@@ -91,6 +109,7 @@ export function MainPage({ survey, questions: apiQuestions, assignments, loading
         status={statusMap[survey.status] ?? 'draft'}
         startDate={formatDate(survey.startedAt)}
         endDate={formatDate(survey.closedAt)}
+        onEdit={() => setEditOpen(true)}
       />
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
@@ -122,6 +141,18 @@ export function MainPage({ survey, questions: apiQuestions, assignments, loading
             />
           </div>
         </div>
+      )}
+
+      {editOpen && (
+        <SurveyEditModal
+          name={survey.name}
+          description={survey.description}
+          startedAt={survey.startedAt}
+          closedAt={survey.closedAt}
+          onSave={handleEditSave}
+          onClose={() => setEditOpen(false)}
+          saving={saving}
+        />
       )}
     </>
   )

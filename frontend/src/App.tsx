@@ -75,6 +75,16 @@ export default function App() {
     // TODO: фильтрация списка опросов
   }
 
+  const handleSurveyUpdate = () => {
+    if (selectedSurveyId === null) return
+    setSurveyLoading(true)
+    Promise.all([
+      surveyApi.get(selectedSurveyId).then(setSurveyDetails),
+      surveyApi.list().then((list) => setSurveys(list.map(toSurvey))),
+    ]).catch(() => setSurveyDetails(null))
+      .finally(() => setSurveyLoading(false))
+  }
+
   let content
   if (page === 'detail' && selectedSurveyId !== null) {
     content = (
@@ -94,6 +104,7 @@ export default function App() {
         questions={surveyDetails.questions}
         assignments={surveyDetails.assignments}
         loading={surveyLoading}
+        onUpdate={handleSurveyUpdate}
       />
     )
   } else if (selectedSurveyId !== null && surveyLoading) {
