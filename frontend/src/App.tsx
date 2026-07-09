@@ -1,39 +1,48 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Sidebar } from './components/Sidebar'
 import { EntitiesPage } from './pages/EntitiesPage'
 import { EntityPage } from './pages/EntityPage'
 import { MainPage } from './pages/MainPage'
-import type { Survey } from './types'
+import { surveyApi } from './api'
+import type { ApiSurvey, Survey } from './types'
 
-const mockSurveys: Survey[] = [
-  {
-    id: 1,
-    title: 'Оценка компетенций 360 (Middle+)',
-    description: 'Опрос команды разработки ИВТ',
-    status: 'active',
-    date: 'До 15.07',
-  },
-  {
-    id: 2,
-    title: 'Опрос по условиям труда 2026',
-    description: 'Сбор обратной связи от лаборантов',
-    status: 'draft',
-    date: '02.07',
-  },
-  {
-    id: 3,
-    title: 'Анкетирование первокурсников',
-    description: 'Адаптация в УдГУ',
-    status: 'closed',
-    date: 'Июнь 2026',
-  },
-]
+const statusMap: Record<string, Survey['status']> = {
+  'Черновик': 'draft',
+  'Активен': 'active',
+  'Завершён': 'closed',
+}
+
+function formatDate(dateStr: string): string {
+  if (!dateStr || dateStr.startsWith('0001')) return ''
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+}
+
+function toSurvey(api: ApiSurvey): Survey {
+  return {
+    id: api.id,
+    title: api.name,
+    description: api.description,
+    status: statusMap[api.status] ?? 'draft',
+    date: formatDate(api.createdAt),
+  }
+}
 
 type Page = 'main' | 'surveys'
 
 export default function App() {
   const [page, setPage] = useState<Page>('main')
   const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(null)
+  const [surveys, setSurveys] = useState<Survey[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    surveyApi
+      .list()
+      .then((list) => setSurveys(list.map(toSurvey)))
+      .catch(() => setSurveys([]))
+      .finally(() => setLoading(false))
+  }, [])
 
   const handleCreateClick = () => {
     // TODO: открыть форму создания нового опроса
@@ -61,7 +70,7 @@ export default function App() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar surveys={mockSurveys} onCreateClick={handleCreateClick} onSearch={handleSearch} />
+      <Sidebar surveys={surveys} loading={loading} onCreateClick={handleCreateClick} onSearch={handleSearch} />
       <main className="flex-1 overflow-y-auto">{content}</main>
     </div>
   )

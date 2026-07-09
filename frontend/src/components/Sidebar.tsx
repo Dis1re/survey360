@@ -3,6 +3,7 @@ import type { Survey } from '../types'
 
 interface SidebarProps {
   surveys: Survey[]
+  loading?: boolean
   onCreateClick: () => void
   onSearch: (query: string) => void
 }
@@ -60,7 +61,7 @@ function SurveyCard({ survey, isActive }: { survey: Survey; isActive: boolean })
   )
 }
 
-export function Sidebar({ surveys, onCreateClick, onSearch }: SidebarProps) {
+export function Sidebar({ surveys, loading, onCreateClick, onSearch }: SidebarProps) {
   const [query, setQuery] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -106,9 +107,15 @@ export function Sidebar({ surveys, onCreateClick, onSearch }: SidebarProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {surveys.map((survey) => (
-          <SurveyCard key={survey.id} survey={survey} isActive={survey.status === 'active'} />
-        ))}
+        {loading ? (
+          <div className="p-4 text-sm text-gray-400 text-center">Загрузка…</div>
+        ) : surveys.length === 0 ? (
+          <div className="p-4 text-sm text-gray-400 text-center">Нет опросов</div>
+        ) : (
+          surveys.map((survey) => (
+            <SurveyCard key={survey.id} survey={survey} isActive={survey.status === 'active'} />
+          ))
+        )}
       </div>
     </aside>
   )
