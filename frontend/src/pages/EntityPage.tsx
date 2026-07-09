@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
 import { surveyApi } from '../api'
-import { Layout } from '../components/Layout'
-import { Link } from '../router'
 import type { ApiSurveyDetails } from '../types'
 
 interface EntityPageProps {
   id: number
+  onBack: () => void
 }
 
 function formatDate(value: string) {
@@ -17,7 +16,11 @@ function boolLabel(value: boolean) {
   return value ? 'Да' : 'Нет'
 }
 
-export function EntityPage({ id }: EntityPageProps) {
+const thClass =
+  'text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider'
+const tdClass = 'px-4 py-3 text-sm text-gray-600'
+
+export function EntityPage({ id, onBack }: EntityPageProps) {
   const [details, setDetails] = useState<ApiSurveyDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -35,153 +38,180 @@ export function EntityPage({ id }: EntityPageProps) {
 
   if (loading) {
     return (
-      <Layout title="Загрузка">
-        <p>Загрузка…</p>
-      </Layout>
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto text-sm text-gray-500">Загрузка…</div>
+      </div>
     )
   }
 
   if (error || !details) {
     return (
-      <Layout title="Опрос не найден">
-        <h1>Опрос не найден</h1>
-        {error && <p className="text-danger">{error}</p>}
-        <Link to="/surveys">← К списку опросов</Link>
-      </Layout>
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto space-y-4">
+          <button
+            type="button"
+            onClick={onBack}
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
+          >
+            ← К списку опросов
+          </button>
+          <h1 className="text-xl font-bold text-gray-900">Опрос не найден</h1>
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+              {error}
+            </div>
+          )}
+        </div>
+      </div>
     )
   }
 
   const { survey, questions, answers, assignments } = details
 
   return (
-    <Layout title={`Опрос ${survey.name}`}>
-      <p>
-        <Link to="/surveys">← К списку опросов</Link>
-      </p>
+    <>
+      <header className="bg-white border-b border-gray-200 p-6 flex-shrink-0">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <button
+              type="button"
+              onClick={onBack}
+              className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer mb-2"
+            >
+              ← К списку опросов
+            </button>
+            <h1 className="text-xl font-bold text-gray-900">Опрос: {survey.name}</h1>
+            <p className="text-xs text-gray-400 mt-1 font-mono">GET /api/survey/{id}</p>
+          </div>
+        </div>
+      </header>
 
-      <h1>Опрос: {survey.name}</h1>
-      <p className="text-muted">
-        <code>GET /api/survey/{id}</code>
-      </p>
+      <div className="p-6">
+        <div className="max-w-6xl mx-auto space-y-6">
+          <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Основные данные</h2>
+            <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <table className="w-full">
+                <tbody className="divide-y divide-gray-100">
+                  {[
+                    ['Id', survey.id],
+                    ['Название', survey.name],
+                    ['Описание', survey.description || '—'],
+                    ['Статус', survey.status],
+                    ['Создан', formatDate(survey.createdAt)],
+                    ['Начат', formatDate(survey.startedAt)],
+                    ['Закрыт', formatDate(survey.closedAt)],
+                  ].map(([label, value]) => (
+                    <tr key={String(label)}>
+                      <th className={`${thClass} w-40 bg-gray-50/80`}>{label}</th>
+                      <td className={tdClass}>{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-      <h3>Основные данные</h3>
-      <table className="table table-sm w-auto">
-        <tbody>
-          <tr>
-            <th>Id</th>
-            <td>{survey.id}</td>
-          </tr>
-          <tr>
-            <th>Название</th>
-            <td>{survey.name}</td>
-          </tr>
-          <tr>
-            <th>Описание</th>
-            <td>{survey.description || '—'}</td>
-          </tr>
-          <tr>
-            <th>Статус</th>
-            <td>{survey.status}</td>
-          </tr>
-          <tr>
-            <th>Создан</th>
-            <td>{formatDate(survey.createdAt)}</td>
-          </tr>
-          <tr>
-            <th>Начат</th>
-            <td>{formatDate(survey.startedAt)}</td>
-          </tr>
-          <tr>
-            <th>Закрыт</th>
-            <td>{formatDate(survey.closedAt)}</td>
-          </tr>
-        </tbody>
-      </table>
+          <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Вопросы ({questions.length})</h2>
+            {questions.length === 0 ? (
+              <p className="text-sm text-gray-500">Вопросов нет</p>
+            ) : (
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50/80 border-b border-gray-200">
+                      <th className={thClass}>Id</th>
+                      <th className={thClass}>Текст</th>
+                      <th className={thClass}>Тип</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {questions.map((question) => (
+                      <tr key={question.id}>
+                        <td className={tdClass}>{question.id}</td>
+                        <td className={tdClass}>{question.text || '—'}</td>
+                        <td className={tdClass}>{question.type || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
-      <h3>Вопросы ({questions.length})</h3>
-      {questions.length === 0 ? (
-        <p className="text-muted">Вопросов нет</p>
-      ) : (
-        <table className="table table-hover">
-          <thead>
-            <tr>
-              <td>Id</td>
-              <td>Текст</td>
-              <td>Тип</td>
-            </tr>
-          </thead>
-          <tbody>
-            {questions.map((question) => (
-              <tr key={question.id}>
-                <td>{question.id}</td>
-                <td>{question.text || '—'}</td>
-                <td>{question.type || '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Ответы ({answers.length})</h2>
+            {answers.length === 0 ? (
+              <p className="text-sm text-gray-500">Ответов нет</p>
+            ) : (
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50/80 border-b border-gray-200">
+                      <th className={thClass}>Id</th>
+                      <th className={thClass}>Вопрос</th>
+                      <th className={thClass}>Пользователь</th>
+                      <th className={thClass}>Текст</th>
+                      <th className={thClass}>Тип</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {answers.map((answer) => (
+                      <tr key={answer.id}>
+                        <td className={tdClass}>{answer.id}</td>
+                        <td className={tdClass}>{answer.questionId}</td>
+                        <td className={tdClass}>{answer.userId}</td>
+                        <td className={tdClass}>{answer.text || '—'}</td>
+                        <td className={tdClass}>{answer.type || '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
-      <h3>Ответы ({answers.length})</h3>
-      {answers.length === 0 ? (
-        <p className="text-muted">Ответов нет</p>
-      ) : (
-        <table className="table table-hover">
-          <thead>
-            <tr>
-              <td>Id</td>
-              <td>Вопрос</td>
-              <td>Пользователь</td>
-              <td>Текст</td>
-              <td>Тип</td>
-            </tr>
-          </thead>
-          <tbody>
-            {answers.map((answer) => (
-              <tr key={answer.id}>
-                <td>{answer.id}</td>
-                <td>{answer.questionId}</td>
-                <td>{answer.userId}</td>
-                <td>{answer.text || '—'}</td>
-                <td>{answer.type || '—'}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
+          <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Назначения ({assignments.length})</h2>
+            {assignments.length === 0 ? (
+              <p className="text-sm text-gray-500">Назначений нет</p>
+            ) : (
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50/80 border-b border-gray-200">
+                      <th className={thClass}>Id</th>
+                      <th className={thClass}>Рецензент</th>
+                      <th className={thClass}>Оцениваемый</th>
+                      <th className={thClass}>Назначен</th>
+                      <th className={thClass}>Завершён</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {assignments.map((assignment) => (
+                      <tr key={assignment.id}>
+                        <td className={tdClass}>{assignment.id}</td>
+                        <td className={tdClass}>{assignment.reviewerId}</td>
+                        <td className={tdClass}>{assignment.targetId}</td>
+                        <td className={tdClass}>{boolLabel(assignment.isAssigned)}</td>
+                        <td className={tdClass}>{boolLabel(assignment.isCompleted)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
 
-      <h3>Назначения ({assignments.length})</h3>
-      {assignments.length === 0 ? (
-        <p className="text-muted">Назначений нет</p>
-      ) : (
-        <table className="table table-hover">
-          <thead>
-            <tr>
-              <td>Id</td>
-              <td>Рецензент</td>
-              <td>Оцениваемый</td>
-              <td>Назначен</td>
-              <td>Завершён</td>
-            </tr>
-          </thead>
-          <tbody>
-            {assignments.map((assignment) => (
-              <tr key={assignment.id}>
-                <td>{assignment.id}</td>
-                <td>{assignment.reviewerId}</td>
-                <td>{assignment.targetId}</td>
-                <td>{boolLabel(assignment.isAssigned)}</td>
-                <td>{boolLabel(assignment.isCompleted)}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      <h3>Ответ API (JSON)</h3>
-      <pre className="bg-light p-3 rounded border">
-        {JSON.stringify(details, null, 2)}
-      </pre>
-    </Layout>
+          <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-4">Ответ API (JSON)</h2>
+            <pre className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-700 overflow-x-auto">
+              {JSON.stringify(details, null, 2)}
+            </pre>
+          </section>
+        </div>
+      </div>
+    </>
   )
 }

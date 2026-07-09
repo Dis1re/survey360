@@ -4,12 +4,16 @@ import { TabBar, type Tab } from '../components/TabBar'
 import { QuestionList } from '../components/QuestionList'
 import { QuestionEditor } from '../components/QuestionEditor'
 import { MatrixTable } from '../components/MatrixTable'
-import { Link } from '../router'
 import type { Participant, Question } from '../types'
+
+interface MainPageProps {
+  onOpenSurveys: () => void
+}
 
 const mockQuestions: Question[] = [
   {
     id: 1,
+    surveyId: 1,
     text: '1. Оценка навыков архитектуры',
     type: 'scale',
     options: [
@@ -17,8 +21,8 @@ const mockQuestions: Question[] = [
       { value: 5, label: 'Эксперт, может выступать архитектором крупных модулей' },
     ],
   },
-  { id: 2, text: '2. Командная работа и Soft Skills', type: 'radio' },
-  { id: 3, text: '3. Тайм-менеджмент и спринты', type: 'text' },
+  { id: 2, surveyId: 1, text: '2. Командная работа и Soft Skills', type: 'radio' },
+  { id: 3, surveyId: 1, text: '3. Тайм-менеджмент и спринты', type: 'text' },
 ]
 
 const mockParticipants: Participant[] = [
@@ -34,7 +38,7 @@ const initialAssignments: Record<string, Record<string, boolean>> = {
   '3': { '1': true, '2': true, '4': true },
 }
 
-export function MainPage() {
+export function MainPage({ onOpenSurveys }: MainPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('editor')
   const [questions, setQuestions] = useState<Question[]>(mockQuestions)
   const [activeQuestionId, setActiveQuestionId] = useState<number | null>(1)
@@ -61,12 +65,13 @@ export function MainPage() {
       <div className="bg-amber-50 border-b border-amber-200 px-6 py-2">
         <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
           <span className="text-xs text-amber-800">Временная ссылка для разработки</span>
-          <Link
-            to="/surveys"
-            className="text-xs font-medium text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-lg transition"
+          <button
+            type="button"
+            onClick={onOpenSurveys}
+            className="text-xs font-medium text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 px-3 py-1.5 rounded-lg transition cursor-pointer"
           >
             Тест API / БД
-          </Link>
+          </button>
         </div>
       </div>
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />

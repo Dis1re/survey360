@@ -53,10 +53,18 @@ public class QuestionController(ApplicationDbContext context) : Controller
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        var deleted = await context.Questions
+        var questionExists = await context.Questions.AnyAsync(q => q.Id == id, ct);
+        if (!questionExists)
+            return NotFound();
+
+        await context.Answers
+            .Where(a => a.QuestionId == id)
+            .ExecuteDeleteAsync(ct);
+
+        await context.Questions
             .Where(q => q.Id == id)
             .ExecuteDeleteAsync(ct);
 
-        return deleted == 0 ? NotFound() : NoContent();
+        return NoContent();
     }
 }

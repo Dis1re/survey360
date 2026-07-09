@@ -60,7 +60,7 @@ npm run dev
 
 - UI: http://localhost:5173
 - Запросы к `/api/*` проксируются на backend (см. `frontend/vite.config.ts`)
-- Тест API: http://localhost:5173/surveys
+- Тест API: кнопка «Тест API / БД» на главной странице редактора
 
 ### Проверка
 

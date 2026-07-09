@@ -25,7 +25,8 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<Answer>()
             .HasOne<Question>()
             .WithMany()
-            .HasForeignKey(a => a.QuestionId);
+            .HasForeignKey(a => a.QuestionId)
+            .OnDelete(DeleteBehavior.Cascade);
         
         modelBuilder.Entity<Answer>()
             .HasOne<User>()
