@@ -59,8 +59,16 @@ export default function App() {
       .finally(() => setSurveyLoading(false))
   }, [selectedSurveyId])
 
-  const handleCreateClick = () => {
-    // TODO: открыть форму создания нового опроса
+  const handleCreateClick = async () => {
+    try {
+      const id = await surveyApi.create()
+      setSelectedSurveyId(id)
+      setPage('main')
+      const list = await surveyApi.list()
+      setSurveys(list.map(toSurvey))
+    } catch {
+      // ignore
+    }
   }
 
   const handleSearch = (_query: string) => {
