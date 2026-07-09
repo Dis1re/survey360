@@ -1,3 +1,4 @@
+// UI types
 export interface Survey {
   id: number
   title: string
@@ -35,28 +36,79 @@ export interface Participant {
   color: string
 }
 
-export interface MySettings {
-  value1: string
-  value2: string
-  value3: number
+export interface Assignments {
+  [respondentId: string]: Record<string, boolean>
 }
 
-export interface LifecycleDemo {
-  transient: { controller: string; view: string }
-  scoped: { controller: string; view: string }
-  singleton: { controller: string; view: string }
+// API types
+export interface ApiUser {
+  id: number
+  name: string
+  email: string
+  createdAt: string
+  updatedAt: string
 }
 
-export interface SimpleEntity {
+export interface CreateUserRequest {
+  name: string
+  email: string
+}
+
+export interface CreateQuestionRequest {
+  surveyId: number
+  text: string
+  type: string
+}
+
+export interface CreateAnswerRequest {
+  questionId: number
+  userId: number
+  text: string
+  type: string
+}
+
+export interface ApiSurvey {
   id: number
   name: string
   description: string
+  status: string
+  createdAt: string
+  startedAt: string
+  closedAt: string
+}
+
+export interface ApiQuestion {
+  id: number
+  surveyId: number
+  text: string
   type: string
 }
 
-export interface EntityInput {
-  name: string
-  description: string
+export interface ApiQuestionDetails {
+  question: ApiQuestion
+  answers: ApiAnswer[]
+}
+
+export interface ApiAnswer {
+  id: number
+  questionId: number
+  userId: number
+  text: string
   type: string
 }
 
+export interface ApiSurveyAssignment {
+  id: number
+  surveyId: number
+  reviewerId: number
+  targetId: number
+  isAssigned: boolean
+  isCompleted: boolean
+}
+
+export interface ApiSurveyDetails {
+  survey: ApiSurvey
+  questions: ApiQuestion[]
+  answers: ApiAnswer[]
+  assignments: ApiSurveyAssignment[]
+}
