@@ -5,17 +5,26 @@ interface QuestionListProps {
   questions: Question[]
   activeQuestionId: number | null
   onQuestionSelect: (id: number) => void
+  onAdd: (text: string, type: string) => void
 }
 
-export function QuestionList({ questions, activeQuestionId, onQuestionSelect }: QuestionListProps) {
+const typeOptions = [
+  { value: 'text', label: 'Текст' },
+  { value: 'scale', label: 'Шкала' },
+  { value: 'radio', label: 'Выбор варианта' },
+]
+
+export function QuestionList({ questions, activeQuestionId, onQuestionSelect, onAdd }: QuestionListProps) {
   const [newQuestionText, setNewQuestionText] = useState('')
+  const [newQuestionType, setNewQuestionType] = useState('text')
   const [showInput, setShowInput] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!newQuestionText.trim()) return
-    // TODO: создать вопрос через API
+    onAdd(newQuestionText.trim(), newQuestionType)
     setNewQuestionText('')
+    setNewQuestionType('text')
     setShowInput(false)
   }
 
@@ -58,12 +67,21 @@ export function QuestionList({ questions, activeQuestionId, onQuestionSelect }: 
             autoFocus
           />
           <div className="flex gap-2">
+            <select
+              className="border border-gray-200 rounded-lg px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-blue-500"
+              value={newQuestionType}
+              onChange={(e) => setNewQuestionType(e.target.value)}
+            >
+              {typeOptions.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
             <button type="submit" className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition cursor-pointer">
               Добавить
             </button>
             <button
               type="button"
-              onClick={() => { setShowInput(false); setNewQuestionText('') }}
+              onClick={() => { setShowInput(false); setNewQuestionText(''); setNewQuestionType('text') }}
               className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-lg transition cursor-pointer"
             >
               Отмена

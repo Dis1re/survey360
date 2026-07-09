@@ -5,7 +5,7 @@ import { TabBar, type Tab } from '../components/TabBar'
 import { QuestionList } from '../components/QuestionList'
 import { QuestionEditor } from '../components/QuestionEditor'
 import { MatrixTable } from '../components/MatrixTable'
-import { surveyApi } from '../api'
+import { questionApi, surveyApi } from '../api'
 import type { ApiQuestion, ApiSurvey, ApiSurveyAssignment, Participant, Question } from '../types'
 
 interface MainPageProps {
@@ -98,6 +98,15 @@ export function MainPage({ survey, questions: apiQuestions, assignments, loading
     }
   }
 
+  const handleAddQuestion = async (text: string, type: string) => {
+    try {
+      await questionApi.create({ surveyId: survey.id, text, type })
+      onUpdate()
+    } catch {
+      // ignore
+    }
+  }
+
   if (loading) {
     return <div className="flex items-center justify-center h-full text-gray-400 text-sm">Загрузка…</div>
   }
@@ -122,6 +131,7 @@ export function MainPage({ survey, questions: apiQuestions, assignments, loading
                 questions={questions}
                 activeQuestionId={activeQuestionId}
                 onQuestionSelect={setActiveQuestionId}
+                onAdd={handleAddQuestion}
               />
             </div>
             <div className="lg:col-span-2">
