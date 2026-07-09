@@ -219,3 +219,8 @@ project.lock.json
 *.Specs_*.html
 
 .ionide/
+
+# SQLite runtime files
+WebApp/survey.db
+WebApp/survey.db-shm
+WebApp/survey.db-wal

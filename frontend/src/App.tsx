@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import { Sidebar } from './components/Sidebar'
-import type { Survey } from './types'
+import { EntitiesPage } from './pages/EntitiesPage'
+import { EntityPage } from './pages/EntityPage'
 import { MainPage } from './pages/MainPage'
+import type { Survey } from './types'
 
 const mockSurveys: Survey[] = [
   {
@@ -26,7 +29,12 @@ const mockSurveys: Survey[] = [
   },
 ]
 
+type Page = 'main' | 'surveys'
+
 export default function App() {
+  const [page, setPage] = useState<Page>('main')
+  const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(null)
+
   const handleCreateClick = () => {
     // TODO: открыть форму создания нового опроса
   }
@@ -35,12 +43,26 @@ export default function App() {
     // TODO: фильтрация списка опросов
   }
 
+  let content
+  if (selectedSurveyId !== null) {
+    content = (
+      <EntityPage id={selectedSurveyId} onBack={() => setSelectedSurveyId(null)} />
+    )
+  } else if (page === 'surveys') {
+    content = (
+      <EntitiesPage
+        onBack={() => setPage('main')}
+        onOpenSurvey={(id) => setSelectedSurveyId(id)}
+      />
+    )
+  } else {
+    content = <MainPage onOpenSurveys={() => setPage('surveys')} />
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar surveys={mockSurveys} onCreateClick={handleCreateClick} onSearch={handleSearch} />
-      <main className="flex-1 overflow-y-auto">
-        <MainPage />
-      </main>
+      <main className="flex-1 overflow-y-auto">{content}</main>
     </div>
   )
 }

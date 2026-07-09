@@ -1,6 +1,6 @@
 namespace WebApp.Models;
 
-public class SurveyAssignments
+public class SurveyAssignment
 {
     public int Id { get; set; }
     public int SurveyId { get; set; }
