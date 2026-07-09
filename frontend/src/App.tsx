@@ -75,6 +75,17 @@ export default function App() {
     // TODO: фильтрация списка опросов
   }
 
+  const handleDeleteSurvey = async (id: number) => {
+    try {
+      await surveyApi.delete(id)
+      if (selectedSurveyId === id) setSelectedSurveyId(null)
+      const list = await surveyApi.list()
+      setSurveys(list.map(toSurvey))
+    } catch {
+      // ignore
+    }
+  }
+
   const handleSurveyUpdate = () => {
     if (selectedSurveyId === null) return
     setSurveyLoading(true)
@@ -105,6 +116,7 @@ export default function App() {
         assignments={surveyDetails.assignments}
         loading={surveyLoading}
         onUpdate={handleSurveyUpdate}
+        onDelete={handleDeleteSurvey}
       />
     )
   } else if (selectedSurveyId !== null && surveyLoading) {

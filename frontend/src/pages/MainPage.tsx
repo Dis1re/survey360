@@ -14,6 +14,7 @@ interface MainPageProps {
   assignments: ApiSurveyAssignment[]
   loading: boolean
   onUpdate: () => void
+  onDelete: (id: number) => void
 }
 
 const statusMap: Record<string, 'active' | 'draft' | 'closed'> = {
@@ -59,7 +60,7 @@ function toMatrixAssignments(assignments: ApiSurveyAssignment[]): Record<string,
   return result
 }
 
-export function MainPage({ survey, questions: apiQuestions, assignments, loading, onUpdate }: MainPageProps) {
+export function MainPage({ survey, questions: apiQuestions, assignments, loading, onUpdate, onDelete }: MainPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('editor')
   const [questions, setQuestions] = useState<Question[]>([])
   const [activeQuestionId, setActiveQuestionId] = useState<number | null>(null)
@@ -151,6 +152,7 @@ export function MainPage({ survey, questions: apiQuestions, assignments, loading
           closedAt={survey.closedAt}
           onSave={handleEditSave}
           onClose={() => setEditOpen(false)}
+          onDelete={() => onDelete(survey.id)}
           saving={saving}
         />
       )}
