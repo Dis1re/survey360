@@ -34,7 +34,7 @@ export function EntityPage({ id }: EntityPageProps) {
     setSaving(true)
     try {
       await entitiesApi.update(id, form)
-      setEntity((prev) => (prev ? { ...prev, ...form } : prev))
+      setEntity((prev: SimpleEntity | null) => (prev ? { ...prev, ...form } : prev))
     } catch {
       // как в оригинальном site.js
     } finally {

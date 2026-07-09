@@ -1,3 +1,38 @@
+export interface Survey {
+  id: number
+  title: string
+  description: string
+  status: 'active' | 'draft' | 'closed'
+  date: string
+}
+
+export interface Question {
+  id: number
+  text: string
+  type: 'radio' | 'scale' | 'text'
+  options?: { value: number; label: string }[]
+}
+
+export interface Participant {
+  id: number
+  name: string
+  role: string
+  initial: string
+  color: string
+}
+
+export interface MySettings {
+  value1: string
+  value2: string
+  value3: number
+}
+
+export interface LifecycleDemo {
+  transient: { controller: string; view: string }
+  scoped: { controller: string; view: string }
+  singleton: { controller: string; view: string }
+}
+
 export interface SimpleEntity {
   id: number
   name: string
@@ -5,21 +40,9 @@ export interface SimpleEntity {
   type: string
 }
 
-export interface MySettings {
-  value1: string
-  value2: number
-  value3: boolean
+export interface EntityInput {
+  name: string
+  description: string
+  type: string
 }
 
-export interface LifecycleRow {
-  controller: string
-  view: string
-}
-
-export interface LifecycleDemo {
-  transient: LifecycleRow
-  scoped: LifecycleRow
-  singleton: LifecycleRow
-}
-
-export type EntityInput = Omit<SimpleEntity, 'id'>
