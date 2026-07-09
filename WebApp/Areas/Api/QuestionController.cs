@@ -7,6 +7,8 @@ namespace WebApp.Areas.Api;
 
 public record CreateQuestionRequest(int SurveyId, string Text, string Type);
 
+public record QuestionDetailsDto(Question Question, List<Answer> Answers);
+
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
@@ -31,13 +33,21 @@ public class QuestionController(ApplicationDbContext context) : Controller
     }
 
     [HttpGet("{id:int}")]
-    public async Task<ActionResult<Question>> Get(int id, CancellationToken ct)
+    public async Task<ActionResult<QuestionDetailsDto>> Get(int id, CancellationToken ct)
     {
         var question = await context.Questions
             .AsNoTracking()
             .FirstOrDefaultAsync(q => q.Id == id, ct);
 
-        return question is null ? NotFound() : question;
+        if (question is null)
+            return NotFound();
+
+        var answers = await context.Answers
+            .AsNoTracking()
+            .Where(a => a.QuestionId == id)
+            .ToListAsync(ct);
+
+        return new QuestionDetailsDto(question, answers);
     }
 
     [HttpDelete("{id:int}")]

@@ -8,6 +8,7 @@ namespace WebApp.Areas.Api;
 public record SurveyDetailsDto(
     Survey Survey,
     List<Question> Questions,
+    List<Answer> Answers,
     List<SurveyAssignment> Assignments
 );
 
@@ -56,12 +57,20 @@ public class SurveyController(ApplicationDbContext context) : Controller
             .Where(q => q.SurveyId == id)
             .ToListAsync(ct);
 
+        var questionIds = questions.Select(q => q.Id).ToList();
+        var answers = questionIds.Count == 0
+            ? []
+            : await context.Answers
+                .AsNoTracking()
+                .Where(a => questionIds.Contains(a.QuestionId))
+                .ToListAsync(ct);
+
         var assignments = await context.SurveyAssignments
             .AsNoTracking()
             .Where(a => a.SurveyId == id)
             .ToListAsync(ct);
 
-        return new SurveyDetailsDto(survey, questions, assignments);
+        return new SurveyDetailsDto(survey, questions, answers, assignments);
     }
 
     [HttpDelete("{id:int}")]
