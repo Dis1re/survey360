@@ -1,0 +1,138 @@
+html {
+  font-size: 14px;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+@media (min-width: 768px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+p, span, a, li, td, th, label, input, button, textarea, select {
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans',
+    'Liberation Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
+.btn:focus,
+.btn:active:focus,
+.btn-link.nav-link:focus,
+.form-control:focus,
+.form-check-input:focus {
+  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #FF8600;
+}
+
+a {
+  color: #FF8600;
+}
+
+a:hover {
+  color: #cc6b00;
+}
+
+.btn-primary {
+  color: #fff;
+  background-color: #FF8600;
+  border-color: #e67a00;
+}
+
+.btn-primary:hover {
+  color: #fff;
+  background-color: #e67a00;
+  border-color: #cc6b00;
+}
+
+.btn-primary:focus,
+.btn-primary:active {
+  color: #fff;
+  background-color: #e67a00;
+  border-color: #cc6b00;
+  box-shadow: 0 0 0 0.25rem rgba(255, 134, 0, 0.5);
+}
+
+.nav-pills .nav-link.active,
+.nav-pills .show > .nav-link {
+  color: #fff;
+  background-color: #FF8600;
+  border-color: #e67a00;
+}
+
+.border-top {
+  border-top: 1px solid #e5e5e5;
+}
+
+.border-bottom {
+  border-bottom: 1px solid #e5e5e5;
+}
+
+.box-shadow {
+  box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.05);
+}
+
+.footer {
+  width: 100%;
+  white-space: nowrap;
+}
+
+.table-hover > tbody > tr:hover {
+  --bs-table-accent-bg: rgba(255, 134, 0, 0.08);
+  color: var(--bs-table-hover-color);
+}
+
+.page-link {
+  color: #FF8600;
+}
+
+.page-link:hover {
+  color: #cc6b00;
+}
+
+.page-item.active .page-link {
+  background-color: #FF8600;
+  border-color: #FF8600;
+}
+
+.form-check-input:checked {
+  background-color: #FF8600;
+  border-color: #FF8600;
+}
+
+.form-check-input:focus {
+  border-color: #FF8600;
+  box-shadow: 0 0 0 0.25rem rgba(255, 134, 0, 0.25);
+}
+
+.nav-link:hover {
+  opacity: 0.85;
+}
+
+.btn-primary:disabled {
+  background-color: #ffb366;
+  border-color: #ffb366;
+}
