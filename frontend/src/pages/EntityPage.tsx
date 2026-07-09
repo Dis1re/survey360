@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import { surveyApi } from '../api'
+import { QuestionList } from '../components/QuestionList'
+import { AnswerPanel } from '../components/AnswerPanel'
 import type { ApiSurveyDetails } from '../types'
 
 interface EntityPageProps {
@@ -7,23 +9,11 @@ interface EntityPageProps {
   onBack: () => void
 }
 
-function formatDate(value: string) {
-  if (!value || value.startsWith('0001')) return '—'
-  return new Date(value).toLocaleString()
-}
-
-function boolLabel(value: boolean) {
-  return value ? 'Да' : 'Нет'
-}
-
-const thClass =
-  'text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider'
-const tdClass = 'px-4 py-3 text-sm text-gray-600'
-
 export function EntityPage({ id, onBack }: EntityPageProps) {
   const [details, setDetails] = useState<ApiSurveyDetails | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [activeQuestionId, setActiveQuestionId] = useState<number | null>(null)
 
   useEffect(() => {
     setLoading(true)
@@ -31,7 +21,10 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
 
     surveyApi
       .get(id)
-      .then(setDetails)
+      .then((data) => {
+        setDetails(data)
+        setActiveQuestionId(data.questions[0]?.id ?? null)
+      })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false))
   }, [id])
@@ -66,7 +59,7 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
     )
   }
 
-  const { survey, questions, answers, assignments } = details
+  const { survey, questions } = details
 
   return (
     <>
@@ -89,117 +82,25 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-6">
           <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Основные данные</h2>
-            <div className="border border-gray-200 rounded-xl overflow-hidden">
-              <table className="w-full">
-                <tbody className="divide-y divide-gray-100">
-                  {[
-                    ['Id', survey.id],
-                    ['Название', survey.name],
-                    ['Описание', survey.description || '—'],
-                    ['Статус', survey.status],
-                    ['Создан', formatDate(survey.createdAt)],
-                    ['Начат', formatDate(survey.startedAt)],
-                    ['Закрыт', formatDate(survey.closedAt)],
-                  ].map(([label, value]) => (
-                    <tr key={String(label)}>
-                      <th className={`${thClass} w-40 bg-gray-50/80`}>{label}</th>
-                      <td className={tdClass}>{value}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-
-          <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Вопросы ({questions.length})</h2>
             {questions.length === 0 ? (
               <p className="text-sm text-gray-500">Вопросов нет</p>
             ) : (
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-50/80 border-b border-gray-200">
-                      <th className={thClass}>Id</th>
-                      <th className={thClass}>Текст</th>
-                      <th className={thClass}>Тип</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {questions.map((question) => (
-                      <tr key={question.id}>
-                        <td className={tdClass}>{question.id}</td>
-                        <td className={tdClass}>{question.text || '—'}</td>
-                        <td className={tdClass}>{question.type || '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
-          <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Ответы ({answers.length})</h2>
-            {answers.length === 0 ? (
-              <p className="text-sm text-gray-500">Ответов нет</p>
-            ) : (
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-50/80 border-b border-gray-200">
-                      <th className={thClass}>Id</th>
-                      <th className={thClass}>Вопрос</th>
-                      <th className={thClass}>Пользователь</th>
-                      <th className={thClass}>Текст</th>
-                      <th className={thClass}>Тип</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {answers.map((answer) => (
-                      <tr key={answer.id}>
-                        <td className={tdClass}>{answer.id}</td>
-                        <td className={tdClass}>{answer.questionId}</td>
-                        <td className={tdClass}>{answer.userId}</td>
-                        <td className={tdClass}>{answer.text || '—'}</td>
-                        <td className={tdClass}>{answer.type || '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </section>
-
-          <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-lg font-bold text-gray-900 mb-4">Назначения ({assignments.length})</h2>
-            {assignments.length === 0 ? (
-              <p className="text-sm text-gray-500">Назначений нет</p>
-            ) : (
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-50/80 border-b border-gray-200">
-                      <th className={thClass}>Id</th>
-                      <th className={thClass}>Рецензент</th>
-                      <th className={thClass}>Оцениваемый</th>
-                      <th className={thClass}>Назначен</th>
-                      <th className={thClass}>Завершён</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {assignments.map((assignment) => (
-                      <tr key={assignment.id}>
-                        <td className={tdClass}>{assignment.id}</td>
-                        <td className={tdClass}>{assignment.reviewerId}</td>
-                        <td className={tdClass}>{assignment.targetId}</td>
-                        <td className={tdClass}>{boolLabel(assignment.isAssigned)}</td>
-                        <td className={tdClass}>{boolLabel(assignment.isCompleted)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-1">
+                  <QuestionList
+                    questions={questions}
+                    activeQuestionId={activeQuestionId}
+                    onQuestionSelect={setActiveQuestionId}
+                    showAddButton={false}
+                  />
+                </div>
+                <div className="lg:col-span-2">
+                  <AnswerPanel
+                    question={questions.find((q) => q.id === activeQuestionId) ?? null}
+                    onAnswer={() => {}}
+                  />
+                </div>
               </div>
             )}
           </section>

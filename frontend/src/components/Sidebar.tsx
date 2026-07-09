@@ -5,6 +5,7 @@ import { surveyApi } from '../api'
 interface SidebarProps {
   onCreateClick: () => void
   onSearch: (query: string) => void
+  onOpenSurvey: (id: number) => void
 }
 
 const statusConfig = {
@@ -38,11 +39,20 @@ const getStatusConfig = (status: string) => {
   return statusConfig.draft
 }
 
-function SurveyCard({ survey, isActive }: { survey: ApiSurvey; isActive: boolean }) {
+function SurveyCard({
+  survey,
+  isActive,
+  onOpenSurvey,
+}: {
+  survey: ApiSurvey
+  isActive: boolean
+  onOpenSurvey: (id: number) => void
+}) {
   const cfg = getStatusConfig(survey.status)
 
   return (
     <div
+      onClick={() => onOpenSurvey(survey.id)}
       className={`p-3 rounded-xl cursor-pointer transition ${
         isActive
           ? 'bg-blue-50/60 border border-blue-100'
@@ -72,7 +82,7 @@ function SurveyCard({ survey, isActive }: { survey: ApiSurvey; isActive: boolean
   )
 }
 
-export function Sidebar({ onCreateClick, onSearch }: SidebarProps) {
+export function Sidebar({ onCreateClick, onSearch, onOpenSurvey }: SidebarProps) {
   const [surveys, setSurveys] = useState<ApiSurvey[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -196,6 +206,7 @@ export function Sidebar({ onCreateClick, onSearch }: SidebarProps) {
               key={survey.id} 
               survey={survey} 
               isActive={survey.status === 'active'} 
+              onOpenSurvey={onOpenSurvey}
             />
           ))
         )}

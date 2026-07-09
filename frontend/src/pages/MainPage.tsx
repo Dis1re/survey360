@@ -14,7 +14,7 @@ const mockQuestions: Question[] = [
   {
     id: 1,
     surveyId: 1,
-    text: '1. Оценка навыков архитектуры',
+    text: '1. Оценка навыков армявапихитектуры',
     type: 'scale',
     options: [
       { value: 1, label: 'Критически слабый уровень, требует менторства' },

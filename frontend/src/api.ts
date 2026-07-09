@@ -58,7 +58,6 @@ export const questionApi = {
       method: 'POST',
       body: JSON.stringify(data),
     }),
-
   get: (id: number) => sendRequest<ApiQuestionDetails>(`${API}/question/${id}`),
 
   delete: (id: number) =>

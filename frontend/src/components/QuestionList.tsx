@@ -1,13 +1,24 @@
 import { useState } from 'react'
-import type { Question } from '../types'
 
-interface QuestionListProps {
-  questions: Question[]
-  activeQuestionId: number | null
-  onQuestionSelect: (id: number) => void
+interface ListQuestion {
+  id: number
+  text?: string
+  type?: string
 }
 
-export function QuestionList({ questions, activeQuestionId, onQuestionSelect }: QuestionListProps) {
+interface QuestionListProps {
+  questions: ListQuestion[]
+  activeQuestionId: number | null
+  onQuestionSelect: (id: number) => void
+  showAddButton?: boolean
+}
+
+export function QuestionList({
+  questions,
+  activeQuestionId,
+  onQuestionSelect,
+  showAddButton = true,
+}: QuestionListProps) {
   const [newQuestionText, setNewQuestionText] = useState('')
   const [showInput, setShowInput] = useState(false)
 
@@ -47,7 +58,8 @@ export function QuestionList({ questions, activeQuestionId, onQuestionSelect }: 
         })}
       </div>
 
-      {showInput ? (
+      {showAddButton &&
+        (showInput ? (
         <form onSubmit={handleSubmit} className="mt-4 space-y-2">
           <input
             type="text"
@@ -80,7 +92,7 @@ export function QuestionList({ questions, activeQuestionId, onQuestionSelect }: 
           </svg>
           Добавить вопрос
         </button>
-      )}
+      ))}
     </div>
   )
 }

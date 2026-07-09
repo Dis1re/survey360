@@ -62,7 +62,11 @@ export default function App() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar onCreateClick={handleCreateClick} onSearch={handleSearch} />
+      <Sidebar
+        onCreateClick={handleCreateClick}
+        onSearch={handleSearch}
+        onOpenSurvey={(id) => setSelectedSurveyId(id)}
+      />
       <main className="flex-1 overflow-y-auto">{content}</main>
     </div>
   )
