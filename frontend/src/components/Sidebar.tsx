@@ -9,6 +9,8 @@ interface SidebarProps {
   onSurveySelect: (id: number) => void
   onCreateClick: () => void
   onSearch: (query: string) => void
+  onOpenDev: () => void
+  onOpenDetails: () => void
 }
 
 const statusConfig = {
@@ -133,6 +135,8 @@ export function Sidebar({
   onSurveySelect,
   onCreateClick,
   onSearch,
+  onOpenDev,
+  onOpenDetails,
 }: SidebarProps) {
   const [query, setQuery] = useState('')
   const [collapsed, setCollapsed] = useState(false)
@@ -171,6 +175,30 @@ export function Sidebar({
             <div className="text-base font-semibold text-gray-900 truncate">Опросы 360</div>
           </div>
         )}
+        <div className="flex items-center gap-1 ml-auto">
+          <button
+            type="button"
+            onClick={onOpenDetails}
+            title="Детали опроса"
+            aria-label="Детали опроса"
+            className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={onOpenDev}
+            title="Dev-страница"
+            aria-label="Dev-страница"
+            className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {!collapsed && (
