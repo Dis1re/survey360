@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Areas.Api;
 
@@ -34,10 +35,12 @@ public record AssignmentEntry(int ReviewerId, int TargetId, bool IsAssigned);
 
 public record CompleteAssignmentRequest(int ReviewerId, int TargetId);
 
+public record SurveyReportInfoDto(int AnswerCount, int AssignedCount, int CompletedCount, bool AllAssignedCompleted);
+
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
-public class SurveyController(ApplicationDbContext context) : Controller
+public class SurveyController(ApplicationDbContext context, SurveyDocxReportService reportService) : Controller
 {
     [HttpPost]
     public async Task<int> Create(CancellationToken ct)
@@ -237,7 +240,8 @@ public class SurveyController(ApplicationDbContext context) : Controller
         [FromBody] CompleteAssignmentRequest request,
         CancellationToken ct)
     {
-        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+        var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == id, ct);
+        if (survey is null)
             return NotFound();
 
         if (request.ReviewerId <= 0 || request.TargetId <= 0)
@@ -248,21 +252,55 @@ public class SurveyController(ApplicationDbContext context) : Controller
                 a => a.SurveyId == id && a.ReviewerId == request.ReviewerId && a.TargetId == request.TargetId,
                 ct);
 
-        if (assignment is null)
-        {
-            assignment = new SurveyAssignment
-            {
-                SurveyId = id,
-                ReviewerId = request.ReviewerId,
-                TargetId = request.TargetId,
-            };
-            await context.SurveyAssignments.AddAsync(assignment, ct);
-        }
+        if (assignment is null || !assignment.IsAssigned)
+            return BadRequest("Назначение не найдено в матрице опроса");
 
-        assignment.IsAssigned = true;
         assignment.IsCompleted = true;
 
         await context.SaveChangesAsync(ct);
+
+        var assignedPairs = await context.SurveyAssignments
+            .Where(a => a.SurveyId == id && a.IsAssigned)
+            .ToListAsync(ct);
+
+        if (assignedPairs.Count > 0 && assignedPairs.All(a => a.IsCompleted))
+        {
+            survey.Status = "Завершен";
+            survey.ClosedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync(ct);
+        }
+
         return NoContent();
+    }
+
+    [HttpGet("{id:int}/report/info")]
+    public async Task<ActionResult<SurveyReportInfoDto>> GetReportInfo(int id, CancellationToken ct)
+    {
+        var info = await reportService.GetReportInfoAsync(id, ct);
+        if (info is null)
+            return NotFound();
+
+        return new SurveyReportInfoDto(
+            info.AnswerCount,
+            info.AssignedCount,
+            info.CompletedCount,
+            info.AllAssignedCompleted);
+    }
+
+    [HttpGet("{id:int}/report.docx")]
+    public async Task<IActionResult> DownloadReport(int id, CancellationToken ct)
+    {
+        var result = await reportService.BuildReportAsync(id, ct);
+        if (result is null)
+        {
+            var exists = await context.Surveys.AnyAsync(s => s.Id == id, ct);
+            if (!exists)
+                return NotFound();
+
+            return BadRequest("Нет ответов для формирования отчёта");
+        }
+
+        const string contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        return File(result.Value.Stream, contentType, result.Value.FileName);
     }
 }
