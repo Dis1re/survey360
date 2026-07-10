@@ -58,6 +58,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [stoppingSurvey, setStoppingSurvey] = useState(false)
   const [creatingQuestion, setCreatingQuestion] = useState(false)
   const [savingQuestion, setSavingQuestion] = useState(false)
+  const [deletingQuestion, setDeletingQuestion] = useState(false)
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [exportingReport, setExportingReport] = useState(false)
@@ -262,6 +263,17 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }
 
+  const handleRemoveMatrixParticipant = async (userId: number, role: 'target' | 'respondent') => {
+    if (surveyId === null) return
+    try {
+      await surveyApi.removeParticipant(surveyId, userId, role)
+      await loadMatrix(surveyId)
+    } catch (err) {
+      console.error(err)
+      throw err
+    }
+  }
+
   const handleSaveMatrix = async (next: Record<string, Record<string, boolean>>) => {
     if (surveyId === null || !surveyEditable) return
     setSavingMatrix(true)
@@ -279,6 +291,27 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       throw err
     } finally {
       setSavingMatrix(false)
+    }
+  }
+
+  const handleDeleteQuestion = async (id: number) => {
+    if (surveyId === null) return
+    setDeletingQuestion(true)
+    try {
+      await questionApi.delete(id)
+      setQuestions((prev) => {
+        const next = prev.filter((q) => q.id !== id)
+        setActiveQuestionId((curr) => {
+          if (curr !== id) return curr
+          return next[0]?.id ?? null
+        })
+        return next
+      })
+    } catch (err) {
+      console.error(err)
+      throw err
+    } finally {
+      setDeletingQuestion(false)
     }
   }
 
@@ -375,6 +408,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                 readOnly={!surveyEditable}
                 onQuestionSelect={setActiveQuestionId}
                 onQuestionCreate={handleCreateQuestion}
+                onQuestionDelete={handleDeleteQuestion}
+                deleting={deletingQuestion}
               />
             </div>
             <div className="lg:col-span-2">
@@ -407,6 +442,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               readOnly={!surveyEditable}
               onExportReport={handleExportReport}
               onAddParticipant={handleAddMatrixParticipant}
+              onRemoveParticipant={handleRemoveMatrixParticipant}
               onSave={handleSaveMatrix}
             />
           </div>

@@ -54,6 +54,11 @@ export const surveyApi = {
       body: JSON.stringify(data),
     }),
 
+  removeParticipant: (id: number, userId: number, role: 'target' | 'respondent') =>
+    sendRequest<void>(`${API}/survey/${id}/participants?userId=${userId}&role=${role}`, {
+      method: 'DELETE',
+    }),
+
   saveAssignments: (id: number, entries: AssignmentEntry[]) =>
     sendRequest<void>(`${API}/survey/${id}/assignments`, {
       method: 'PUT',
