@@ -6,6 +6,7 @@ interface QuestionListProps {
   activeQuestionId: number | null
   creating?: boolean
   deleting?: boolean
+  readOnly?: boolean
   onQuestionSelect: (id: number) => void
   onQuestionCreate: (text: string) => Promise<void>
   onQuestionDelete: (id: number) => Promise<void>
@@ -16,6 +17,7 @@ export function QuestionList({
   activeQuestionId,
   creating = false,
   deleting = false,
+  readOnly = false,
   onQuestionSelect,
   onQuestionCreate,
   onQuestionDelete,
@@ -88,7 +90,11 @@ export function QuestionList({
         )}
       </div>
 
-      {showInput ? (
+      {readOnly ? (
+        <p className="mt-4 text-xs text-gray-400 text-center px-2">
+          Редактирование недоступно — опрос уже запущен или завершён
+        </p>
+      ) : showInput ? (
         <form onSubmit={handleSubmit} className="mt-4 space-y-2">
           <input
             type="text"

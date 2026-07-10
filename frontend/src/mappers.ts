@@ -128,6 +128,20 @@ export function assignmentsToMatrix(
   return result
 }
 
+export function assignmentsToCompletionMatrix(
+  assignments: ApiSurveyAssignment[],
+): Record<string, Record<string, boolean>> {
+  const result: Record<string, Record<string, boolean>> = {}
+  for (const assignment of assignments) {
+    if (!assignment.isAssigned || !assignment.isCompleted) continue
+    const reviewerKey = String(assignment.reviewerId)
+    const targetKey = String(assignment.targetId)
+    if (!result[reviewerKey]) result[reviewerKey] = {}
+    result[reviewerKey][targetKey] = true
+  }
+  return result
+}
+
 export function getUniqueUserIds(assignments: ApiSurveyAssignment[]) {
   const ids = new Set<number>()
   for (const assignment of assignments) {
