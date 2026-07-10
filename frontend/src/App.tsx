@@ -5,9 +5,12 @@ import { apiSurveyToSurvey } from './mappers'
 import { EntitiesPage } from './pages/DevPage'
 import { MainPage } from './pages/MainPage'
 import { EntityPage } from './pages/SurveyDetails'
+import { ParticipantSelect } from './pages/ParticipantSelect'
+import { TargetSelect } from './pages/TargetSelect'
+import { TakeSurvey } from './pages/TakeSurvey'
 import type { Survey } from './types'
 
-type View = 'main' | 'dev' | 'details'
+type View = 'main' | 'dev' | 'details' | 'take'
 
 export default function App() {
   const [surveys, setSurveys] = useState<Survey[]>([])
@@ -16,6 +19,8 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [view, setView] = useState<View>('main')
+  const [takeUserId, setTakeUserId] = useState<number | null>(null)
+  const [takeTargetId, setTakeTargetId] = useState<number | null>(null)
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -42,6 +47,12 @@ export default function App() {
   const handleOpenDev = () => setView('dev')
 
   const handleOpenDetails = () => setView('details')
+
+  const handleOpenTake = () => {
+    setTakeUserId(null)
+    setTakeTargetId(null)
+    setView('take')
+  }
 
   const handleBack = () => {
     setView('main')
@@ -73,12 +84,36 @@ export default function App() {
         onSearch={setSearchQuery}
         onOpenDev={handleOpenDev}
         onOpenDetails={handleOpenDetails}
+        onOpenTake={handleOpenTake}
       />
       <main className="flex-1 overflow-y-auto">
         {view === 'dev' ? (
           <EntitiesPage onBack={handleBack} onOpenSurvey={setSelectedSurveyId} />
         ) : view === 'details' ? (
           <EntityPage id={selectedSurveyId ?? 0} onBack={handleBack} />
+        ) : view === 'take' ? (
+          selectedSurveyId === null ? (
+            <div className="flex items-center justify-center h-full p-6">
+              <p className="text-sm text-gray-500">Выберите опрос в боковой панели, чтобы пройти его.</p>
+            </div>
+          ) : takeUserId === null ? (
+            <ParticipantSelect onSelect={setTakeUserId} onBack={handleBack} />
+          ) : takeTargetId === null ? (
+            <TargetSelect
+              surveyId={selectedSurveyId ?? 0}
+              userId={takeUserId}
+              onSelect={setTakeTargetId}
+              onBack={() => setTakeUserId(null)}
+            />
+          ) : (
+            <TakeSurvey
+              surveyId={selectedSurveyId ?? 0}
+              userId={takeUserId}
+              targetId={takeTargetId}
+              onBackToUsers={() => setTakeTargetId(null)}
+              onBack={handleBack}
+            />
+          )
         ) : (
           <MainPage surveyId={selectedSurveyId} onSurveyUpdated={loadSurveys} onSurveyDeleted={loadSurveys} />
         )}

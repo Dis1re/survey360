@@ -142,3 +142,8 @@ export interface AssignmentEntry {
   targetId: number
   isAssigned: boolean
 }
+
+export interface CompleteAssignmentRequest {
+  reviewerId: number
+  targetId: number
+}
