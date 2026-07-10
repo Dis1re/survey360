@@ -83,7 +83,7 @@ export function QuestionList({
             <button
               type="submit"
               disabled={creating || !newQuestionText.trim()}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-lg transition cursor-pointer"
+              className="px-3 py-1.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-lg transition cursor-pointer"
             >
               {creating ? 'Добавление…' : 'Добавить'}
             </button>
