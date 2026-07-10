@@ -5,8 +5,6 @@ import { apiSurveyToSurvey } from './mappers'
 import { EntitiesPage } from './pages/DevPage'
 import { MainPage } from './pages/MainPage'
 import { EntityPage } from './pages/SurveyDetails'
-import { ParticipantSelect } from './pages/ParticipantSelect'
-import { TargetSelect } from './pages/TargetSelect'
 import { TakeSurvey } from './pages/TakeSurvey'
 import type { Survey } from './types'
 
@@ -19,8 +17,6 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [view, setView] = useState<View>('main')
-  const [takeUserId, setTakeUserId] = useState<number | null>(null)
-  const [takeTargetId, setTakeTargetId] = useState<number | null>(null)
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -49,8 +45,6 @@ export default function App() {
   const handleOpenDetails = () => setView('details')
 
   const handleOpenTake = () => {
-    setTakeUserId(null)
-    setTakeTargetId(null)
     setView('take')
   }
 
@@ -96,23 +90,8 @@ export default function App() {
             <div className="flex items-center justify-center h-full p-6">
               <p className="text-sm text-gray-500">Выберите опрос в боковой панели, чтобы пройти его.</p>
             </div>
-          ) : takeUserId === null ? (
-            <ParticipantSelect onSelect={setTakeUserId} onBack={handleBack} />
-          ) : takeTargetId === null ? (
-            <TargetSelect
-              surveyId={selectedSurveyId ?? 0}
-              userId={takeUserId}
-              onSelect={setTakeTargetId}
-              onBack={() => setTakeUserId(null)}
-            />
           ) : (
-            <TakeSurvey
-              surveyId={selectedSurveyId ?? 0}
-              userId={takeUserId}
-              targetId={takeTargetId}
-              onBackToUsers={() => setTakeTargetId(null)}
-              onBack={handleBack}
-            />
+            <TakeSurvey surveyId={selectedSurveyId} onBack={handleBack} />
           )
         ) : (
           <MainPage surveyId={selectedSurveyId} onSurveyUpdated={loadSurveys} onSurveyDeleted={loadSurveys} />
