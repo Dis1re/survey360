@@ -32,6 +32,8 @@ public record SaveAssignmentsRequest(List<AssignmentEntry> Entries);
 
 public record AssignmentEntry(int ReviewerId, int TargetId, bool IsAssigned);
 
+public record CompleteAssignmentRequest(int ReviewerId, int TargetId);
+
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
@@ -227,5 +229,40 @@ public class SurveyController(ApplicationDbContext context) : Controller
             .ExecuteDeleteAsync(ct);
 
         return deleted == 0 ? NotFound() : NoContent();
+    }
+
+    [HttpPost("{id:int}/assignments/complete")]
+    public async Task<IActionResult> CompleteAssignment(
+        int id,
+        [FromBody] CompleteAssignmentRequest request,
+        CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        if (request.ReviewerId <= 0 || request.TargetId <= 0)
+            return BadRequest("ReviewerId и TargetId обязательны");
+
+        var assignment = await context.SurveyAssignments
+            .FirstOrDefaultAsync(
+                a => a.SurveyId == id && a.ReviewerId == request.ReviewerId && a.TargetId == request.TargetId,
+                ct);
+
+        if (assignment is null)
+        {
+            assignment = new SurveyAssignment
+            {
+                SurveyId = id,
+                ReviewerId = request.ReviewerId,
+                TargetId = request.TargetId,
+            };
+            await context.SurveyAssignments.AddAsync(assignment, ct);
+        }
+
+        assignment.IsAssigned = true;
+        assignment.IsCompleted = true;
+
+        await context.SaveChangesAsync(ct);
+        return NoContent();
     }
 }

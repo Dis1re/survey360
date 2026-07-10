@@ -5,9 +5,10 @@ import { apiSurveyToSurvey } from './mappers'
 import { EntitiesPage } from './pages/DevPage'
 import { MainPage } from './pages/MainPage'
 import { EntityPage } from './pages/SurveyDetails'
+import { TakeSurvey } from './pages/TakeSurvey'
 import type { Survey } from './types'
 
-type View = 'main' | 'dev' | 'details'
+type View = 'main' | 'dev' | 'details' | 'take'
 
 export default function App() {
   const [surveys, setSurveys] = useState<Survey[]>([])
@@ -15,7 +16,6 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
-  const [dbDebugOpen, setDbDebugOpen] = useState(false)
   const [view, setView] = useState<View>('main')
 
   const loadSurveys = useCallback(async () => {
@@ -43,6 +43,10 @@ export default function App() {
   const handleOpenDev = () => setView('dev')
 
   const handleOpenDetails = () => setView('details')
+
+  const handleOpenTake = () => {
+    setView('take')
+  }
 
   const handleBack = () => {
     setView('main')
@@ -74,12 +78,21 @@ export default function App() {
         onSearch={setSearchQuery}
         onOpenDev={handleOpenDev}
         onOpenDetails={handleOpenDetails}
+        onOpenTake={handleOpenTake}
       />
       <main className="flex-1 overflow-y-auto">
         {view === 'dev' ? (
           <EntitiesPage onBack={handleBack} onOpenSurvey={setSelectedSurveyId} />
         ) : view === 'details' ? (
           <EntityPage id={selectedSurveyId ?? 0} onBack={handleBack} />
+        ) : view === 'take' ? (
+          selectedSurveyId === null ? (
+            <div className="flex items-center justify-center h-full p-6">
+              <p className="text-sm text-gray-500">Выберите опрос в боковой панели, чтобы пройти его.</p>
+            </div>
+          ) : (
+            <TakeSurvey surveyId={selectedSurveyId} onBack={handleBack} />
+          )
         ) : (
           <MainPage surveyId={selectedSurveyId} onSurveyUpdated={loadSurveys} onSurveyDeleted={loadSurveys} />
         )}

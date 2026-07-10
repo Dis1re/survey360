@@ -11,6 +11,7 @@ interface SidebarProps {
   onSearch: (query: string) => void
   onOpenDev: () => void
   onOpenDetails: () => void
+  onOpenTake: () => void
 }
 
 const statusConfig = {
@@ -137,6 +138,7 @@ export function Sidebar({
   onSearch,
   onOpenDev,
   onOpenDetails,
+  onOpenTake,
 }: SidebarProps) {
   const [query, setQuery] = useState('')
   const [collapsed, setCollapsed] = useState(false)
@@ -171,7 +173,7 @@ export function Sidebar({
               <img
                 src="/Survey360Logo.webp"
                 alt=""
-                className="w-10 h-10 object-contain shrink-0 rounded-lg"
+                className="w-12 h-12 object-contain shrink-0"
               />
               <div className="text-base font-semibold text-gray-900 truncate">Опросы 360</div>
             </div>
@@ -196,6 +198,17 @@ export function Sidebar({
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={onOpenTake}
+                title="Пройти опрос"
+                aria-label="Пройти опрос"
+                className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>

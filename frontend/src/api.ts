@@ -10,6 +10,7 @@ import type {
   CreateAnswerRequest,
   CreateQuestionRequest,
   CreateUserRequest,
+  CompleteAssignmentRequest,
   UpdateQuestionRequest,
   UpdateSurveyRequest,
 } from './types'
@@ -56,6 +57,12 @@ export const surveyApi = {
     sendRequest<void>(`${API}/survey/${id}/assignments`, {
       method: 'PUT',
       body: JSON.stringify({ entries }),
+    }),
+
+  completeAssignment: (id: number, data: CompleteAssignmentRequest) =>
+    sendRequest<void>(`${API}/survey/${id}/assignments/complete`, {
+      method: 'POST',
+      body: JSON.stringify(data),
     }),
 
   update: (id: number, data: UpdateSurveyRequest) =>

@@ -13,8 +13,6 @@ const btnPrimary =
   'px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition shadow-sm disabled:opacity-50 cursor-pointer'
 const btnSecondary =
   'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition disabled:opacity-50 cursor-pointer'
-const btnDanger =
-  'px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition disabled:opacity-50 cursor-pointer'
 const btnDangerOutline =
   'px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-xl transition disabled:opacity-50 cursor-pointer'
 
