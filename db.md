@@ -1,65 +1,172 @@
-# Database Schema
+# База данных Survey360
 
-## Tables
+Данные хранятся в **SQLite** — один файл `WebApp/survey.db`. Схема описывается C#-классами в `Models/` и применяется через **Entity Framework Core** и папку `Migrations/`.
 
-### users
+## Зачем эта база
 
-| Column | Type | Constraints |
-|--------|------|-------------|
-| id | integer | PRIMARY KEY |
-| name | text | |
-| email | text | |
-| updated_at | timestamp | |
+Survey360 — система опросов **360°**:
 
-### surveys
+1. Создаётся **опрос** с **вопросами**.
+2. В опрос добавляются **участники** — кого оценивают и кто оценивает.
+3. В **матрице** отмечается, кто именно кого оценивает (пары reviewer → target).
+4. **Ответы** сохраняются на каждый вопрос от конкретного пользователя.
 
-| Column | Type | Constraints |
-|--------|------|-------------|
-| id | integer | PRIMARY KEY |
-| name | text | |
-| discription | text | |
-| status | text | |
-| created_at | timestamp | |
-| started_at | timestamp | |
-| closed_at | timestamp | |
+База как раз хранит все эти сущности и связи между ними.
 
-### questions
+---
 
-| Column | Type | Constraints |
-|--------|------|-------------|
-| id | integer | PRIMARY KEY |
-| survey_id | integer | FK → surveys.id |
-| text | text | |
-| type | text | |
-
-### answers
-
-| Column | Type | Constraints |
-|--------|------|-------------|
-| id | integer | PRIMARY KEY |
-| question_id | integer | FK → questions.id |
-| user_id | integer | FK → users.id |
-| type | text | |
-| text | text | |
-
-### survey_assignments
-
-| Column | Type | Constraints |
-|--------|------|-------------|
-| id | integer | PRIMARY KEY |
-| survey_id | integer | FK → surveys.id |
-| reviewer_id | integer | FK → users.id |
-| target_id | integer | FK → users.id |
-| is_assigned | bool | |
-| is_completed | bool | |
-
-## Relationships
+## Схема связей (картинка словами)
 
 ```
-survey_assignments.survey_id  → surveys.id
-survey_assignments.reviewer_id → users.id
-survey_assignments.target_id   → users.id
-surveys.id                     → questions.survey_id
-questions.id                   → answers.question_id
-answers.user_id                → users.id
+users ─────────────────────────────────────────────┐
+  │                                                 │
+  │         survey_participants                     │
+  ├──────── (user_id, survey_id, роли) ──── surveys │
+  │                                                 │
+  │         survey_assignments                      │
+  ├──────── (reviewer_id → target_id) ──────────────┤
+  │                                                 │
+  │         answers                                 │
+  └──────── (user_id + question_id) ─── questions ──┘
+                                              │
+                                         survey_id
 ```
+
+- Один **опрос** → много **вопросов**, **участников**, **назначений**.
+- **Ответ** всегда привязан к **вопросу** и **пользователю** (кто ответил).
+- **Назначение** — это пара «оценивающий (reviewer) оценивает оцениваемого (target)» в рамках одного опроса.
+
+---
+
+## Таблицы
+
+### `Users` — пользователи системы
+
+Люди, которые могут участвовать в опросах (оцениваемые, оценивающие, авторы).
+
+| Колонка | Тип | Описание |
+|---------|-----|----------|
+| `Id` | integer | Первичный ключ |
+| `Name` | text | ФИО или отображаемое имя |
+| `Email` | text | Email |
+| `CreatedAt` | timestamp | Когда создан |
+| `UpdatedAt` | timestamp | Когда последний раз обновлён |
+
+---
+
+### `Surveys` — опросы
+
+| Колонка | Тип | Описание |
+|---------|-----|----------|
+| `Id` | integer | Первичный ключ |
+| `Name` | text | Название опроса |
+| `Description` | text | Описание |
+| `Status` | text | Статус, например «Черновик», «Активный», «Закрыт» |
+| `CreatedAt` | timestamp | Дата создания |
+| `StartedAt` | timestamp | Когда опрос запущен (пустая дата = ещё не запускали) |
+| `ClosedAt` | timestamp | Когда закрыт |
+
+При создании через API опрос получает имя «Новый опрос» и статус «Черновик».
+
+---
+
+### `Questions` — вопросы опроса
+
+| Колонка | Тип | Описание |
+|---------|-----|----------|
+| `Id` | integer | Первичный ключ |
+| `SurveyId` | integer | FK → `Surveys.Id` — к какому опросу относится |
+| `Text` | text | Текст вопроса |
+| `Type` | text | Тип ответа: `rating`, `text`, `radio` и т.д. (строка, без enum в БД) |
+
+Удаление опроса **каскадом** удаляет все его вопросы.
+
+---
+
+### `Answers` — ответы на вопросы
+
+| Колонка | Тип | Описание |
+|---------|-----|----------|
+| `Id` | integer | Первичный ключ |
+| `QuestionId` | integer | FK → `Questions.Id` |
+| `UserId` | integer | FK → `Users.Id` — кто ответил |
+| `Text` | text | Содержимое ответа (число, текст и т.д.) |
+| `Type` | text | Тип ответа (дублирует логику вопроса для гибкости) |
+
+Удаление вопроса **каскадом** удаляет все ответы на него.
+
+---
+
+### `SurveyParticipants` — участники конкретного опроса
+
+Кто включён в опрос и в какой **роли**. Один пользователь в одном опросе — **одна строка** (уникальный индекс `SurveyId + UserId`).
+
+| Колонка | Тип | Описание |
+|---------|-----|----------|
+| `Id` | integer | Первичный ключ |
+| `SurveyId` | integer | FK → `Surveys.Id` |
+| `UserId` | integer | FK → `Users.Id` |
+| `IsTarget` | bool | `true` — этого человека **оценивают** (столбец в матрице) |
+| `IsRespondent` | bool | `true` — этот человек **оценивает других** (строка в матрице) |
+
+Один человек может быть и target, и respondent одновременно — тогда оба флага `true`.
+
+Добавление через API: `POST /api/survey/{id}/participants` с `role: "target"` или `"respondent"`.
+
+---
+
+### `SurveyAssignments` — матрица «кто кого оценивает»
+
+Каждая строка — одна **галочка** в матрице: reviewer (оценивающий) → target (оцениваемый).
+
+| Колонка | Тип | Описание |
+|---------|-----|----------|
+| `Id` | integer | Первичный ключ |
+| `SurveyId` | integer | FK → `Surveys.Id` |
+| `ReviewerId` | integer | FK → `Users.Id` — кто оценивает (respondent) |
+| `TargetId` | integer | FK → `Users.Id` — кого оценивают |
+| `IsAssigned` | bool | Назначение включено (сохраняются только `true`) |
+| `IsCompleted` | bool | Респондент уже заполнил оценку по этой паре |
+
+Сохранение матрицы: `PUT /api/survey/{id}/assignments` — **полная перезапись** всех назначений опроса (старые удаляются, новые записываются).
+
+Backend проверяет, что `ReviewerId` — respondent, а `TargetId` — target в этом опросе; иначе пара игнорируется.
+
+---
+
+## Связи (FK)
+
+| Откуда | Куда | При удалении родителя |
+|--------|------|------------------------|
+| `Questions.SurveyId` | `Surveys.Id` | CASCADE — вопросы удаляются с опросом |
+| `Answers.QuestionId` | `Questions.Id` | CASCADE |
+| `Answers.UserId` | `Users.Id` | CASCADE |
+| `SurveyParticipants.SurveyId` | `Surveys.Id` | CASCADE |
+| `SurveyParticipants.UserId` | `Users.Id` | CASCADE |
+| `SurveyAssignments.SurveyId` | `Surveys.Id` | CASCADE |
+| `SurveyAssignments.ReviewerId` | `Users.Id` | CASCADE |
+| `SurveyAssignments.TargetId` | `Users.Id` | CASCADE |
+
+---
+
+## Как менять схему
+
+1. Правите класс в `WebApp/Models/`.
+2. При необходимости — связи в `ApplicationDbContext.OnModelCreating`.
+3. Из папки `WebApp/`:
+   ```bash
+   dotnet ef migrations add КраткоеИмяИзменения
+   ```
+4. Перезапускаете backend — миграция применится автоматически.
+
+**Не редактируйте** `survey.db` вручную и не удаляйте старые файлы миграций — только новые миграции поверх текущих.
+
+---
+
+## Очистка данных (только разработка)
+
+`DELETE /api/database` удаляет все строки из всех таблиц в порядке:
+
+`Answers` → `SurveyAssignments` → `SurveyParticipants` → `Questions` → `Surveys` → `Users`
+
+Работает только когда backend запущен в **Development**.

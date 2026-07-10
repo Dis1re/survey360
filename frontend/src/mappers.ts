@@ -110,6 +110,10 @@ export function apiUserToParticipant(user: ApiUser, index: number): Participant 
   }
 }
 
+export function usersToParticipants(users: ApiUser[]): Participant[] {
+  return users.map((user, index) => apiUserToParticipant(user, index))
+}
+
 export function assignmentsToMatrix(
   assignments: ApiSurveyAssignment[],
 ): Record<string, Record<string, boolean>> {

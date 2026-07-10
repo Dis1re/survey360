@@ -28,6 +28,15 @@ public class UserController(ApplicationDbContext context) : Controller
         return user.Id;
     }
 
+    [HttpGet]
+    public async Task<IEnumerable<User>> List(CancellationToken ct)
+    {
+        return await context.Users
+            .AsNoTracking()
+            .OrderBy(u => u.Name)
+            .ToListAsync(ct);
+    }
+
     [HttpGet("{id:int}")]
     public async Task<ActionResult<User>> Get(int id, CancellationToken ct)
     {

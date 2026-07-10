@@ -34,60 +34,38 @@ const statusConfig = {
   },
 }
 
+function getSurveyInitial(title: string) {
+  const trimmed = title.trim()
+  if (!trimmed) return '?'
+  const words = trimmed.split(/\s+/).filter(Boolean)
+  if (words.length >= 2) {
+    return (words[0][0] + words[1][0]).toUpperCase()
+  }
+  return trimmed.slice(0, 2).toUpperCase()
+}
+
 function SurveyCard({
   survey,
   isActive,
-  compact = false,
   onSelect,
 }: {
   survey: Survey
   isActive: boolean
-  compact?: boolean
   onSelect: () => void
 }) {
   const cfg = statusConfig[survey.status]
 
-  const cardProps = {
-    role: 'button' as const,
-    tabIndex: 0,
-    title: survey.title,
-    onClick: onSelect,
-    onKeyDown: (e: React.KeyboardEvent) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault()
-        onSelect()
-      }
-    },
-  }
-
-  if (compact) {
-    const initial = survey.title.trim().charAt(0).toUpperCase() || '?'
-
-    return (
-      <div
-        {...cardProps}
-        aria-label={survey.title}
-        className={`p-2 rounded-xl cursor-pointer transition flex flex-col items-center gap-1 ${
-          isActive
-            ? 'bg-blue-50/60 border border-blue-100'
-            : 'hover:bg-gray-50 border border-transparent'
-        }`}
-      >
-        <span className={`w-2 h-2 rounded-full shrink-0 ${cfg.dotClass}`} />
-        <span
-          className={`text-xs font-semibold leading-none ${
-            isActive ? 'text-gray-900' : 'text-gray-600'
-          }`}
-        >
-          {initial}
-        </span>
-      </div>
-    )
-  }
-
   return (
     <div
-      {...cardProps}
+      role="button"
+      tabIndex={0}
+      onClick={onSelect}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onSelect()
+        }
+      }}
       className={`p-3 rounded-xl cursor-pointer transition ${
         isActive
           ? 'bg-blue-50/60 border border-blue-100'
@@ -112,6 +90,40 @@ function SurveyCard({
       </h4>
       <p className="text-xs text-gray-500 truncate mt-0.5">{survey.description}</p>
     </div>
+  )
+}
+
+function SurveyMiniCard({
+  survey,
+  isActive,
+  onSelect,
+}: {
+  survey: Survey
+  isActive: boolean
+  onSelect: () => void
+}) {
+  const cfg = statusConfig[survey.status]
+  const initial = getSurveyInitial(survey.title)
+
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      title={`${survey.title} · ${cfg.label}`}
+      aria-label={`${survey.title}, ${cfg.label}`}
+      aria-current={isActive ? 'true' : undefined}
+      className={`relative w-full aspect-square rounded-xl flex items-center justify-center transition cursor-pointer ${
+        isActive
+          ? 'bg-blue-50 border border-blue-200 text-blue-700'
+          : 'hover:bg-gray-50 border border-transparent text-gray-600'
+      }`}
+    >
+      <span
+        className={`absolute top-1.5 right-1.5 w-2 h-2 rounded-full ${cfg.dotClass}`}
+        aria-hidden="true"
+      />
+      <span className="text-xs font-semibold leading-none">{initial}</span>
+    </button>
   )
 }
 
@@ -154,7 +166,14 @@ export function Sidebar({
         </button>
 
         {!collapsed && (
-          <div className="text-sm font-semibold text-gray-900">Опросы</div>
+          <div className="flex items-center gap-2 min-w-0">
+            <img
+              src="/Survey360Logo.webp"
+              alt=""
+              className="w-12 h-12 object-contain shrink-0"
+            />
+            <div className="text-base font-semibold text-gray-900 truncate">Опросы 360</div>
+          </div>
         )}
         <div className="flex items-center gap-1 ml-auto">
           <button
@@ -212,17 +231,27 @@ export function Sidebar({
         </div>
       )}
 
-      <div className={`flex-1 overflow-y-auto p-2 space-y-1 ${collapsed ? 'px-1' : ''}`}>
+      <div className="flex-1 overflow-y-auto p-2 space-y-1">
         {loading ? (
-          !collapsed && <p className="px-3 py-2 text-sm text-gray-400">Загрузка…</p>
+          <p className={`py-2 text-sm text-gray-400 ${collapsed ? 'text-center' : 'px-3'}`}>
+            {collapsed ? '…' : 'Загрузка…'}
+          </p>
         ) : surveys.length === 0 ? (
           !collapsed && <p className="px-3 py-2 text-sm text-gray-400">Опросов пока нет</p>
+        ) : collapsed ? (
+          surveys.map((survey) => (
+            <SurveyMiniCard
+              key={survey.id}
+              survey={survey}
+              isActive={survey.id === activeSurveyId}
+              onSelect={() => onSurveySelect(survey.id)}
+            />
+          ))
         ) : (
           surveys.map((survey) => (
             <SurveyCard
               key={survey.id}
               survey={survey}
-              compact={collapsed}
               isActive={survey.id === activeSurveyId}
               onSelect={() => onSurveySelect(survey.id)}
             />

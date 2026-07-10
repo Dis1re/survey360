@@ -17,21 +17,18 @@ export function QuestionEditor({ question, saving = false, onSave }: QuestionEdi
   const [text, setText] = useState('')
   const [type, setType] = useState<Question['type']>('scale')
   const [options, setOptions] = useState<{ value: number; label: string }[]>([])
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (question) {
       setText(question.text)
       setType(question.type)
       setOptions(question.options ?? [])
-      setError(null)
     }
   }, [question])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!question || !text.trim()) return
-    setError(null)
     try {
       await onSave({
         ...question,
@@ -40,7 +37,7 @@ export function QuestionEditor({ question, saving = false, onSave }: QuestionEdi
         options: type === 'scale' || type === 'radio' ? options : undefined,
       })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Не удалось сохранить вопрос')
+      console.error(err)
     }
   }
 
@@ -113,10 +110,6 @@ export function QuestionEditor({ question, saving = false, onSave }: QuestionEdi
             ))}
           </div>
         </div>
-      )}
-
-      {error && (
-        <p className="text-sm text-red-600">{error}</p>
       )}
 
       <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">

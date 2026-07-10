@@ -1,9 +1,12 @@
 import type {
+  AddSurveyParticipantRequest,
   ApiAnswer,
   ApiQuestionDetails,
   ApiSurvey,
   ApiSurveyDetails,
+  ApiSurveyMatrix,
   ApiUser,
+  AssignmentEntry,
   CreateAnswerRequest,
   CreateQuestionRequest,
   CreateUserRequest,
@@ -23,7 +26,8 @@ async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T
 
   if (!response.ok) {
     const errorText = await response.text()
-    throw new Error(`Ошибка API [${response.status}]: ${errorText || response.statusText}`)
+    console.error(`API ${url} [${response.status}]:`, errorText || response.statusText)
+    throw new Error(`Ошибка API [${response.status}]`)
   }
 
   const text = await response.text()
@@ -40,6 +44,20 @@ export const surveyApi = {
 
   get: (id: number) => sendRequest<ApiSurveyDetails>(`${API}/survey/${id}`),
 
+  getMatrix: (id: number) => sendRequest<ApiSurveyMatrix>(`${API}/survey/${id}/matrix`),
+
+  addParticipant: (id: number, data: AddSurveyParticipantRequest) =>
+    sendRequest<void>(`${API}/survey/${id}/participants`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  saveAssignments: (id: number, entries: AssignmentEntry[]) =>
+    sendRequest<void>(`${API}/survey/${id}/assignments`, {
+      method: 'PUT',
+      body: JSON.stringify({ entries }),
+    }),
+
   update: (id: number, data: UpdateSurveyRequest) =>
     sendRequest<ApiSurvey>(`${API}/survey/${id}`, {
       method: 'PUT',
@@ -51,6 +69,8 @@ export const surveyApi = {
 }
 
 export const userApi = {
+  list: () => sendRequest<ApiUser[]>(`${API}/user`),
+
   create: (data: CreateUserRequest) =>
     sendRequest<number>(`${API}/user`, {
       method: 'POST',
