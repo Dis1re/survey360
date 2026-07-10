@@ -283,7 +283,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }
 
   const handleDeleteSurvey = async () => {
-    if (surveyId === null || !surveyEditable) return
+    if (surveyId === null) return
     await surveyApi.delete(surveyId)
     setSurvey(null)
     setQuestions([])
@@ -350,6 +350,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
         surveyId={surveyId}
         initial={surveyHeaderInitial}
         status={surveyStatus}
+        startedAt={survey.startedAt}
+        closedAt={survey.closedAt}
         saving={savingSurvey}
         starting={startingSurvey}
         stopping={stoppingSurvey}

@@ -16,6 +16,8 @@ interface SurveyHeaderProps {
   surveyId: number
   initial: SurveyHeaderForm
   status: Survey['status']
+  startedAt?: string
+  closedAt?: string
   saving?: boolean
   starting?: boolean
   stopping?: boolean
@@ -50,10 +52,21 @@ function todayInputDate() {
   return `${y}-${m}-${d}`
 }
 
+function formatHeaderDate(value: string | undefined) {
+  if (!value || value.startsWith('0001')) return null
+  return new Date(value).toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
 export function SurveyHeader({
   surveyId,
   initial,
   status,
+  startedAt,
+  closedAt,
   saving = false,
   starting = false,
   stopping = false,
@@ -82,6 +95,8 @@ export function SurveyHeader({
   const canStart = questionsCount > 0
   const readOnly = status !== 'draft'
   const showPublicLink = status === 'active'
+  const startDateLabel = formatHeaderDate(startedAt)
+  const endDateLabel = formatHeaderDate(closedAt)
 
   useEffect(() => {
     setForm(initial)
@@ -256,6 +271,17 @@ export function SurveyHeader({
               readOnly={readOnly}
             />
 
+            {readOnly && status === 'active' && (startDateLabel || endDateLabel) && (
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/75">
+                {startDateLabel && <span>Начало: {startDateLabel}</span>}
+                {endDateLabel ? (
+                  <span>Окончание: {endDateLabel}</span>
+                ) : (
+                  <span>Окончание: не задано</span>
+                )}
+              </div>
+            )}
+
             {dirty && !readOnly && (
               <button
                 type="submit"
@@ -335,7 +361,7 @@ export function SurveyHeader({
                 + Добавить пользователя
               </button>
             )}
-            {onDelete && !readOnly && (
+            {onDelete && (
               <button
                 type="button"
                 onClick={handleDeleteSurvey}
@@ -344,6 +370,43 @@ export function SurveyHeader({
               >
                 {deleting ? 'Удаление…' : 'Удалить опрос'}
               </button>
+            )}
+            {status === 'closed' && (startDateLabel || endDateLabel) && (
+              <div
+                className="rounded-xl border p-3.5 space-y-3"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  borderColor: 'rgba(255,255,255,0.25)',
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+                  >
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-semibold text-white/90 uppercase tracking-wide">
+                    Период проведения
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {startDateLabel && (
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-white/60 text-xs">Начало</span>
+                      <span className="text-white font-medium tabular-nums">{startDateLabel}</span>
+                    </div>
+                  )}
+                  {endDateLabel && (
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-white/60 text-xs">Окончание</span>
+                      <span className="text-white font-medium tabular-nums">{endDateLabel}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
           </div>
         </div>
