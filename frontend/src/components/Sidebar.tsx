@@ -67,10 +67,10 @@ function SurveyCard({
           onSelect()
         }
       }}
-      className={`p-3 rounded-xl cursor-pointer transition ${
+      className={`p-3 rounded-xl cursor-pointer transition border ${
         isActive
-          ? 'bg-blue-50/60 border border-blue-100'
-          : 'hover:bg-gray-50 border border-transparent'
+          ? 'bg-orange-50 border-orange-200'
+          : 'bg-white border-orange-200 hover:bg-gray-50 hover:border-orange-300'
       }`}
     >
       <div className="flex items-center justify-between mb-1">
@@ -115,8 +115,8 @@ function SurveyMiniCard({
       aria-current={isActive ? 'true' : undefined}
       className={`relative w-full aspect-square rounded-xl flex items-center justify-center transition cursor-pointer ${
         isActive
-          ? 'bg-blue-50 border border-blue-200 text-blue-700'
-          : 'hover:bg-gray-50 border border-transparent text-gray-600'
+          ? 'bg-orange-50 border border-orange-200 text-orange-700'
+          : 'hover:bg-gray-50 border border-orange-200 text-gray-600'
       }`}
     >
       <span
@@ -150,12 +150,12 @@ export function Sidebar({
   }
 
   return (
-    <aside className={`bg-white border-r border-gray-200 flex flex-col flex-shrink-0 h-screen ${collapsed ? 'w-20' : 'w-80'}`}>
-      <div className="p-4 border-b border-gray-100 flex items-center justify-between gap-3">
+    <aside className={`flex flex-col flex-shrink-0 h-screen ${collapsed ? 'w-20' : 'w-80'}`}>
+      <div className="p-4 flex items-center justify-between gap-3 bg-white border-b border-gray-100">
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
-          className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-2 cursor-pointer"
+          className="shrink-0 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 transition p-2 cursor-pointer hover:bg-gray-200"
           aria-label={collapsed ? 'Показать боковую панель' : 'Скрыть боковую панель'}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -167,51 +167,53 @@ export function Sidebar({
           </svg>
         </button>
 
-        {!collapsed && (
-          <div className="flex items-center gap-2 min-w-0">
-            <img
-              src="/Survey360Logo.webp"
-              alt=""
-              className="w-12 h-12 object-contain shrink-0"
-            />
-            <div className="text-base font-semibold text-gray-900 truncate">Опросы 360</div>
-          </div>
-        )}
-        <div className="flex items-center gap-1 ml-auto">
-          <button
-            type="button"
-            onClick={onOpenDetails}
-            title="Детали опроса"
-            aria-label="Детали опроса"
-            className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            onClick={onOpenDev}
-            title="Dev-страница"
-            aria-label="Dev-страница"
-            className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            onClick={onOpenTake}
-            title="Пройти опрос"
-            aria-label="Пройти опрос"
-            className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
+        {!collapsed ? (
+          <>
+            <div className="flex items-center gap-2 min-w-0">
+              <img
+                src="/Survey360Logo.webp"
+                alt=""
+                className="w-12 h-12 object-contain shrink-0"
+              />
+              <div className="text-base font-semibold text-gray-900 truncate">Опросы 360</div>
+            </div>
+            <div className="flex items-center gap-1 ml-auto">
+              <button
+                type="button"
+                onClick={onOpenDetails}
+                title="Детали опроса"
+                aria-label="Детали опроса"
+                className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={onOpenDev}
+                title="Dev-страница"
+                aria-label="Dev-страница"
+                className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={onOpenTake}
+                title="Пройти опрос"
+                aria-label="Пройти опрос"
+                className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+          </>
+        ) : null}
       </div>
 
       {!collapsed && (

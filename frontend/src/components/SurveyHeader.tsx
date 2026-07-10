@@ -113,7 +113,9 @@ export function SurveyHeader({ initial, status, saving = false, onSave, onUserCr
       className="flex-shrink-0"
       style={{
         background:
-          'linear-gradient(90deg, rgba(255,134,0,1) 0%, rgba(255,107,0,1) 45%, rgba(232,93,4,1) 100%)',
+          'linear-gradient(90deg, rgba(255,134,0,1) 0%, rgba(255,107,0,1) 55%, rgba(232,93,4,1) 100%)',
+        backgroundSize: '150% 100%',
+        backgroundRepeat: 'no-repeat',
       }}
     >
       <style>{`
