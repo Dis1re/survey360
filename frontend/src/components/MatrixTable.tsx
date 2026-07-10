@@ -132,18 +132,20 @@ export function MatrixTable({
                      {targets.map((target) => (
                        <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px]">
                          <div className="flex flex-col items-center gap-1">
-                           <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
-                             {target.initial}
+                           <div className="relative inline-flex">
+                             <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
+                               {target.initial}
+                             </div>
+                             <button
+                               type="button"
+                               onClick={() => onRemoveParticipant(target.id, 'target')}
+                               className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                               title="Удалить объект"
+                             >
+                               ✕
+                             </button>
                            </div>
                            <span>{target.name}</span>
-                           <button
-                             type="button"
-                             onClick={() => onRemoveParticipant(target.id, 'target')}
-                             className="mt-1 w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer"
-                             title="Удалить объект"
-                           >
-                             ✕
-                           </button>
                          </div>
                        </th>
                      ))}
@@ -154,18 +156,20 @@ export function MatrixTable({
                     <tr key={respondent.id} className="hover:bg-blue-50/30 transition">
                        <td className="p-4 font-medium text-gray-900 border-r border-gray-100">
                          <div className="flex items-center gap-2">
-                           <div className={`w-6 h-6 rounded-full ${respondent.color} flex items-center justify-center text-xs font-bold shrink-0`}>
-                             {respondent.initial}
+                           <div className="relative inline-flex">
+                             <div className={`w-6 h-6 rounded-full ${respondent.color} flex items-center justify-center text-xs font-bold shrink-0`}>
+                               {respondent.initial}
+                             </div>
+                             <button
+                               type="button"
+                               onClick={() => onRemoveParticipant(respondent.id, 'respondent')}
+                               className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                               title="Удалить респондента"
+                             >
+                               ✕
+                             </button>
                            </div>
                            {respondent.name}
-                           <button
-                             type="button"
-                             onClick={() => onRemoveParticipant(respondent.id, 'respondent')}
-                             className="ml-auto w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer"
-                             title="Удалить респондента"
-                           >
-                             ✕
-                           </button>
                          </div>
                        </td>
                       {targets.map((target) => (
