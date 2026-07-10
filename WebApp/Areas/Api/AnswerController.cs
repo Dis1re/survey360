@@ -5,7 +5,7 @@ using WebApp.Models;
 
 namespace WebApp.Areas.Api;
 
-public record CreateAnswerRequest(int QuestionId, int UserId, string Text, string Type);
+public record CreateAnswerRequest(int QuestionId, int UserId, int TargetId, string Text, string Type);
 
 [Area("api")]
 [ApiController]
@@ -23,10 +23,18 @@ public class AnswerController(ApplicationDbContext context) : Controller
         if (!userExists)
             return NotFound($"Пользователь с id {request.UserId} не найден");
 
+        if (request.TargetId <= 0)
+            return BadRequest("TargetId обязателен");
+
+        var targetExists = await context.Users.AnyAsync(u => u.Id == request.TargetId, ct);
+        if (!targetExists)
+            return NotFound($"Пользователь с id {request.TargetId} не найден");
+
         var answer = new Answer
         {
             QuestionId = request.QuestionId,
             UserId = request.UserId,
+            TargetId = request.TargetId,
             Text = request.Text,
             Type = request.Type,
         };

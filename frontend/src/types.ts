@@ -76,6 +76,7 @@ export interface UpdateQuestionRequest {
 export interface CreateAnswerRequest {
   questionId: number
   userId: number
+  targetId: number
   text: string
   type: string
 }
@@ -106,6 +107,7 @@ export interface ApiAnswer {
   id: number
   questionId: number
   userId: number
+  targetId: number
   text: string
   type: string
 }
@@ -146,4 +148,11 @@ export interface AssignmentEntry {
 export interface CompleteAssignmentRequest {
   reviewerId: number
   targetId: number
+}
+
+export interface SurveyReportInfo {
+  answerCount: number
+  assignedCount: number
+  completedCount: number
+  allAssignedCompleted: boolean
 }

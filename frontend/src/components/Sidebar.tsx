@@ -47,11 +47,11 @@ function getSurveyInitial(title: string) {
 
 function SurveyCard({
   survey,
-  isActive,
+  isSelected,
   onSelect,
 }: {
   survey: Survey
-  isActive: boolean
+  isSelected: boolean
   onSelect: () => void
 }) {
   const cfg = statusConfig[survey.status]
@@ -68,9 +68,9 @@ function SurveyCard({
         }
       }}
       className={`p-3 rounded-xl cursor-pointer transition border ${
-        isActive
-          ? 'bg-orange-50 border-orange-200'
-          : 'bg-white border-orange-200 hover:bg-gray-50 hover:border-orange-300'
+        isSelected
+          ? 'bg-white border-l-4 border-l-[#FF8600] border-gray-200 shadow-sm'
+          : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
       }`}
     >
       <div className="flex items-center justify-between mb-1">
@@ -84,7 +84,7 @@ function SurveyCard({
       </div>
       <h4
         className={`font-medium text-sm truncate ${
-          isActive ? 'text-gray-900' : 'text-gray-700'
+          isSelected ? 'text-gray-900' : 'text-gray-700'
         }`}
       >
         {survey.title}
@@ -96,11 +96,11 @@ function SurveyCard({
 
 function SurveyMiniCard({
   survey,
-  isActive,
+  isSelected,
   onSelect,
 }: {
   survey: Survey
-  isActive: boolean
+  isSelected: boolean
   onSelect: () => void
 }) {
   const cfg = statusConfig[survey.status]
@@ -112,11 +112,11 @@ function SurveyMiniCard({
       onClick={onSelect}
       title={`${survey.title} · ${cfg.label}`}
       aria-label={`${survey.title}, ${cfg.label}`}
-      aria-current={isActive ? 'true' : undefined}
+      aria-current={isSelected ? 'true' : undefined}
       className={`relative w-full aspect-square rounded-xl flex items-center justify-center transition cursor-pointer ${
-        isActive
-          ? 'bg-orange-50 border border-orange-200 text-orange-700'
-          : 'hover:bg-gray-50 border border-orange-200 text-gray-600'
+        isSelected
+          ? 'bg-white border-2 border-[#FF8600] text-orange-700 shadow-sm'
+          : 'hover:bg-gray-50 border border-gray-200 text-gray-600'
       }`}
     >
       <span
@@ -177,6 +177,8 @@ export function Sidebar({
               />
               <div className="text-base font-semibold text-gray-900 truncate">Опросы 360</div>
             </div>
+            
+            {/* TEMP: FOR DEBUGGING */}
             <div className="flex items-center gap-1 ml-auto">
               <button
                 type="button"
@@ -198,17 +200,6 @@ export function Sidebar({
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                </svg>
-              </button>
-              <button
-                type="button"
-                onClick={onOpenTake}
-                title="Пройти опрос"
-                aria-label="Пройти опрос"
-                className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
                 </svg>
               </button>
             </div>
@@ -258,7 +249,7 @@ export function Sidebar({
             <SurveyMiniCard
               key={survey.id}
               survey={survey}
-              isActive={survey.id === activeSurveyId}
+              isSelected={survey.id === activeSurveyId}
               onSelect={() => onSurveySelect(survey.id)}
             />
           ))
@@ -267,7 +258,7 @@ export function Sidebar({
             <SurveyCard
               key={survey.id}
               survey={survey}
-              isActive={survey.id === activeSurveyId}
+              isSelected={survey.id === activeSurveyId}
               onSelect={() => onSurveySelect(survey.id)}
             />
           ))

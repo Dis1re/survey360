@@ -5,15 +5,26 @@ import type { Survey } from '../types'
 export interface SurveyHeaderForm {
   title: string
   description: string
+}
+
+export interface StartSurveyPayload extends SurveyHeaderForm {
   startDate: string
   endDate: string
 }
 
 interface SurveyHeaderProps {
+  surveyId: number
   initial: SurveyHeaderForm
   status: Survey['status']
+  startedAt?: string
+  closedAt?: string
   saving?: boolean
+  starting?: boolean
+  stopping?: boolean
+  questionsCount?: number
   onSave: (data: SurveyHeaderForm) => Promise<void>
+  onStartSurvey: (data: StartSurveyPayload) => Promise<void>
+  onStopSurvey: (data: SurveyHeaderForm) => Promise<void>
   onUserCreated?: () => void | Promise<void>
   onDelete?: () => Promise<void>
 }
@@ -27,20 +38,65 @@ const statusConfig = {
 const inputClass =
   'w-full bg-white/15 border border-white/30 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/60'
 
-const dateInputClass = `${inputClass} survey-header-date`
+const modalDateClass =
+  'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#FF8600]'
 
 const DESCRIPTION_MIN_ROWS = 3
 const DESCRIPTION_MAX_HEIGHT = 168
 
-export function SurveyHeader({ initial, status, saving = false, onSave, onUserCreated, onDelete }: SurveyHeaderProps) {
+function todayInputDate() {
+  const now = new Date()
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
+
+function formatHeaderDate(value: string | undefined) {
+  if (!value || value.startsWith('0001')) return null
+  return new Date(value).toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+}
+
+export function SurveyHeader({
+  surveyId,
+  initial,
+  status,
+  startedAt,
+  closedAt,
+  saving = false,
+  starting = false,
+  stopping = false,
+  questionsCount = 0,
+  onSave,
+  onStartSurvey,
+  onStopSurvey,
+  onUserCreated,
+  onDelete,
+}: SurveyHeaderProps) {
   const [form, setForm] = useState(initial)
   const [dirty, setDirty] = useState(false)
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
   const [userModalOpen, setUserModalOpen] = useState(false)
+  const [startModalOpen, setStartModalOpen] = useState(false)
+  const [startDates, setStartDates] = useState({ startDate: '', endDate: '' })
+  const [showEndDate, setShowEndDate] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
+  const [modalLinkCopied, setModalLinkCopied] = useState(false)
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
   const [userSaving, setUserSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+
+  const publicLink = `${window.location.origin}/survey/${surveyId}`
+  const canStart = questionsCount > 0
+  const readOnly = status !== 'draft'
+  const showPublicLink = status === 'active'
+  const startDateLabel = formatHeaderDate(startedAt)
+  const endDateLabel = formatHeaderDate(closedAt)
 
   useEffect(() => {
     setForm(initial)
@@ -60,9 +116,19 @@ export function SurveyHeader({ initial, status, saving = false, onSave, onUserCr
     resizeDescription()
   }, [form.description, initial.description])
 
+  useEffect(() => {
+    if (!startModalOpen) return
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !starting) setStartModalOpen(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [startModalOpen, starting])
+
   const cfg = statusConfig[status]
 
   const updateField = <K extends keyof SurveyHeaderForm>(key: K, value: SurveyHeaderForm[K]) => {
+    if (readOnly) return
     setForm((prev) => ({ ...prev, [key]: value }))
     setDirty(true)
   }
@@ -94,6 +160,56 @@ export function SurveyHeader({ initial, status, saving = false, onSave, onUserCr
     }
   }
 
+  const handleCopyLink = async (link: string, target: 'header' | 'modal') => {
+    try {
+      await navigator.clipboard.writeText(link)
+      if (target === 'header') {
+        setLinkCopied(true)
+        window.setTimeout(() => setLinkCopied(false), 2000)
+      } else {
+        setModalLinkCopied(true)
+        window.setTimeout(() => setModalLinkCopied(false), 2000)
+      }
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleOpenStartModal = () => {
+    setStartDates({ startDate: todayInputDate(), endDate: '' })
+    setShowEndDate(false)
+    setModalLinkCopied(false)
+    setStartModalOpen(true)
+  }
+
+  const handleStartSurvey = async () => {
+    if (!form.title.trim()) return
+    try {
+      await onStartSurvey({
+        title: form.title,
+        description: form.description,
+        startDate: startDates.startDate,
+        endDate: startDates.endDate,
+      })
+      setStartModalOpen(false)
+      setDirty(false)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleStopSurvey = async () => {
+    const title = form.title.trim() || 'этот опрос'
+    if (!confirm(`Остановить опрос «${title}»? Респонденты больше не смогут его заполнять.`)) return
+
+    try {
+      await onStopSurvey(form)
+      setDirty(false)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   const handleDeleteSurvey = async () => {
     const title = form.title.trim() || 'этот опрос'
     if (!confirm(`Удалить опрос «${title}»?`)) return
@@ -118,26 +234,6 @@ export function SurveyHeader({ initial, status, saving = false, onSave, onUserCr
         backgroundRepeat: 'no-repeat',
       }}
     >
-      <style>{`
-        .survey-header-date {
-          color: #fff;
-        }
-        .survey-header-date::-webkit-datetime-edit,
-        .survey-header-date::-webkit-datetime-edit-fields-wrapper,
-        .survey-header-date::-webkit-datetime-edit-text,
-        .survey-header-date::-webkit-datetime-edit-month-field,
-        .survey-header-date::-webkit-datetime-edit-day-field,
-        .survey-header-date::-webkit-datetime-edit-year-field {
-          color: #fff;
-          -webkit-text-fill-color: #fff;
-        }
-        .survey-header-date::-webkit-calendar-picker-indicator {
-          filter: invert(1);
-          opacity: 0.85;
-          cursor: pointer;
-        }
-      `}</style>
-
       <form onSubmit={handleSubmit} className="p-6">
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row lg:items-start justify-between gap-4">
           <div className="flex-1 space-y-3">
@@ -145,10 +241,11 @@ export function SurveyHeader({ initial, status, saving = false, onSave, onUserCr
               <div className="flex-1 min-w-[200px]">
                 <input
                   type="text"
-                  className={`${inputClass} text-xl font-bold`}
+                  className={`${inputClass} text-xl font-bold ${readOnly ? 'opacity-90 cursor-default' : ''}`}
                   value={form.title}
                   onChange={(e) => updateField('title', e.target.value)}
                   placeholder="Название опроса"
+                  readOnly={readOnly}
                 />
               </div>
               <span
@@ -166,14 +263,26 @@ export function SurveyHeader({ initial, status, saving = false, onSave, onUserCr
 
             <textarea
               ref={descriptionRef}
-              className={`${inputClass} resize-none leading-relaxed`}
+              className={`${inputClass} resize-none leading-relaxed ${readOnly ? 'opacity-90 cursor-default' : ''}`}
               rows={DESCRIPTION_MIN_ROWS}
               value={form.description}
               onChange={(e) => updateField('description', e.target.value)}
               placeholder="Описание опроса"
+              readOnly={readOnly}
             />
 
-            {dirty && (
+            {readOnly && status === 'active' && (startDateLabel || endDateLabel) && (
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/75">
+                {startDateLabel && <span>Начало: {startDateLabel}</span>}
+                {endDateLabel ? (
+                  <span>Окончание: {endDateLabel}</span>
+                ) : (
+                  <span>Окончание: не задано</span>
+                )}
+              </div>
+            )}
+
+            {dirty && !readOnly && (
               <button
                 type="submit"
                 disabled={saving || !form.title.trim()}
@@ -184,49 +293,74 @@ export function SurveyHeader({ initial, status, saving = false, onSave, onUserCr
             )}
           </div>
 
-          <div className="flex flex-col gap-3 self-start shrink-0">
-            <div
-              className="flex items-center gap-3 text-xs border p-3 rounded-xl"
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.12)',
-                borderColor: 'rgba(255,255,255,0.25)',
-              }}
-            >
-              <svg className="w-4 h-4 text-white/70 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
+          <div className="flex flex-col gap-3 self-start shrink-0 w-full lg:w-72">
+            {showPublicLink ? (
               <div className="space-y-2">
-                <span className="block text-white/70 font-medium">Период проведения</span>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="date"
-                    className={dateInputClass}
-                    style={{ color: '#fff' }}
-                    value={form.startDate}
-                    onChange={(e) => updateField('startDate', e.target.value)}
-                  />
-                  <span className="text-white">—</span>
-                  <input
-                    type="date"
-                    className={dateInputClass}
-                    style={{ color: '#fff' }}
-                    value={form.endDate}
-                    onChange={(e) => updateField('endDate', e.target.value)}
-                  />
+                <div
+                  className="border p-3 rounded-xl space-y-2"
+                  style={{
+                    backgroundColor: 'rgba(255,255,255,0.12)',
+                    borderColor: 'rgba(255,255,255,0.25)',
+                  }}
+                >
+                  <span className="block text-xs text-white/70 font-medium">Ссылка на опрос</span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      readOnly
+                      value={publicLink}
+                      className="flex-1 min-w-0 bg-white/15 border border-white/30 rounded-lg px-2.5 py-1.5 text-xs text-white truncate"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleCopyLink(publicLink, 'header')}
+                      className="shrink-0 px-2.5 py-1.5 text-xs font-medium text-[#FF8600] bg-white hover:bg-white/90 rounded-lg transition cursor-pointer"
+                    >
+                      {linkCopied ? 'Скопировано' : 'Копировать'}
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-white/60 leading-relaxed">
+                    Одна ссылка для всех — респондент выбирает себя при заполнении.
+                  </p>
                 </div>
+                <button
+                  type="button"
+                  onClick={handleStopSurvey}
+                  disabled={stopping}
+                  className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl transition cursor-pointer border border-red-700"
+                >
+                  {stopping ? 'Остановка…' : 'Остановить опрос'}
+                </button>
               </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setUserModalOpen(true)}
-              className="w-full px-3 py-2 text-xs font-medium text-white border rounded-xl transition cursor-pointer hover:bg-white/10"
-              style={{
-                backgroundColor: 'rgba(255,255,255,0.12)',
-                borderColor: 'rgba(255,255,255,0.25)',
-              }}
-            >
-              + Добавить пользователя
-            </button>
+            ) : status === 'draft' ? (
+              <div className="space-y-1.5">
+                <button
+                  type="button"
+                  onClick={handleOpenStartModal}
+                  disabled={!canStart}
+                  className="w-full px-4 py-2.5 text-sm font-semibold text-[#FF8600] bg-white hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition cursor-pointer shadow-sm"
+                >
+                  Начать опрос
+                </button>
+                {!canStart && (
+                  <p className="text-[11px] text-white/60 text-center">Добавьте хотя бы один вопрос</p>
+                )}
+              </div>
+            ) : null}
+
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => setUserModalOpen(true)}
+                className="w-full px-3 py-2 text-xs font-medium text-white border rounded-xl transition cursor-pointer hover:bg-white/10"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  borderColor: 'rgba(255,255,255,0.25)',
+                }}
+              >
+                + Добавить пользователя
+              </button>
+            )}
             {onDelete && (
               <button
                 type="button"
@@ -237,9 +371,164 @@ export function SurveyHeader({ initial, status, saving = false, onSave, onUserCr
                 {deleting ? 'Удаление…' : 'Удалить опрос'}
               </button>
             )}
+            {status === 'closed' && (startDateLabel || endDateLabel) && (
+              <div
+                className="rounded-xl border p-3.5 space-y-3"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  borderColor: 'rgba(255,255,255,0.25)',
+                }}
+              >
+                <div className="flex items-center gap-2">
+                  <div
+                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
+                  >
+                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-semibold text-white/90 uppercase tracking-wide">
+                    Период проведения
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {startDateLabel && (
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-white/60 text-xs">Начало</span>
+                      <span className="text-white font-medium tabular-nums">{startDateLabel}</span>
+                    </div>
+                  )}
+                  {endDateLabel && (
+                    <div className="flex items-center justify-between gap-3 text-sm">
+                      <span className="text-white/60 text-xs">Окончание</span>
+                      <span className="text-white font-medium tabular-nums">{endDateLabel}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </form>
+
+      {startModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
+          <div
+            className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="start-survey-title"
+          >
+            <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3 border-b border-gray-100">
+              <div>
+                <h2 id="start-survey-title" className="text-base font-bold text-gray-900">
+                  Опубликовать опрос
+                </h2>
+                <p className="text-sm text-gray-500 mt-1 leading-relaxed">
+                  Опрос станет доступен по ссылке. Респонденты выбирают себя из списка участников.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStartModalOpen(false)}
+                disabled={starting}
+                className="shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition cursor-pointer disabled:opacity-50"
+                aria-label="Закрыть"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="px-5 py-4 space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                  Ссылка на опрос
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={publicLink}
+                    className="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 bg-gray-50 truncate"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleCopyLink(publicLink, 'modal')}
+                    className="shrink-0 px-3 py-2 text-sm font-medium text-[#FF8600] border border-[#FF8600]/30 hover:bg-[#FF8600]/5 rounded-xl transition cursor-pointer"
+                  >
+                    {modalLinkCopied ? 'Скопировано' : 'Копировать'}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                  Дата начала
+                </label>
+                <input
+                  type="date"
+                  className={modalDateClass}
+                  value={startDates.startDate}
+                  onChange={(e) => setStartDates((prev) => ({ ...prev, startDate: e.target.value }))}
+                  disabled={starting}
+                />
+
+                {showEndDate ? (
+                  <div className="mt-3">
+                    <div className="flex items-baseline justify-between gap-2 mb-2">
+                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        Дата окончания
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowEndDate(false)
+                          setStartDates((prev) => ({ ...prev, endDate: '' }))
+                        }}
+                        disabled={starting}
+                        className="text-[11px] text-gray-400 hover:text-gray-600 transition cursor-pointer disabled:opacity-50"
+                      >
+                        Убрать
+                      </button>
+                    </div>
+                    <input
+                      type="date"
+                      className={modalDateClass}
+                      value={startDates.endDate}
+                      min={startDates.startDate || undefined}
+                      onChange={(e) => setStartDates((prev) => ({ ...prev, endDate: e.target.value }))}
+                      disabled={starting}
+                    />
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowEndDate(true)}
+                    disabled={starting}
+                    className="mt-2 text-sm text-[#FF8600] hover:text-[#FF6B00] transition cursor-pointer disabled:opacity-50"
+                  >
+                    + Добавить дату окончания
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="px-5 pb-5">
+              <button
+                type="button"
+                onClick={handleStartSurvey}
+                disabled={starting || !form.title.trim()}
+                className="w-full py-2.5 text-sm font-semibold text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition cursor-pointer"
+              >
+                {starting ? 'Запуск…' : 'Начать опрос'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {userModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => !userSaving && setUserModalOpen(false)}>
