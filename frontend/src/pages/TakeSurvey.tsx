@@ -216,6 +216,20 @@ function TargetPicker({
   )
 }
 
+function DogThumbsAnimation() {
+  return (
+    <div className="dog-toast fixed bottom-8 right-8 z-50">
+      <div className="dog-card bg-white border border-gray-200 rounded-2xl p-3 shadow-lg flex items-center gap-3">
+        <div className="dog-emoji">🐶<span className="ml-1 paw">👍</span></div>
+        <div className="text-left">
+          <div className="text-sm font-semibold text-gray-900">Спасибо!</div>
+          <div className="text-xs text-gray-500">Ответы сохранены — вы молодец</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyProps) {
   const initialParams = parseSurveyResponseParams()
   const [survey, setSurvey] = useState<ApiSurvey | null>(null)
@@ -455,29 +469,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
     )
   }
 
-  function DogThumbsAnimation() {
-    return (
-      <>
-        <style>{`
-          .dog-toast { pointer-events: none; }
-          .dog-card { animation: pop .45s cubic-bezier(.2,.9,.2,1); }
-          @keyframes pop { from { transform: translateY(12px) scale(.98); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
-          .dog-emoji { font-size: 28px; line-height: 1; }
-          .paw { display: inline-block; transform-origin: 50% 60%; animation: paw-wave 0.9s ease-in-out 0.15s 3 both; }
-          @keyframes paw-wave { 0% { transform: rotate(0deg) } 40% { transform: rotate(-25deg) } 70% { transform: rotate(8deg) } 100% { transform: rotate(0deg) } }
-        `}</style>
-        <div className="dog-toast fixed bottom-8 right-8 z-50">
-          <div className="dog-card bg-white border border-gray-200 rounded-2xl p-3 shadow-lg flex items-center gap-3">
-            <div className="dog-emoji">🐶<span className="ml-1 paw">👍</span></div>
-            <div className="text-left">
-              <div className="text-sm font-semibold text-gray-900">Спасибо!</div>
-              <div className="text-xs text-gray-500">Ответы сохранены — вы молодец</div>
-            </div>
-          </div>
-        </div>
-      </>
-    )
-  }
+
 
   return (
     <div className="max-w-2xl mx-auto p-6">
