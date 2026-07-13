@@ -402,7 +402,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       {activeTab === 'editor' && (
         <div className="p-6">
           <div className="max-w-6xl mx-auto space-y-3">
-            <div className="flex justify-end gap-2">
+            <div className="flex justify-start gap-2">
               <button
                 type="button"
                 onClick={() => setTemplateModal('save')}
@@ -412,13 +412,15 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               >
                 Сохранить как шаблон
               </button>
-              <button
-                type="button"
-                onClick={() => setTemplateModal('load')}
-                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
-              >
-                Загрузить из шаблона
-              </button>
+              {surveyEditable && (
+                <button
+                  type="button"
+                  onClick={() => setTemplateModal('load')}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Загрузить из шаблона
+                </button>
+              )}
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1">
