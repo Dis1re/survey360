@@ -42,7 +42,8 @@ public class AuthController(ApplicationDbContext context) : Controller
         if (string.IsNullOrEmpty(raw))
             return BadRequest("Email обязателен");
 
-        if (raw.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+        if (raw.Equals("Admin", StringComparison.OrdinalIgnoreCase)
+            || raw.Equals("Админ", StringComparison.OrdinalIgnoreCase))
         {
             var devAdmin = await EnsureDevAdminAsync(ct);
             await SignInAsync(devAdmin);

@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 import { userApi } from '../api'
-import { UserBar } from './UserBar'
 import type { Survey } from '../types'
 
 export interface SurveyHeaderForm {
@@ -295,8 +294,6 @@ export function SurveyHeader({
           </div>
 
           <div className="flex flex-col gap-3 self-start shrink-0 w-full lg:w-72">
-            <UserBar variant="header" />
-
             {showPublicLink ? (
               <div className="space-y-2">
                 <div

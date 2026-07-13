@@ -61,6 +61,7 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
             CreatedAt = DateTime.UtcNow,
             StartedAt = default,
             ClosedAt = default,
+            CreatedByUserId = User.GetUserId(),
         };
         await context.Surveys.AddAsync(survey, ct);
         await context.SaveChangesAsync(ct);
@@ -71,10 +72,27 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
     [HttpGet]
     public async Task<IEnumerable<Survey>> List(CancellationToken ct)
     {
-        return await context.Surveys
+        var userId = User.GetUserId();
+        if (userId is null)
+            return [];
+
+        var surveys = await context.Surveys.AsNoTracking().ToListAsync(ct);
+
+        var respondentSurveyIds = await context.SurveyAssignments
             .AsNoTracking()
-            .OrderByDescending(s => s.CreatedAt)
+            .Where(a => a.ReviewerId == userId.Value && a.IsAssigned)
+            .Select(a => a.SurveyId)
+            .Distinct()
             .ToListAsync(ct);
+
+        var respondentSurveyIdSet = respondentSurveyIds.ToHashSet();
+
+        return surveys
+            .Where(s =>
+                (IsSurveyDraft(s.Status) && s.CreatedByUserId == userId.Value) ||
+                (!IsSurveyDraft(s.Status) && respondentSurveyIdSet.Contains(s.Id)))
+            .OrderByDescending(s => s.CreatedAt)
+            .ToList();
     }
 
     [HttpGet("{id:int}")]

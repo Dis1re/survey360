@@ -112,11 +112,13 @@ function TargetPicker({
   userId,
   onSelect,
   onBack,
+  backLabel = 'Сменить пользователя',
 }: {
   surveyId: number
   userId: number
   onSelect: (id: number, completed: boolean) => void
   onBack: () => void
+  backLabel?: string
 }) {
   const [targets, setTargets] = useState<TargetEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -199,7 +201,7 @@ function TargetPicker({
           onClick={onBack}
           className="px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
         >
-          Сменить пользователя
+          {backLabel}
         </button>
         <button
           type="button"
@@ -231,6 +233,7 @@ export function TakeSurvey({
   const [users, setUsers] = useState<ApiUser[]>([])
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [loading, setLoading] = useState(true)
+  const [autoResolvingTarget, setAutoResolvingTarget] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -248,13 +251,54 @@ export function TakeSurvey({
 
   const lockedUserId = authUserId ?? userId
   const showUserModal = !hideUserSwitch && (userModalOpen || userId === null)
-  const showTargetModal = !showUserModal && (targetModalOpen || targetId === null)
+  const showTargetModal =
+    !showUserModal &&
+    lockedUserId !== null &&
+    (targetModalOpen || (!hideUserSwitch && targetId === null))
 
   useEffect(() => {
     if (authUserId !== null) {
       setUserId(authUserId)
     }
   }, [authUserId])
+
+  useEffect(() => {
+    if (!hideUserSwitch || lockedUserId === null || targetId !== null || targetModalOpen) return
+
+    if (initialParams.targetId !== null) {
+      setTargetId(initialParams.targetId)
+      return
+    }
+
+    let cancelled = false
+    setAutoResolvingTarget(true)
+    Promise.all([surveyApi.get(surveyId), userApi.list()])
+      .then(([details, userList]) => {
+        if (cancelled) return
+        const entries = details.assignments
+          .filter((a) => a.isAssigned && a.reviewerId === lockedUserId)
+          .map((a) => {
+            const user = userList.find((u) => u.id === a.targetId)
+            return user ? { user, completed: a.isCompleted } : null
+          })
+          .filter((e): e is TargetEntry => e !== null)
+
+        const pick = entries.find((t) => !t.completed) ?? entries[0]
+        if (pick) {
+          setTargetId(pick.user.id)
+          setReadOnly(pick.completed)
+          if (!pick.completed) setAnswers({})
+        }
+      })
+      .catch(console.error)
+      .finally(() => {
+        if (!cancelled) setAutoResolvingTarget(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [hideUserSwitch, lockedUserId, targetId, targetModalOpen, surveyId, initialParams.targetId])
 
   useEffect(() => {
     setLoading(true)
@@ -414,10 +458,20 @@ export function TakeSurvey({
     }
   }
 
-  if (loading) {
+  if (loading || autoResolvingTarget) {
     return (
       <div className="flex items-center justify-center h-full min-h-[50vh] p-6">
         <p className="text-sm text-gray-500">Загрузка опроса…</p>
+      </div>
+    )
+  }
+
+  if (hideUserSwitch && lockedUserId !== null && targetId === null && !targetModalOpen) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[50vh] p-6">
+        <div className="text-center max-w-md">
+          <p className="text-sm text-gray-500">Для вас нет назначенных целей в этом опросе</p>
+        </div>
       </div>
     )
   }
@@ -466,7 +520,7 @@ export function TakeSurvey({
               onClick={() => {
                 setSubmitted(false)
                 setTargetId(null)
-                setTargetModalOpen(true)
+                if (!hideUserSwitch) setTargetModalOpen(true)
               }}
               className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
             >
@@ -638,7 +692,8 @@ export function TakeSurvey({
             surveyId={surveyId}
             userId={lockedUserId}
             onSelect={handleSelectTarget}
-            onBack={handleBackToUsers}
+            onBack={hideUserSwitch ? () => setTargetModalOpen(false) : handleBackToUsers}
+            backLabel={hideUserSwitch ? 'Отмена' : 'Сменить пользователя'}
           />
         </Modal>
       )}

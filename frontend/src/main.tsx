@@ -1,9 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
 import { AuthProvider, useAuth } from './context/AuthContext.tsx'
 import { DevRoutePage } from './pages/DevRoutePage.tsx'
 import { LoginPage } from './pages/LoginPage.tsx'
+import { UserApp } from './pages/UserApp.tsx'
 import { PublicSurveyPage } from './pages/PublicSurveyPage.tsx'
 import { getPublicSurveyId, isDevRoute } from './routing.ts'
 import './site.css'
@@ -27,7 +27,7 @@ function AuthenticatedApp() {
     return <LoginPage />
   }
 
-  return <App />
+  return <UserApp />
 }
 
 const publicSurveyId = getPublicSurveyId()

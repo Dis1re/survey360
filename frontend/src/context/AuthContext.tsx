@@ -4,16 +4,6 @@ import type { AuthUser } from '../types'
 
 const AUTH_USER_STORAGE_KEY = 'survey360.auth.user'
 
-function readStoredUser(): AuthUser | null {
-  try {
-    const raw = localStorage.getItem(AUTH_USER_STORAGE_KEY)
-    if (!raw) return null
-    return JSON.parse(raw) as AuthUser
-  } catch {
-    return null
-  }
-}
-
 function writeStoredUser(user: AuthUser | null) {
   if (user) localStorage.setItem(AUTH_USER_STORAGE_KEY, JSON.stringify(user))
   else localStorage.removeItem(AUTH_USER_STORAGE_KEY)
@@ -29,8 +19,8 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(() => readStoredUser())
-  const [loading, setLoading] = useState(() => readStoredUser() === null)
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     authApi

@@ -69,8 +69,6 @@ export default function App() {
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar
-        mode="admin"
-        showUserBar={view !== 'main'}
         surveys={filteredSurveys}
         activeSurveyId={selectedSurveyId}
         loading={loading}

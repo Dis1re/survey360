@@ -66,6 +66,12 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<SurveyParticipant>()
             .HasIndex(sp => new { sp.SurveyId, sp.UserId })
             .IsUnique();
+
+        modelBuilder.Entity<Survey>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(s => s.CreatedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 
     // Тут указываются все сущности БД, с которыми нужно уметь работать

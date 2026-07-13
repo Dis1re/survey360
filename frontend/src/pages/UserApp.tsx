@@ -4,6 +4,7 @@ import { Sidebar } from '../components/Sidebar'
 import { useAuth } from '../context/AuthContext'
 import { apiSurveyToSurvey } from '../mappers'
 import { openDevPage } from '../routing'
+import { MainPage } from './MainPage'
 import { TakeSurvey } from './TakeSurvey'
 import type { Survey } from '../types'
 
@@ -13,6 +14,7 @@ export function UserApp() {
   const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
+  const [creating, setCreating] = useState(false)
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -36,16 +38,33 @@ export function UserApp() {
       )
     : surveys
 
+  const selectedSurvey =
+    selectedSurveyId !== null ? surveys.find((s) => s.id === selectedSurveyId) ?? null : null
+
+  const handleCreateClick = async () => {
+    setCreating(true)
+    try {
+      const id = await surveyApi.create()
+      await loadSurveys()
+      setSelectedSurveyId(id)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setCreating(false)
+    }
+  }
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar
-        mode="user"
         surveys={filteredSurveys}
         activeSurveyId={selectedSurveyId}
         loading={loading}
+        creating={creating}
         onSurveySelect={setSelectedSurveyId}
+        onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
-        onOpenDev={openDevPage}
+        onOpenDev={user?.isAdmin ? openDevPage : undefined}
       />
       <main className="flex-1 overflow-y-auto">
         {selectedSurveyId === null ? (
@@ -55,11 +74,17 @@ export function UserApp() {
                 {loading
                   ? 'Загрузка…'
                   : surveys.length === 0
-                    ? `У ${user?.name || 'вас'} пока нет назначенных опросов`
+                    ? 'У вас пока нет опросов — создайте первый'
                     : 'Выберите опрос в боковой панели'}
               </p>
             </div>
           </div>
+        ) : selectedSurvey?.status === 'draft' ? (
+          <MainPage
+            surveyId={selectedSurveyId}
+            onSurveyUpdated={loadSurveys}
+            onSurveyDeleted={loadSurveys}
+          />
         ) : (
           <TakeSurvey
             surveyId={selectedSurveyId}

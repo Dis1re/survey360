@@ -7,8 +7,6 @@ interface SidebarProps {
   activeSurveyId: number | null
   loading?: boolean
   creating?: boolean
-  mode?: 'admin' | 'user'
-  showUserBar?: boolean
   onSurveySelect: (id: number) => void
   onCreateClick?: () => void
   onSearch: (query: string) => void
@@ -136,8 +134,6 @@ export function Sidebar({
   activeSurveyId,
   loading = false,
   creating = false,
-  mode = 'admin',
-  showUserBar = true,
   onSurveySelect,
   onCreateClick,
   onSearch,
@@ -184,8 +180,8 @@ export function Sidebar({
             
             {/* TEMP: FOR DEBUGGING */}
             <div className="flex items-center gap-1 ml-auto">
-              {showUserBar && <UserBar compact />}
-              {mode === 'admin' && onOpenDetails && (
+              <UserBar compact />
+              {onOpenDetails && (
               <button
                 type="button"
                 onClick={onOpenDetails}
@@ -215,7 +211,7 @@ export function Sidebar({
           </>
         ) : (
           <div className="flex items-center gap-1 ml-auto">
-            {showUserBar && <UserBar compact />}
+            <UserBar compact />
             {onOpenDev && (
               <button
                 type="button"
@@ -292,7 +288,7 @@ export function Sidebar({
       </div>
 
       {/* Create button pinned to bottom, orange + can hide with sidebar collapse */}
-      {mode === 'admin' && onCreateClick && !collapsed && (
+      {onCreateClick && !collapsed && (
         <div className="p-4 border-t border-gray-100">
           <button
             onClick={onCreateClick}
@@ -307,7 +303,7 @@ export function Sidebar({
         </div>
       )}
 
-      {mode === 'admin' && onCreateClick && collapsed && (
+      {onCreateClick && collapsed && (
         <div className="p-4 border-t border-gray-100">
           <button
             onClick={onCreateClick}
