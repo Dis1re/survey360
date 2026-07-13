@@ -14,6 +14,12 @@ const typeLabels: Record<Question['type'], string> = {
   text: 'Развернутый текстовый ответ',
 }
 
+function parseStep(value: unknown): number | '' {
+  if (value == null || value === '') return ''
+  const v = Math.round(Number(value))
+  return v < 1 ? 1 : v
+}
+
 export function QuestionEditor({ question, saving = false, readOnly = false, onSave }: QuestionEditorProps) {
   const [text, setText] = useState('')
   const [type, setType] = useState<Question['type']>('scale')
@@ -31,7 +37,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
       if (question.type === 'scale') {
         setMin(question.props?.min != null ? Number(question.props.min) : '')
         setMax(question.props?.max != null ? Number(question.props.max) : '')
-        setStep(question.props?.step != null ? Number(question.props.step) : '')
+        setStep(parseStep(question.props?.step))
         setOptions([])
       } else if (question.type === 'radio') {
         setOptions(
@@ -92,7 +98,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
     if (question.type === 'scale') {
       setMin(question.props?.min != null ? Number(question.props.min) : '')
       setMax(question.props?.max != null ? Number(question.props.max) : '')
-      setStep(question.props?.step != null ? Number(question.props.step) : '')
+      setStep(parseStep(question.props?.step))
       setOptions([])
     } else if (question.type === 'radio') {
       setOptions(
@@ -192,9 +198,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
             </label>
             <input
               type="number"
+              step={1}
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-default"
               value={step}
-              onChange={(e) => setStep(e.target.value === '' ? '' : Number(e.target.value))}
+              onChange={(e) => setStep(e.target.value === '' ? '' : Math.max(1, Math.round(Number(e.target.value))))}
               readOnly={readOnly}
               disabled={readOnly}
               placeholder="1"

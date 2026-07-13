@@ -658,27 +658,27 @@ function QuestionInput({
     const selected = value ? Number(value) : null
     const min = Number(question.props?.min ?? 1)
     const max = Number(question.props?.max ?? 5)
-    const rawStep = Number(question.props?.step ?? 1)
-    const step = min > max && rawStep > 0 ? -rawStep : rawStep
+    const baseStep = Math.max(1, Math.abs(Math.round(Number(question.props?.step ?? 1))))
+    const step = min > max ? -baseStep : baseStep
     const values: number[] = []
-    if (step !== 0 && ((min < max && step > 0) || (min > max && step < 0))) {
+    if (baseStep !== 0) {
       if (step > 0) {
-        for (let n = min; n <= max; n += step) values.push(n)
+        for (let n = min; n <= max; n += step) values.push(Math.round(n))
       } else {
-        for (let n = min; n >= max; n += step) values.push(n)
+        for (let n = min; n >= max; n += step) values.push(Math.round(n))
       }
     } else {
       for (let n = 1; n <= 5; n++) values.push(n)
     }
     return (
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         {values.map((n) => (
           <button
             key={n}
             type="button"
             disabled={readOnly}
             onClick={() => onChange(String(n))}
-            className={`flex-1 py-3 rounded-xl border text-sm font-semibold transition ${
+            className={`flex-1 min-w-[44px] py-3 rounded-xl border text-sm font-semibold transition ${
               readOnly ? 'cursor-default' : 'cursor-pointer'
             } ${
               selected === n
@@ -717,7 +717,7 @@ function QuestionInput({
         {options.map((opt) => (
           <label
             key={opt.value}
-            className={`flex items-center gap-3 p-3 rounded-xl border transition ${
+            className={`flex items-start gap-3 p-3 rounded-xl border transition ${
               readOnly ? 'cursor-default' : 'cursor-pointer'
             } ${
               value === String(opt.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
@@ -729,9 +729,11 @@ function QuestionInput({
               checked={value === String(opt.value)}
               disabled={readOnly}
               onChange={() => onChange(String(opt.value))}
-              className="w-4 h-4 text-blue-600"
+              className="w-4 h-4 text-blue-600 mt-0.5 shrink-0"
             />
-            <span className="text-sm text-gray-800">{opt.label || String(opt.value)}</span>
+            <span className="text-sm text-gray-800 min-w-0 flex-1 break-words">
+              {opt.label || String(opt.value)}
+            </span>
           </label>
         ))}
       </div>
