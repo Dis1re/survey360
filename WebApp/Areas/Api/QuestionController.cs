@@ -5,9 +5,9 @@ using WebApp.Models;
 
 namespace WebApp.Areas.Api;
 
-public record CreateQuestionRequest(int SurveyId, string Text, string Type, bool IsRequired = false, QuestionProps? Props = null);
+public record CreateQuestionRequest(int SurveyId, string Text, string Type, bool IsRequired = false, string? Props = null);
 
-public record UpdateQuestionRequest(string Text, string Type, bool IsRequired = false, QuestionProps? Props = null);
+public record UpdateQuestionRequest(string Text, string Type, bool IsRequired = false, string? Props = null);
 
 public record QuestionDetailsDto(Question Question, List<Answer> Answers);
 
@@ -29,7 +29,7 @@ public class QuestionController(ApplicationDbContext context) : Controller
             Text = request.Text,
             Type = request.Type,
             IsRequired = request.IsRequired,
-            Props = request.Props ?? new(),
+            Props = request.Props,
         };
         await context.Questions.AddAsync(question, ct);
         await context.SaveChangesAsync(ct);
