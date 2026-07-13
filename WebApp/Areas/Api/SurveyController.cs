@@ -85,7 +85,8 @@ public class SurveyController(
         var questions = await context.Questions
             .AsNoTracking()
             .Where(q => q.SurveyId == id)
-            .OrderBy(q => q.Id)
+            .OrderBy(q => q.Order)
+            .ThenBy(q => q.Id)
             .ToListAsync(ct);
 
         var questionIds = questions.Select(q => q.Id).ToList();
@@ -110,6 +111,24 @@ public class SurveyController(
         var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == id, ct);
         if (survey is null)
             return NotFound();
+
+        var targetStatus = (request.Status ?? "").Trim();
+        var isActive = targetStatus.Contains("актив", StringComparison.OrdinalIgnoreCase)
+            || targetStatus.Equals("active", StringComparison.OrdinalIgnoreCase);
+
+        if (isActive)
+        {
+            var hasQuestions = await context.Questions.AnyAsync(q => q.SurveyId == id, ct);
+            var hasAssignments = await context.SurveyAssignments
+                .AnyAsync(a => a.SurveyId == id && a.IsAssigned, ct);
+
+            if (!hasQuestions || !hasAssignments)
+            {
+                return BadRequest(
+                    "Нельзя запустить опрос: добавьте хотя бы один вопрос и заполните матрицу " +
+                    "назначений (хотя бы одну пару «оценивающий → оцениваемый»).");
+            }
+        }
 
         survey.Name = request.Name;
         survey.Description = request.Description;
@@ -339,6 +358,43 @@ public class SurveyController(
         return deleted == 0 ? NotFound() : NoContent();
     }
 
+    public record ReorderQuestionsRequest(List<int> OrderedIds);
+
+    [HttpPut("{id:int}/questions/order")]
+    public async Task<IActionResult> ReorderQuestions(
+        int id,
+        [FromBody] ReorderQuestionsRequest request,
+        CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        var ids = request.OrderedIds.Distinct().ToList();
+        if (ids.Count == 0)
+            return NoContent();
+
+        var questions = await context.Questions
+            .Where(q => q.SurveyId == id)
+            .ToListAsync(ct);
+
+        var byId = questions.ToDictionary(q => q.Id);
+        var order = 0;
+        foreach (var questionId in ids)
+        {
+            if (byId.TryGetValue(questionId, out var question))
+                question.Order = order++;
+        }
+
+        foreach (var question in questions)
+        {
+            if (!ids.Contains(question.Id))
+                question.Order = order++;
+        }
+
+        await context.SaveChangesAsync(ct);
+        return NoContent();
+    }
+
     [HttpPost("{id:int}/assignments/complete")]
     public async Task<IActionResult> CompleteAssignment(
         int id,
@@ -359,6 +415,38 @@ public class SurveyController(
 
         if (assignment is null || !assignment.IsAssigned)
             return BadRequest("Назначение не найдено в матрице опроса");
+
+        var requiredQuestions = await context.Questions
+            .AsNoTracking()
+            .Where(q => q.SurveyId == id && q.IsRequired)
+            .ToListAsync(ct);
+
+        if (requiredQuestions.Count > 0)
+        {
+            var requiredIds = requiredQuestions.Select(q => q.Id).ToHashSet();
+            var answeredRequiredIds = await context.Answers
+                .AsNoTracking()
+                .Where(a => a.UserId == request.ReviewerId
+                            && a.TargetId == request.TargetId
+                            && requiredIds.Contains(a.QuestionId)
+                            && a.Text != null && a.Text != "")
+                .Select(a => a.QuestionId)
+                .ToListAsync(ct);
+
+            var missing = requiredQuestions
+                .Where(q => !answeredRequiredIds.Contains(q.Id))
+                .Select(q => new { q.Id, q.Text })
+                .ToList();
+
+            if (missing.Count > 0)
+            {
+                return BadRequest(new
+                {
+                    message = "Не заполнены обязательные вопросы",
+                    missingQuestionIds = missing.Select(m => m.Id).ToList(),
+                });
+            }
+        }
 
         assignment.IsCompleted = true;
 

@@ -21,7 +21,8 @@ interface SurveyHeaderProps {
   saving?: boolean
   starting?: boolean
   stopping?: boolean
-  questionsCount?: number
+  canStart?: boolean
+  startHint?: string
   onSave: (data: SurveyHeaderForm) => Promise<void>
   onStartSurvey: (data: StartSurveyPayload) => Promise<void>
   onStopSurvey: (data: SurveyHeaderForm) => Promise<void>
@@ -70,7 +71,8 @@ export function SurveyHeader({
   saving = false,
   starting = false,
   stopping = false,
-  questionsCount = 0,
+  canStart = false,
+  startHint = '',
   onSave,
   onStartSurvey,
   onStopSurvey,
@@ -92,7 +94,6 @@ export function SurveyHeader({
   const [deleting, setDeleting] = useState(false)
 
   const publicLink = `${window.location.origin}/survey/${surveyId}`
-  const canStart = questionsCount > 0
   const readOnly = status !== 'draft'
   const showPublicLink = status === 'active'
   const startDateLabel = formatHeaderDate(startedAt)
@@ -342,8 +343,10 @@ export function SurveyHeader({
                 >
                   Начать опрос
                 </button>
-                {!canStart && (
-                  <p className="text-[11px] text-white/60 text-center">Добавьте хотя бы один вопрос</p>
+                {!canStart && startHint && (
+                  <p className="text-[11px] text-white/80 text-center leading-snug">
+                    {startHint}
+                  </p>
                 )}
               </div>
             ) : null}

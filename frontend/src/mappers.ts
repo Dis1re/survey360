@@ -87,15 +87,14 @@ export function apiQuestionToQuestion(api: ApiQuestion): Question {
     surveyId: api.surveyId,
     text: api.text,
     type,
+    isRequired: api.isRequired ?? false,
+    props: api.props ?? undefined,
     options:
-      type === 'scale'
-        ? [
-            { value: 1, label: '' },
-            { value: 5, label: '' },
-          ]
-        : type === 'radio'
-          ? []
-          : undefined,
+      type === 'radio'
+        ? Object.entries(api.props ?? {})
+            .map(([k, v]) => ({ value: Number(k), label: String(v) }))
+            .sort((a, b) => a.value - b.value)
+        : undefined,
   }
 }
 

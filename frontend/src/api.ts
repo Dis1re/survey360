@@ -34,7 +34,15 @@ async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T
   if (!response.ok) {
     const errorText = await response.text()
     console.error(`API ${url} [${response.status}]:`, errorText || response.statusText)
-    throw new Error(`Ошибка API [${response.status}]`)
+    let message = `Ошибка API [${response.status}]`
+    try {
+      const parsed = JSON.parse(errorText)
+      if (parsed?.message) message = parsed.message
+      else if (parsed?.title) message = parsed.title
+    } catch {
+      if (errorText) message = errorText
+    }
+    throw new Error(message)
   }
 
   const text = await response.text()
@@ -84,6 +92,12 @@ export const surveyApi = {
 
   delete: (id: number) =>
     sendRequest<void>(`${API}/survey/${id}`, { method: 'DELETE' }),
+
+  reorderQuestions: (id: number, orderedIds: number[]) =>
+    sendRequest<void>(`${API}/survey/${id}/questions/order`, {
+      method: 'PUT',
+      body: JSON.stringify({ orderedIds }),
+    }),
 
   getReportInfo: (id: number) =>
     sendRequest<SurveyReportInfo>(`${API}/survey/${id}/report/info`),
