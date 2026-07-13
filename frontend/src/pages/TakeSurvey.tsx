@@ -394,6 +394,15 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
       setError('Заполните хотя бы один вопрос')
       return
     }
+
+    const missingRequired = questions.filter(
+      (q) => q.isRequired && (answers[q.id] ?? '').trim() === '',
+    )
+    if (missingRequired.length > 0) {
+      setError('Не заполнены обязательные вопросы')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
     try {
@@ -417,7 +426,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
       }
     } catch (err) {
       console.error(err)
-      setError('Не удалось сохранить ответы')
+      setError(err instanceof Error ? err.message : 'Не удалось сохранить ответы')
     } finally {
       setSubmitting(false)
     }
@@ -579,6 +588,11 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
               <label className="block text-sm font-medium text-gray-900 mb-3">
                 <span className="text-gray-400 mr-1.5">{index + 1}.</span>
                 {question.text}
+                {question.isRequired && (
+                  <span className="ml-1.5 text-red-500" title="Обязательный вопрос">
+                    *
+                  </span>
+                )}
               </label>
               <QuestionInput
                 question={question}
@@ -642,15 +656,29 @@ function QuestionInput({
 }) {
   if (question.type === 'scale') {
     const selected = value ? Number(value) : null
+    const min = Number(question.props?.min ?? 1)
+    const max = Number(question.props?.max ?? 5)
+    const baseStep = Math.max(1, Math.abs(Math.round(Number(question.props?.step ?? 1))))
+    const step = min > max ? -baseStep : baseStep
+    const values: number[] = []
+    if (baseStep !== 0) {
+      if (step > 0) {
+        for (let n = min; n <= max; n += step) values.push(Math.round(n))
+      } else {
+        for (let n = min; n >= max; n += step) values.push(Math.round(n))
+      }
+    } else {
+      for (let n = 1; n <= 5; n++) values.push(n)
+    }
     return (
-      <div className="flex gap-2">
-        {[1, 2, 3, 4, 5].map((n) => (
+      <div className="flex flex-wrap gap-2">
+        {values.map((n) => (
           <button
             key={n}
             type="button"
             disabled={readOnly}
             onClick={() => onChange(String(n))}
-            className={`flex-1 py-3 rounded-xl border text-sm font-semibold transition ${
+            className={`flex-1 min-w-[44px] py-3 rounded-xl border text-sm font-semibold transition ${
               readOnly ? 'cursor-default' : 'cursor-pointer'
             } ${
               selected === n
@@ -689,21 +717,23 @@ function QuestionInput({
         {options.map((opt) => (
           <label
             key={opt.value}
-            className={`flex items-center gap-3 p-3 rounded-xl border transition ${
+            className={`flex items-start gap-3 p-3 rounded-xl border transition ${
               readOnly ? 'cursor-default' : 'cursor-pointer'
             } ${
-              value === opt.label ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
+              value === String(opt.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
             } ${readOnly ? 'opacity-80' : ''}`}
           >
             <input
               type="radio"
               name={`q-${question.id}`}
-              checked={value === opt.label}
+              checked={value === String(opt.value)}
               disabled={readOnly}
-              onChange={() => onChange(opt.label)}
-              className="w-4 h-4 text-blue-600"
+              onChange={() => onChange(String(opt.value))}
+              className="w-4 h-4 text-blue-600 mt-0.5 shrink-0"
             />
-            <span className="text-sm text-gray-800">{opt.label || String(opt.value)}</span>
+            <span className="text-sm text-gray-800 min-w-0 flex-1 break-words">
+              {opt.label || String(opt.value)}
+            </span>
           </label>
         ))}
       </div>

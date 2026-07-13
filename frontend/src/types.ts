@@ -14,17 +14,23 @@ export interface SurveyInput {
   date: string
 }
 
+export type QuestionProps = Record<string, string | number>
+
 export interface Question {
   id: number
   surveyId: number
   text: string
   type: 'radio' | 'scale' | 'text'
+  isRequired?: boolean
+  props?: QuestionProps
   options?: { value: number; label: string }[]
 }
 
 export interface QuestionInput {
   text: string
   type: Question['type']
+  isRequired?: boolean
+  props?: QuestionProps
   options?: Question['options']
 }
 
@@ -66,11 +72,15 @@ export interface CreateQuestionRequest {
   surveyId: number
   text: string
   type: string
+  isRequired?: boolean
+  props?: QuestionProps
 }
 
 export interface UpdateQuestionRequest {
   text: string
   type: string
+  isRequired?: boolean
+  props?: QuestionProps
 }
 
 export interface CreateAnswerRequest {
@@ -96,6 +106,8 @@ export interface ApiQuestion {
   surveyId: number
   text: string
   type: string
+  isRequired?: boolean
+  props?: QuestionProps
 }
 
 export interface ApiQuestionDetails {
@@ -157,7 +169,6 @@ export interface SurveyReportInfo {
   allAssignedCompleted: boolean
 }
 
-<<<<<<< HEAD
 export interface SaveAsTemplateRequest {
   name: string
   description: string

@@ -236,7 +236,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     if (surveyId === null || !surveyEditable) return
     setCreatingQuestion(true)
     try {
-      const id = await questionApi.create({ surveyId, text, type: 'rating' })
+      const id = await questionApi.create({ surveyId, text, type: 'rating', isRequired: false })
       setQuestions((prev) => [...prev, apiQuestionToQuestion({ id, surveyId, text, type: 'rating' })])
       setActiveQuestionId(id)
     } catch (err) {
@@ -254,8 +254,10 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       const saved = await questionApi.update(updated.id, {
         text: updated.text,
         type: mapQuestionTypeToApi(updated.type),
+        isRequired: updated.isRequired ?? false,
+        props: updated.props,
       })
-      const mapped = { ...apiQuestionToQuestion(saved), options: updated.options }
+      const mapped = apiQuestionToQuestion(saved)
       setQuestions((prev) => prev.map((q) => (q.id === updated.id ? mapped : q)))
     } catch (err) {
       console.error(err)
@@ -311,7 +313,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }
 
   const handleDeleteQuestion = async (id: number) => {
-    if (surveyId === null) return
+    if (surveyId === null || !surveyEditable) return
     setDeletingQuestion(true)
     try {
       await questionApi.delete(id)
