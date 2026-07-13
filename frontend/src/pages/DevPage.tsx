@@ -13,6 +13,8 @@ const btnPrimary =
   'px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition shadow-sm disabled:opacity-50 cursor-pointer'
 const btnSecondary =
   'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition disabled:opacity-50 cursor-pointer'
+const btnDanger =
+  'px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition disabled:opacity-50 cursor-pointer'
 const btnDangerOutline =
   'px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-xl transition disabled:opacity-50 cursor-pointer'
 
@@ -95,7 +97,6 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
 
   const [answerQuestionId, setAnswerQuestionId] = useState('')
   const [answerUserId, setAnswerUserId] = useState('')
-  const [answerTargetId, setAnswerTargetId] = useState('')
   const [answerText, setAnswerText] = useState('5')
   const [answerType, setAnswerType] = useState('rating')
   const [answerGetId, setAnswerGetId] = useState('')
@@ -104,27 +105,24 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
   const [clearingDb, setClearingDb] = useState(false)
   const [knownQuestions, setKnownQuestions] = useState<ApiQuestion[]>([])
   const [knownAnswers, setKnownAnswers] = useState<ApiAnswer[]>([])
-  const [knownUsers, setKnownUsers] = useState<ApiUser[]>([])
-
-  const loadUsers = async () => {
-    const users = await userApi.list()
-    setKnownUsers(users)
-    return users
-  }
+  const [knownUserIds, setKnownUserIds] = useState<number[]>([])
 
   const loadRelatedEntities = async (surveyList: ApiSurvey[]) => {
     if (surveyList.length === 0) {
       setKnownQuestions([])
       setKnownAnswers([])
+      setKnownUserIds([])
       return
     }
 
     const details = await Promise.all(surveyList.map((survey) => surveyApi.get(survey.id)))
     const questions = details.flatMap((detail) => detail.questions)
     const answers = details.flatMap((detail) => detail.answers)
+    const userIds = [...new Set(answers.map((answer) => answer.userId))].sort((a, b) => a - b)
 
     setKnownQuestions(questions)
     setKnownAnswers(answers)
+    setKnownUserIds(userIds)
   }
 
   const loadSurveys = async () => {
@@ -136,7 +134,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
   }
 
   useEffect(() => {
-    Promise.all([loadSurveys(), loadUsers()])
+    loadSurveys()
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false))
   }, [])
@@ -146,7 +144,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     setError(null)
     try {
       const id = await surveyApi.create()
-      await Promise.all([loadSurveys(), loadUsers()])
+      await loadSurveys()
       setQuestionSurveyId(String(id))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось создать опрос')
@@ -159,7 +157,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     setLoading(true)
     setError(null)
     try {
-      await Promise.all([loadSurveys(), loadUsers()])
+      await loadSurveys()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось загрузить список')
     } finally {
@@ -174,10 +172,10 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     setError(null)
     try {
       await surveyApi.delete(id)
-      await Promise.all([loadSurveys(), loadUsers()])
+      await loadSurveys()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось удалить опрос')
-      await Promise.all([loadSurveys(), loadUsers()])
+      await loadSurveys()
     }
   }
 
@@ -191,7 +189,6 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
       setAnswerUserId(String(id))
       const user = await userApi.get(id)
       setUserResult(user)
-      await loadUsers()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось создать пользователя')
     } finally {
@@ -237,7 +234,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
       setQuestionGetId(String(id))
       setAnswerQuestionId(String(id))
       await loadQuestionDetails(id)
-      await Promise.all([loadSurveys(), loadUsers()])
+      await loadSurveys()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось создать вопрос')
     } finally {
@@ -282,7 +279,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
       await questionApi.delete(id)
       setQuestionResult(null)
       setQuestionGetId('')
-      await Promise.all([loadSurveys(), loadUsers()])
+      await loadSurveys()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось удалить вопрос')
     } finally {
@@ -294,8 +291,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     e.preventDefault()
     const questionId = Number(answerQuestionId)
     const userId = Number(answerUserId)
-    const targetId = Number(answerTargetId)
-    if (!questionId || !userId || !targetId) return
+    if (!questionId || !userId) return
 
     setAnswerBusy(true)
     setError(null)
@@ -303,7 +299,6 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
       const id = await answerApi.create({
         questionId,
         userId,
-        targetId,
         text: answerText,
         type: answerType,
       })
@@ -312,7 +307,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
       if (String(questionId) === questionGetId) {
         await loadQuestionDetails(questionId)
       }
-      await Promise.all([loadSurveys(), loadUsers()])
+      await loadSurveys()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось создать ответ')
     } finally {
@@ -344,7 +339,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     setSurveys([])
     setKnownQuestions([])
     setKnownAnswers([])
-    setKnownUsers([])
+    setKnownUserIds([])
     setUserGetId('')
     setUserResult(null)
     setQuestionSurveyId('')
@@ -367,7 +362,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     try {
       await databaseApi.clearAll()
       resetLocalState()
-      await Promise.all([loadSurveys(), loadUsers()])
+      await loadSurveys()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось очистить базу данных')
     } finally {
@@ -511,7 +506,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
 
           <Section
             title="Пользователи"
-            endpoints={<>GET /api/user · POST /api/user · GET /api/user/&#123;id&#125;</>}
+            endpoints={<>POST /api/user · GET /api/user/&#123;id&#125;</>}
           >
             <form className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4" onSubmit={handleCreateUser}>
               <Field label="Имя" hint="ФИО или отображаемое имя. Поле name в POST /api/user.">
@@ -540,33 +535,27 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
               </div>
             </form>
 
-            {knownUsers.length > 0 ? (
+            {knownUserIds.length > 0 ? (
               <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
                 <div className="px-4 py-2 bg-gray-50/80 border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  В базе ({knownUsers.length})
+                  В базе (из ответов опросов)
                 </div>
                 <table className="w-full">
                   <thead>
                     <tr className="bg-gray-50/50 border-b border-gray-200">
                       <th className={thClass}>Id</th>
-                      <th className={thClass}>Имя</th>
-                      <th className={thClass}>Email</th>
-                      <th className={thClass}>Создан</th>
                       <th className={thClass} />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
-                    {knownUsers.map((user) => (
-                      <tr key={user.id} className="hover:bg-gray-50/50">
-                        <td className={`${tdClass} font-mono`}>{user.id}</td>
-                        <td className={tdClass}>{user.name || '—'}</td>
-                        <td className={tdClass}>{user.email || '—'}</td>
-                        <td className={tdClass}>{formatDate(user.createdAt)}</td>
+                    {knownUserIds.map((userId) => (
+                      <tr key={userId} className="hover:bg-gray-50/50">
+                        <td className={`${tdClass} font-mono`}>{userId}</td>
                         <td className={`${tdClass} text-right`}>
                           <button
                             type="button"
                             className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition cursor-pointer disabled:opacity-50"
-                            onClick={() => handleGetUser(user.id)}
+                            onClick={() => handleGetUser(userId)}
                             disabled={userBusy}
                           >
                             Получить
@@ -579,7 +568,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
               </div>
             ) : (
               <p className="text-xs text-gray-400 mt-3">
-                Пользователей пока нет — создайте первого через форму выше.
+                Пользователей в ответах пока нет — создайте пользователя или укажите id вручную.
               </p>
             )}
 
@@ -728,20 +717,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                   />
                 </Field>
               </div>
-              <div className="md:col-span-2">
-                <Field label="Target id" hint="Id оцениваемого пользователя. Поле targetId.">
-                  <input
-                    className={inputClass}
-                    type="number"
-                    min={1}
-                    placeholder="2"
-                    value={answerTargetId}
-                    onChange={(e) => setAnswerTargetId(e.target.value)}
-                    required
-                  />
-                </Field>
-              </div>
-              <div className="md:col-span-2">
+              <div className="md:col-span-3">
                 <Field label="Текст ответа" hint="Значение: «5» для rating, текст для text. Поле text.">
                   <input
                     className={inputClass}
