@@ -128,10 +128,27 @@ function LoadTemplate({
   const [loadingPreview, setLoadingPreview] = useState(false)
   const [applying, setApplying] = useState(false)
   const [done, setDone] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+
+  const reload = () => templateApi.list().then(setTemplates).catch(console.error)
 
   useEffect(() => {
-    templateApi.list().then(setTemplates).catch(console.error).finally(() => setLoading(false))
+    reload().finally(() => setLoading(false))
   }, [])
+
+  const handleDelete = async (id: number) => {
+    try {
+      await templateApi.delete(id)
+      setDeletingId(null)
+      if (selectedId === id) {
+        setSelectedId(null)
+        setPreview(null)
+      }
+      await reload()
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   const handleSelect = async (id: number) => {
     setSelectedId(id)
@@ -191,21 +208,35 @@ function LoadTemplate({
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {templates.map((t) => (
-                <button
+                <div
                   key={t.id}
-                  type="button"
-                  onClick={() => handleSelect(t.id)}
-                  className={`w-full text-left p-3 rounded-xl border transition cursor-pointer ${
+                  className={`relative group p-3 rounded-xl border transition ${
                     selectedId === t.id
                       ? 'bg-orange-50 border-orange-300'
                       : 'bg-white border-gray-200 hover:bg-gray-50'
                   }`}
                 >
-                  <div className="font-medium text-sm text-gray-900">{t.name}</div>
-                  {t.description && (
-                    <div className="text-xs text-gray-500 mt-0.5">{t.description}</div>
-                  )}
-                </button>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); setDeletingId(t.id) }}
+                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition cursor-pointer p-0.5"
+                    title="Удалить шаблон"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSelect(t.id)}
+                    className="w-full text-left cursor-pointer"
+                  >
+                    <div className="font-medium text-sm text-gray-900 pr-5">{t.name}</div>
+                    {t.description && (
+                      <div className="text-xs text-gray-500 mt-0.5">{t.description}</div>
+                    )}
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -250,6 +281,32 @@ function LoadTemplate({
             >
               {applying ? 'Добавление…' : `Добавить ${preview?.length ?? 0} вопрос(ов)`}
             </button>
+          </div>
+        </div>
+      )}
+
+      {deletingId !== null && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+          <div className="bg-white rounded-2xl shadow-xl p-6 max-w-sm w-full space-y-4">
+            <p className="text-sm text-gray-700">
+              Удалить шаблон «{templates.find((t) => t.id === deletingId)?.name}»?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDeletingId(null)}
+                className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(deletingId)}
+                className="px-5 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl transition cursor-pointer"
+              >
+                Удалить
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -121,6 +121,9 @@ export const templateApi = {
 
   get: (id: number) => sendRequest<ApiSurveyTemplateDetails>(`${API}/survey-template/${id}`),
 
+  delete: (id: number) =>
+    sendRequest<void>(`${API}/survey-template/${id}`, { method: 'DELETE' }),
+
   createSurveyFromTemplate: (id: number) =>
     sendRequest<number>(`${API}/survey-template/${id}/create-survey`, { method: 'POST' }),
 }
