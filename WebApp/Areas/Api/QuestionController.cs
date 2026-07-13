@@ -23,6 +23,10 @@ public class QuestionController(ApplicationDbContext context) : Controller
         if (!surveyExists)
             return NotFound($"Опрос с id {request.SurveyId} не найден");
 
+        var maxOrder = await context.Questions
+            .Where(q => q.SurveyId == request.SurveyId)
+            .MaxAsync(q => (int?)q.Order) ?? -1;
+
         var question = new Question
         {
             SurveyId = request.SurveyId,
@@ -30,6 +34,7 @@ public class QuestionController(ApplicationDbContext context) : Controller
             Type = request.Type,
             IsRequired = request.IsRequired,
             Props = request.Props,
+            Order = maxOrder + 1,
         };
         await context.Questions.AddAsync(question, ct);
         await context.SaveChangesAsync(ct);

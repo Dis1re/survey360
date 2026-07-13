@@ -8,4 +8,5 @@ public class Question
     public string Type { get; set; } = "";
     public bool IsRequired { get; set; }
     public string? Props { get; set; }
+    public int Order { get; set; }
 }
