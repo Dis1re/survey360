@@ -149,6 +149,21 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
 
   const surveyStatus = survey ? mapSurveyStatus(survey.status) : 'draft'
   const surveyEditable = surveyStatus === 'draft'
+
+  const hasQuestions = questions.length > 0
+  const matrixFilled =
+    targets.length > 0 &&
+    respondents.length > 0 &&
+    Object.values(assignments).some((row) => Object.values(row).some(Boolean))
+  const canStart = hasQuestions && matrixFilled
+  const startHint = !hasQuestions && !matrixFilled
+    ? 'Добавьте хотя бы один вопрос и заполните матрицу назначений'
+    : !hasQuestions
+      ? 'Добавьте хотя бы один вопрос'
+      : !matrixFilled
+        ? 'Заполните матрицу назначений (хотя бы одну пару «оценивающий → оцениваемый»)'
+        : ''
+
   const activeQuestion = questions.find((q) => q.id === activeQuestionId) ?? null
 
   const handleSaveSurvey = async (data: SurveyHeaderForm) => {
@@ -310,9 +325,21 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       })
     } catch (err) {
       console.error(err)
-      throw err
     } finally {
       setDeletingQuestion(false)
+    }
+  }
+
+  const handleReorderQuestions = async (orderedIds: number[]) => {
+    if (surveyId === null || !surveyEditable) return
+    const map = new Map(questions.map((q) => [q.id, q]))
+    const next = orderedIds.map((id) => map.get(id)).filter((q): q is Question => q !== undefined)
+    setQuestions(next)
+    try {
+      await surveyApi.reorderQuestions(surveyId, orderedIds)
+    } catch (err) {
+      console.error(err)
+      if (surveyId !== null) void loadSurvey(surveyId)
     }
   }
 
@@ -401,7 +428,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
         saving={savingSurvey}
         starting={startingSurvey}
         stopping={stoppingSurvey}
-        questionsCount={questions.length}
+        canStart={canStart}
+        startHint={startHint}
         onSave={handleSaveSurvey}
         onStartSurvey={handleStartSurvey}
         onStopSurvey={handleStopSurvey}
@@ -432,6 +460,20 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                   Загрузить из шаблона
                 </button>
               )}
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <QuestionList
+                  questions={questions}
+                  activeQuestionId={activeQuestionId}
+                  creating={creatingQuestion}
+                  readOnly={!surveyEditable}
+                  onQuestionSelect={setActiveQuestionId}
+                  onQuestionCreate={handleCreateQuestion}
+                  onQuestionDelete={handleDeleteQuestion}
+                  onReorder={handleReorderQuestions}
+                  deleting={deletingQuestion}
+                />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1">
