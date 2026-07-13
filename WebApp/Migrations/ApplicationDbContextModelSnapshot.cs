@@ -206,32 +206,6 @@ namespace WebApp.Migrations
                     b.ToTable("SurveyParticipants");
                 });
 
-            modelBuilder.Entity("WebApp.Models.SurveyTemplate", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("Props")
-                        .IsRequired()
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("SurveyTemplates");
-                });
-
             modelBuilder.Entity("WebApp.Models.SurveyRespondentLink", b =>
                 {
                     b.Property<int>("Id")
@@ -262,6 +236,32 @@ namespace WebApp.Migrations
                         .IsUnique();
 
                     b.ToTable("SurveyRespondentLinks");
+                });
+
+            modelBuilder.Entity("WebApp.Models.SurveyTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Props")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SurveyTemplates");
                 });
 
             modelBuilder.Entity("WebApp.Models.User", b =>
@@ -366,15 +366,15 @@ namespace WebApp.Migrations
 
             modelBuilder.Entity("WebApp.Models.SurveyRespondentLink", b =>
                 {
-                    b.HasOne("WebApp.Models.Survey", null)
-                        .WithMany()
-                        .HasForeignKey("SurveyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("WebApp.Models.User", null)
                         .WithMany()
                         .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebApp.Models.Survey", null)
+                        .WithMany()
+                        .HasForeignKey("SurveyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

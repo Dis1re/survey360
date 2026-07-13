@@ -18,7 +18,7 @@ interface MatrixTableProps {
   surveyName?: string
   respondentLinks?: RespondentLink[]
   onExportReport?: () => void | Promise<void>
-  onAddParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
+  onAddParticipant: (userIds: number[], role: 'target' | 'respondent') => Promise<void>
   onRemoveParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
   onSave: (assignments: Record<string, Record<string, boolean>>) => Promise<void>
 }
@@ -63,6 +63,7 @@ export function MatrixTable({
   const [assignments, setAssignments] =
     useState<Record<string, Record<string, boolean>>>(initialAssignments)
   const [pickerRole, setPickerRole] = useState<'target' | 'respondent' | null>(null)
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
   const [search, setSearch] = useState('')
   const [copiedReviewerId, setCopiedReviewerId] = useState<number | null>(null)
 
@@ -135,7 +136,7 @@ export function MatrixTable({
                 <>
                   <button
                     type="button"
-                    onClick={() => setPickerRole('target')}
+                    onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
                     disabled={adding || allUsers.length === 0}
                     className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer"
                   >
@@ -143,7 +144,7 @@ export function MatrixTable({
                   </button>
                   <button
                     type="button"
-                    onClick={() => setPickerRole('respondent')}
+                    onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
                     disabled={adding || allUsers.length === 0}
                     className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer"
                   >
@@ -174,17 +175,19 @@ export function MatrixTable({
                        <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px]">
                          <div className="flex flex-col items-center gap-1">
                            <div className="relative inline-flex">
-                             <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
-                               {target.initial}
-                             </div>
-                             <button
-                               type="button"
-                               onClick={() => onRemoveParticipant(target.id, 'target')}
-                               className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
-                               title="Удалить объект"
-                             >
-                               ✕
-                             </button>
+                            <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
+                                {target.initial}
+                              </div>
+                              {!readOnly && (
+                                <button
+                                  type="button"
+                                  onClick={() => onRemoveParticipant(target.id, 'target')}
+                                  className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                                  title="Удалить объект"
+                                >
+                                  ✕
+                                </button>
+                              )}
                            </div>
                            <span>{target.name}</span>
                          </div>
@@ -202,17 +205,19 @@ export function MatrixTable({
                       <td className="p-4 font-medium text-gray-900 border-r border-gray-100">
                         <div className="flex items-center gap-2">
                           <div className="relative inline-flex">
-                            <div className={`w-6 h-6 rounded-full ${respondent.color} flex items-center justify-center text-xs font-bold shrink-0`}>
-                              {respondent.initial}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => onRemoveParticipant(respondent.id, 'respondent')}
-                              className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
-                              title="Удалить респондента"
-                            >
-                              ✕
-                            </button>
+                              <div className={`w-6 h-6 rounded-full ${respondent.color} flex items-center justify-center text-xs font-bold shrink-0`}>
+                                {respondent.initial}
+                              </div>
+                              {!readOnly && (
+                                <button
+                                  type="button"
+                                  onClick={() => onRemoveParticipant(respondent.id, 'respondent')}
+                                  className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                                  title="Удалить респондента"
+                                >
+                                  ✕
+                                </button>
+                              )}
                           </div>
                           <div className="min-w-0">
                             <div>{respondent.name}</div>
@@ -318,11 +323,28 @@ export function MatrixTable({
 
       {pickerRole && (
         <Modal
-          title={pickerRole === 'target' ? 'Добавить объект оценки' : 'Добавить респондента'}
+          title={pickerRole === 'target' ? 'Добавить объекты оценки' : 'Добавить респондентов'}
           size="md"
-          onClose={() => setPickerRole(null)}
+          onClose={() => { setPickerRole(null); setSelectedUserIds([]) }}
           preventClose={adding}
         >
+          {availableUsers.length > 0 && (
+            <div className="flex justify-end mb-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setSelectedUserIds(
+                    selectedUserIds.length === availableUsers.length
+                      ? []
+                      : availableUsers.map((u) => u.id),
+                  )
+                }
+                className="text-xs font-medium text-[#FF8600] hover:text-[#FF6B00] cursor-pointer"
+              >
+                {selectedUserIds.length === availableUsers.length ? 'Снять все' : 'Выбрать все'}
+              </button>
+            </div>
+          )}
           {availableUsers.length === 0 ? (
             <p className="text-sm text-gray-500 py-4">Все пользователи уже добавлены</p>
           ) : (
@@ -339,30 +361,56 @@ export function MatrixTable({
                 <p className="text-sm text-gray-500 py-4">Ничего не найдено</p>
               ) : (
                 <div className="overflow-y-auto space-y-1 max-h-[50vh]">
-                  {filteredUsers.map((user) => (
-                    <button
-                      key={user.id}
-                      type="button"
-                      disabled={adding}
-                      onClick={() => onAddParticipant(user.id, pickerRole).then(() => { setPickerRole(null); setSearch('') }).catch(console.error)}
-                      className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-gray-50 border border-orange-200 hover:border-orange-300 transition disabled:opacity-50 cursor-pointer"
-                    >
-                      <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                      <div className="text-xs text-gray-400">{user.email}</div>
-                    </button>
-                  ))}
+                  {filteredUsers.map((user) => {
+                    const checked = selectedUserIds.includes(user.id)
+                    return (
+                      <label
+                        key={user.id}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 border border-gray-100 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setSelectedUserIds((prev) =>
+                              checked ? prev.filter((id) => id !== user.id) : [...prev, user.id],
+                            )
+                          }
+                          className="w-4 h-4 text-[#FF8600] rounded focus:ring-[#FF8600]"
+                        />
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
+                          <div className="text-xs text-gray-400 truncate">{user.email}</div>
+                        </div>
+                      </label>
+                    )
+                  })}
                 </div>
               )}
             </>
           )}
-          <button
-            type="button"
-            onClick={() => setPickerRole(null)}
-            disabled={adding}
-            className="mt-4 text-sm text-gray-500 hover:text-gray-700 cursor-pointer disabled:opacity-50"
-          >
-            Отмена
-          </button>
+          <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => { setPickerRole(null); setSelectedUserIds([]) }}
+              disabled={adding}
+              className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer disabled:opacity-50"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onAddParticipant(selectedUserIds, pickerRole)
+                  .then(() => { setPickerRole(null); setSelectedUserIds([]); setSearch('') })
+                  .catch(console.error)
+              }
+              disabled={adding || selectedUserIds.length === 0}
+              className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
+            >
+              {adding ? 'Добавление…' : `Добавить выбранных (${selectedUserIds.length})`}
+            </button>
+          </div>
         </Modal>
       )}
     </>

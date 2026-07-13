@@ -276,11 +276,13 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }
 
-  const handleAddMatrixParticipant = async (userId: number, role: 'target' | 'respondent') => {
-    if (surveyId === null || !surveyEditable) return
+  const handleAddMatrixParticipant = async (userIds: number[], role: 'target' | 'respondent') => {
+    if (surveyId === null || !surveyEditable || userIds.length === 0) return
     setAddingMatrixParticipant(true)
     try {
-      await surveyApi.addParticipant(surveyId, { userId, role })
+      for (const userId of userIds) {
+        await surveyApi.addParticipant(surveyId, { userId, role })
+      }
       await loadMatrix(surveyId)
     } catch (err) {
       console.error(err)
@@ -291,7 +293,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }
 
   const handleRemoveMatrixParticipant = async (userId: number, role: 'target' | 'respondent') => {
-    if (surveyId === null) return
+    if (surveyId === null || !surveyEditable) return
     try {
       await surveyApi.removeParticipant(surveyId, userId, role)
       await loadMatrix(surveyId)
