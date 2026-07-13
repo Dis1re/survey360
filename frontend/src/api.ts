@@ -7,6 +7,7 @@ import type {
   ApiSurveyMatrix,
   ApiUser,
   AssignmentEntry,
+  AuthUser,
   CreateAnswerRequest,
   CreateQuestionRequest,
   CreateUserRequest,
@@ -18,6 +19,7 @@ import type {
 
 async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(url, {
+    credentials: 'include',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -29,7 +31,13 @@ async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T
   if (!response.ok) {
     const errorText = await response.text()
     console.error(`API ${url} [${response.status}]:`, errorText || response.statusText)
-    throw new Error(`Ошибка API [${response.status}]`)
+    const err = new Error(errorText || `Ошибка API [${response.status}]`) as Error & { status?: number }
+    err.status = response.status
+    throw err
+  }
+
+  if (response.status === 204) {
+    return null as T
   }
 
   const text = await response.text()
@@ -37,6 +45,24 @@ async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T
 }
 
 const API = '/api'
+
+export const authApi = {
+  login: (email: string) =>
+    sendRequest<AuthUser>(`${API}/auth/login`, {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  adminLogin: (email: string) =>
+    sendRequest<AuthUser>(`${API}/auth/admin-login`, {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  me: () => sendRequest<AuthUser>(`${API}/auth/me`),
+
+  logout: () => sendRequest<void>(`${API}/auth/logout`, { method: 'POST' }),
+}
 
 export const surveyApi = {
   create: () =>

@@ -155,6 +155,7 @@ export function MatrixTable({
                              <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
                                {target.initial}
                              </div>
+                             {!readOnly && (
                              <button
                                type="button"
                                onClick={() => onRemoveParticipant(target.id, 'target')}
@@ -163,6 +164,7 @@ export function MatrixTable({
                              >
                                ✕
                              </button>
+                             )}
                            </div>
                            <span>{target.name}</span>
                          </div>
@@ -179,6 +181,7 @@ export function MatrixTable({
                             <div className={`w-6 h-6 rounded-full ${respondent.color} flex items-center justify-center text-xs font-bold shrink-0`}>
                               {respondent.initial}
                             </div>
+                            {!readOnly && (
                             <button
                               type="button"
                               onClick={() => onRemoveParticipant(respondent.id, 'respondent')}
@@ -187,6 +190,7 @@ export function MatrixTable({
                             >
                               ✕
                             </button>
+                            )}
                           </div>
                           {respondent.name}
                         </div>

@@ -5,6 +5,22 @@ export function getPublicSurveyId(): number | null {
   return Number.isFinite(id) && id > 0 ? id : null
 }
 
+export function isDevRoute(): boolean {
+  return new URLSearchParams(window.location.search).has('dev')
+}
+
+export function openDevPage(): void {
+  const url = new URL(window.location.href)
+  url.searchParams.set('dev', '1')
+  window.location.assign(`${url.pathname}${url.search}`)
+}
+
+export function closeDevPage(): void {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('dev')
+  window.location.assign(url.pathname || '/')
+}
+
 export function parseSurveyResponseParams(): { reviewerId: number | null; targetId: number | null } {
   const params = new URLSearchParams(window.location.search)
   const reviewer = Number(params.get('reviewer'))

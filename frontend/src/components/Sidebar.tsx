@@ -1,17 +1,20 @@
 import { useState } from 'react'
 import type { Survey } from '../types'
+import { UserBar } from './UserBar'
 
 interface SidebarProps {
   surveys: Survey[]
   activeSurveyId: number | null
   loading?: boolean
   creating?: boolean
+  mode?: 'admin' | 'user'
+  showUserBar?: boolean
   onSurveySelect: (id: number) => void
-  onCreateClick: () => void
+  onCreateClick?: () => void
   onSearch: (query: string) => void
-  onOpenDev: () => void
-  onOpenDetails: () => void
-  onOpenTake: () => void
+  onOpenDev?: () => void
+  onOpenDetails?: () => void
+  onOpenTake?: () => void
 }
 
 const statusConfig = {
@@ -133,12 +136,13 @@ export function Sidebar({
   activeSurveyId,
   loading = false,
   creating = false,
+  mode = 'admin',
+  showUserBar = true,
   onSurveySelect,
   onCreateClick,
   onSearch,
   onOpenDev,
   onOpenDetails,
-  onOpenTake,
 }: SidebarProps) {
   const [query, setQuery] = useState('')
   const [collapsed, setCollapsed] = useState(false)
@@ -180,6 +184,8 @@ export function Sidebar({
             
             {/* TEMP: FOR DEBUGGING */}
             <div className="flex items-center gap-1 ml-auto">
+              {showUserBar && <UserBar compact />}
+              {mode === 'admin' && onOpenDetails && (
               <button
                 type="button"
                 onClick={onOpenDetails}
@@ -191,20 +197,40 @@ export function Sidebar({
                   <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
               </button>
+              )}
+              {onOpenDev && (
               <button
                 type="button"
                 onClick={onOpenDev}
-                title="Dev-страница"
-                aria-label="Dev-страница"
+                title="База данных"
+                aria-label="База данных"
                 className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                 </svg>
               </button>
+              )}
             </div>
           </>
-        ) : null}
+        ) : (
+          <div className="flex items-center gap-1 ml-auto">
+            {showUserBar && <UserBar compact />}
+            {onOpenDev && (
+              <button
+                type="button"
+                onClick={onOpenDev}
+                title="База данных"
+                aria-label="База данных"
+                className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-2 cursor-pointer"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                </svg>
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {!collapsed && (
@@ -266,7 +292,7 @@ export function Sidebar({
       </div>
 
       {/* Create button pinned to bottom, orange + can hide with sidebar collapse */}
-      {!collapsed && (
+      {mode === 'admin' && onCreateClick && !collapsed && (
         <div className="p-4 border-t border-gray-100">
           <button
             onClick={onCreateClick}
@@ -281,7 +307,7 @@ export function Sidebar({
         </div>
       )}
 
-      {collapsed && (
+      {mode === 'admin' && onCreateClick && collapsed && (
         <div className="p-4 border-t border-gray-100">
           <button
             onClick={onCreateClick}

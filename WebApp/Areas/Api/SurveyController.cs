@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
@@ -42,8 +43,15 @@ public record SurveyReportInfoDto(int AnswerCount, int AssignedCount, int Comple
 [Route("/api/[controller]")]
 public class SurveyController(ApplicationDbContext context, SurveyDocxReportService reportService) : Controller
 {
+    private static bool IsSurveyDraft(string status)
+    {
+        var normalized = status.Trim().ToLowerInvariant();
+        return normalized.Contains("черновик") || normalized == "draft";
+    }
+
+    [Authorize]
     [HttpPost]
-    public async Task<int> Create(CancellationToken ct)
+    public async Task<ActionResult<int>> Create(CancellationToken ct)
     {
         var survey = new Survey
         {
@@ -59,6 +67,7 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         return survey.Id;
     }
 
+    [Authorize]
     [HttpGet]
     public async Task<IEnumerable<Survey>> List(CancellationToken ct)
     {
@@ -99,6 +108,7 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         return new SurveyDetailsDto(survey, questions, answers, assignments);
     }
 
+    [Authorize]
     [HttpPut("{id:int}")]
     public async Task<ActionResult<Survey>> Update(int id, [FromBody] UpdateSurveyRequest request, CancellationToken ct)
     {
@@ -150,6 +160,7 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
             assignments);
     }
 
+    [Authorize]
     [HttpPost("{id:int}/participants")]
     public async Task<IActionResult> AddParticipant(
         int id,
@@ -158,6 +169,10 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
     {
         if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
             return NotFound();
+
+        var survey = await context.Surveys.AsNoTracking().FirstAsync(s => s.Id == id, ct);
+        if (!IsSurveyDraft(survey.Status))
+            return BadRequest("Добавлять участников можно только в черновике опроса");
 
         if (!await context.Users.AnyAsync(u => u.Id == request.UserId, ct))
             return NotFound($"Пользователь с id {request.UserId} не найден");
@@ -184,6 +199,7 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         return NoContent();
     }
 
+    [Authorize]
     [HttpDelete("{id:int}/participants")]
     public async Task<IActionResult> RemoveParticipant(
         int id,
@@ -193,6 +209,10 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
     {
         if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
             return NotFound();
+
+        var survey = await context.Surveys.AsNoTracking().FirstAsync(s => s.Id == id, ct);
+        if (!IsSurveyDraft(survey.Status))
+            return BadRequest("Удалять участников можно только в черновике опроса");
 
         var roleNormalized = role.Trim().ToLowerInvariant();
         if (roleNormalized is not ("target" or "respondent"))
@@ -232,6 +252,7 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         return NoContent();
     }
 
+    [Authorize]
     [HttpPut("{id:int}/assignments")]
     public async Task<IActionResult> SaveAssignments(
         int id,
@@ -272,6 +293,7 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         return NoContent();
     }
 
+    [Authorize]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
@@ -321,6 +343,7 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         return NoContent();
     }
 
+    [Authorize]
     [HttpGet("{id:int}/report/info")]
     public async Task<ActionResult<SurveyReportInfoDto>> GetReportInfo(int id, CancellationToken ct)
     {
@@ -335,6 +358,7 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
             info.AllAssignedCompleted);
     }
 
+    [Authorize]
     [HttpGet("{id:int}/report.docx")]
     public async Task<IActionResult> DownloadReport(int id, CancellationToken ct)
     {

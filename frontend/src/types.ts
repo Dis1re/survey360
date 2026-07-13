@@ -45,8 +45,20 @@ export interface ApiUser {
   id: number
   name: string
   email: string
+  isAdmin?: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface AuthUser {
+  id: number
+  name: string
+  email: string
+  isAdmin: boolean
+}
+
+export interface LoginRequest {
+  email: string
 }
 
 export interface CreateUserRequest {

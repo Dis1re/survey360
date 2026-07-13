@@ -9,6 +9,8 @@ interface TakeSurveyProps {
   surveyId: number
   onBack?: () => void
   standalone?: boolean
+  authUserId?: number | null
+  hideUserSwitch?: boolean
 }
 
 interface TargetEntry {
@@ -216,7 +218,13 @@ function TargetPicker({
   )
 }
 
-export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyProps) {
+export function TakeSurvey({
+  surveyId,
+  onBack,
+  standalone = false,
+  authUserId = null,
+  hideUserSwitch = false,
+}: TakeSurveyProps) {
   const initialParams = parseSurveyResponseParams()
   const [survey, setSurvey] = useState<ApiSurvey | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -227,19 +235,26 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [userId, setUserId] = useState<number | null>(initialParams.reviewerId)
+  const [userId, setUserId] = useState<number | null>(authUserId ?? initialParams.reviewerId)
   const [targetId, setTargetId] = useState<number | null>(initialParams.targetId)
   const [userModalOpen, setUserModalOpen] = useState(false)
   const [targetModalOpen, setTargetModalOpen] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
   const [assignmentChecked, setAssignmentChecked] = useState(
-    initialParams.reviewerId === null || initialParams.targetId === null,
+    (authUserId ?? initialParams.reviewerId) === null || initialParams.targetId === null,
   )
 
   const [surveyClosed, setSurveyClosed] = useState(false)
 
-  const showUserModal = userModalOpen || userId === null
+  const lockedUserId = authUserId ?? userId
+  const showUserModal = !hideUserSwitch && (userModalOpen || userId === null)
   const showTargetModal = !showUserModal && (targetModalOpen || targetId === null)
+
+  useEffect(() => {
+    if (authUserId !== null) {
+      setUserId(authUserId)
+    }
+  }, [authUserId])
 
   useEffect(() => {
     setLoading(true)
@@ -257,7 +272,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
   }, [surveyId])
 
   useEffect(() => {
-    if (userId === null || targetId === null) {
+    if (lockedUserId === null || targetId === null) {
       setReadOnly(false)
       setAssignmentChecked(true)
       return
@@ -270,7 +285,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
       .then((details) => {
         if (cancelled) return
         const assignment = details.assignments.find(
-          (a) => a.reviewerId === userId && a.targetId === targetId && a.isAssigned,
+          (a) => a.reviewerId === lockedUserId && a.targetId === targetId && a.isAssigned,
         )
         if (!assignment) {
           setError('Назначение не найдено в матрице опроса')
@@ -282,7 +297,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
           setReadOnly(true)
           const saved: Record<number, string> = {}
           for (const answer of details.answers) {
-            if (answer.userId === userId && answer.targetId === targetId) {
+            if (answer.userId === lockedUserId && answer.targetId === targetId) {
               saved[answer.questionId] = answer.text
             }
           }
@@ -300,14 +315,14 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
     return () => {
       cancelled = true
     }
-  }, [surveyId, userId, targetId])
+  }, [surveyId, lockedUserId, targetId])
 
   const storageKey =
     assignmentChecked &&
     !readOnly &&
-    userId !== null &&
+    lockedUserId !== null &&
     targetId !== null
-      ? `take-survey:${surveyId}:${userId}:${targetId}`
+      ? `take-survey:${surveyId}:${lockedUserId}:${targetId}`
       : null
 
   useEffect(() => {
@@ -332,7 +347,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
     }
   }, [answers, storageKey])
 
-  const respondent = userId !== null ? users.find((u) => u.id === userId) ?? null : null
+  const respondent = lockedUserId !== null ? users.find((u) => u.id === lockedUserId) ?? null : null
   const target = targetId !== null ? users.find((u) => u.id === targetId) ?? null : null
 
   const setAnswer = (questionId: number, value: string) => {
@@ -341,6 +356,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
   }
 
   const handleSelectUser = (id: number) => {
+    if (hideUserSwitch) return
     setUserId(id)
     setTargetId(null)
     setUserModalOpen(false)
@@ -355,6 +371,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
   }
 
   const handleBackToUsers = () => {
+    if (hideUserSwitch) return
     setSubmitted(false)
     setTargetModalOpen(false)
     setUserModalOpen(true)
@@ -362,7 +379,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (readOnly || userId === null || targetId === null) return
+    if (readOnly || lockedUserId === null || targetId === null) return
     const answered = questions.filter((q) => (answers[q.id] ?? '').trim() !== '')
     if (answered.length === 0) {
       setError('Заполните хотя бы один вопрос')
@@ -374,13 +391,13 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
       for (const question of answered) {
         await answerApi.create({
           questionId: question.id,
-          userId,
+          userId: lockedUserId,
           targetId,
           text: answers[question.id].trim(),
           type: mapQuestionTypeToApi(question.type),
         })
       }
-      await surveyApi.completeAssignment(surveyId, { reviewerId: userId, targetId })
+      await surveyApi.completeAssignment(surveyId, { reviewerId: lockedUserId, targetId })
       setSubmitted(true)
       if (storageKey) {
         try {
@@ -405,16 +422,28 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
     )
   }
 
-  if (surveyClosed && !readOnly) {
+  if (surveyClosed && !readOnly && targetId !== null && assignmentChecked) {
     return (
       <div className="max-w-2xl mx-auto p-6 text-center">
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
           <h2 className="text-xl font-semibold text-gray-900">{survey?.name ?? 'Опрос'}</h2>
           <p className="text-sm text-gray-500 mt-3">
             {mapSurveyStatus(survey?.status ?? '') === 'closed'
-              ? 'Этот опрос завершён и больше недоступен для заполнения.'
+              ? 'Этот опрос завершён. Новые ответы отправить нельзя — выберите цель с уже отправленными ответами для просмотра.'
               : 'Опрос ещё не опубликован. Дождитесь, пока организатор запустит его.'}
           </p>
+          {hideUserSwitch && (
+            <button
+              type="button"
+              onClick={() => {
+                setTargetId(null)
+                setTargetModalOpen(true)
+              }}
+              className="mt-6 px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl cursor-pointer"
+            >
+              Выбрать цель для просмотра
+            </button>
+          )}
         </div>
       </div>
     )
@@ -434,10 +463,14 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
           <div className="mt-6 flex justify-center gap-3">
             <button
               type="button"
-              onClick={handleBackToUsers}
+              onClick={() => {
+                setSubmitted(false)
+                setTargetId(null)
+                setTargetModalOpen(true)
+              }}
               className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
             >
-              {standalone ? 'Оценить ещё' : 'Другой пользователь'}
+              {standalone || hideUserSwitch ? 'Оценить ещё' : 'Другой пользователь'}
             </button>
             {!standalone && onBack && (
               <button
@@ -456,6 +489,18 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
 
   return (
     <div className="max-w-2xl mx-auto p-6">
+      {hideUserSwitch && !standalone && lockedUserId !== null && targetId !== null && (
+        <div className="flex justify-end mb-4">
+          <button
+            type="button"
+            onClick={() => setTargetModalOpen(true)}
+            className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+          >
+            Сменить цель
+          </button>
+        </div>
+      )}
+
       {!standalone && onBack && (
         <div className="flex items-start justify-between gap-3 mb-4">
           <button
@@ -469,6 +514,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
             Назад
           </button>
           <div className="flex gap-2">
+            {!hideUserSwitch && (
             <button
               type="button"
               onClick={() => setUserModalOpen(true)}
@@ -476,6 +522,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
             >
               Сменить пользователя
             </button>
+            )}
             <button
               type="button"
               onClick={() => setTargetModalOpen(true)}
@@ -487,8 +534,9 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
         </div>
       )}
 
-      {standalone && userId !== null && targetId !== null && (
+      {standalone && lockedUserId !== null && targetId !== null && (
         <div className="flex justify-end gap-2 mb-4">
+          {!hideUserSwitch && (
           <button
             type="button"
             onClick={() => setUserModalOpen(true)}
@@ -496,6 +544,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
           >
             Сменить пользователя
           </button>
+          )}
           <button
             type="button"
             onClick={() => setTargetModalOpen(true)}
@@ -513,7 +562,9 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
             <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            Режим просмотра — ответы нельзя изменить
+            {surveyClosed
+              ? 'Опрос завершён — просмотр ваших отправленных ответов'
+              : 'Режим просмотра — ответы нельзя изменить'}
           </div>
         )}
         {survey?.description && (
@@ -581,11 +632,11 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
         </Modal>
       )}
 
-      {showTargetModal && userId !== null && (
+      {showTargetModal && lockedUserId !== null && (
         <Modal title="Выбор цели опроса">
           <TargetPicker
             surveyId={surveyId}
-            userId={userId}
+            userId={lockedUserId}
             onSelect={handleSelectTarget}
             onBack={handleBackToUsers}
           />

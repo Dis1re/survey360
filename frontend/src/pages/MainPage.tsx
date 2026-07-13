@@ -264,7 +264,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }
 
   const handleRemoveMatrixParticipant = async (userId: number, role: 'target' | 'respondent') => {
-    if (surveyId === null) return
+    if (surveyId === null || !surveyEditable) return
     try {
       await surveyApi.removeParticipant(surveyId, userId, role)
       await loadMatrix(surveyId)
