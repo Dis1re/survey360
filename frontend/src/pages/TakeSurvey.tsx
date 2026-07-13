@@ -622,9 +622,23 @@ function QuestionInput({
 }) {
   if (question.type === 'scale') {
     const selected = value ? Number(value) : null
+    const min = Number(question.props?.min ?? 1)
+    const max = Number(question.props?.max ?? 5)
+    const rawStep = Number(question.props?.step ?? 1)
+    const step = min > max && rawStep > 0 ? -rawStep : rawStep
+    const values: number[] = []
+    if (step !== 0 && ((min < max && step > 0) || (min > max && step < 0))) {
+      if (step > 0) {
+        for (let n = min; n <= max; n += step) values.push(n)
+      } else {
+        for (let n = min; n >= max; n += step) values.push(n)
+      }
+    } else {
+      for (let n = 1; n <= 5; n++) values.push(n)
+    }
     return (
       <div className="flex gap-2">
-        {[1, 2, 3, 4, 5].map((n) => (
+        {values.map((n) => (
           <button
             key={n}
             type="button"
@@ -672,15 +686,15 @@ function QuestionInput({
             className={`flex items-center gap-3 p-3 rounded-xl border transition ${
               readOnly ? 'cursor-default' : 'cursor-pointer'
             } ${
-              value === opt.label ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
+              value === String(opt.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
             } ${readOnly ? 'opacity-80' : ''}`}
           >
             <input
               type="radio"
               name={`q-${question.id}`}
-              checked={value === opt.label}
+              checked={value === String(opt.value)}
               disabled={readOnly}
-              onChange={() => onChange(opt.label)}
+              onChange={() => onChange(String(opt.value))}
               className="w-4 h-4 text-blue-600"
             />
             <span className="text-sm text-gray-800">{opt.label || String(opt.value)}</span>

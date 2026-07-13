@@ -218,8 +218,9 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
         text: updated.text,
         type: mapQuestionTypeToApi(updated.type),
         isRequired: updated.isRequired ?? false,
+        props: updated.props,
       })
-      const mapped = { ...apiQuestionToQuestion(saved), options: updated.options }
+      const mapped = apiQuestionToQuestion(saved)
       setQuestions((prev) => prev.map((q) => (q.id === updated.id ? mapped : q)))
     } catch (err) {
       console.error(err)
