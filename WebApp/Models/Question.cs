@@ -7,5 +7,5 @@ public class Question
     public string Text { get; set; } = "";
     public string Type { get; set; } = "";
     public bool IsRequired { get; set; }
-    public QuestionProps Props { get; set; } = new();
+    public string? Props { get; set; }
 }
