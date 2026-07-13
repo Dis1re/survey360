@@ -468,6 +468,166 @@ Swagger (интерактивная документация): http://localhost:
 
 ---
 
+## Survey Template — шаблоны анкет
+
+### `POST /api/survey-template`
+
+Создаёт шаблон анкеты.
+
+**Request body**
+
+```json
+{
+  "name": "Шаблон оценки 360",
+  "description": "Стандартный набор вопросов для квартальной оценки",
+  "props": ""
+}
+```
+
+`props` — произвольный текстовый параметр для хранения дополнительных настроек шаблона.
+
+**Response** `200 OK` — id шаблона (число).
+
+---
+
+### `GET /api/survey-template`
+
+Список всех шаблонов, сначала новые.
+
+**Response** `200 OK`
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Шаблон оценки 360",
+    "description": "Стандартный набор вопросов",
+    "props": "",
+    "createdAt": "2026-07-10T10:00:00Z"
+  }
+]
+```
+
+---
+
+### `GET /api/survey-template/{id}`
+
+Шаблон со всеми вопросами.
+
+**Response** `200 OK`
+
+```json
+{
+  "template": {
+    "id": 1,
+    "name": "Шаблон оценки 360",
+    "description": "Стандартный набор вопросов",
+    "props": "",
+    "createdAt": "2026-07-10T10:00:00Z"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "surveyTemplateId": 1,
+      "text": "Как вы оцениваете работу коллеги?",
+      "type": "rating"
+    }
+  ]
+}
+```
+
+**Response** `404` — шаблон не найден.
+
+---
+
+### `PUT /api/survey-template/{id}`
+
+Обновляет метаданные шаблона (название, описание, props).
+
+**Request body**
+
+```json
+{
+  "name": "Шаблон оценки 360 (обновлённый)",
+  "description": "Описание",
+  "props": "дополнительные настройки"
+}
+```
+
+**Response** `200 OK` — обновлённый шаблон.
+
+**Response** `404` — шаблон не найден.
+
+---
+
+### `DELETE /api/survey-template/{id}`
+
+Удаляет шаблон и все его вопросы (каскадно).
+
+**Response** `204 No Content`
+
+**Response** `404` — шаблон не найден.
+
+---
+
+### `POST /api/survey-template/{id}/questions`
+
+Добавляет вопрос в шаблон.
+
+**Request body**
+
+```json
+{
+  "text": "Как вы оцениваете работу коллеги?",
+  "type": "rating"
+}
+```
+
+**Response** `200 OK` — id вопроса (число).
+
+**Response** `404` — шаблон не найден.
+
+---
+
+### `PUT /api/survey-template/{id}/questions/{questionId}`
+
+Обновляет вопрос шаблона.
+
+**Request body**
+
+```json
+{
+  "text": "Оцените взаимодействие с коллегой",
+  "type": "scale"
+}
+```
+
+**Response** `200 OK` — обновлённый вопрос.
+
+**Response** `404` — шаблон или вопрос не найден.
+
+---
+
+### `DELETE /api/survey-template/{id}/questions/{questionId}`
+
+Удаляет вопрос из шаблона.
+
+**Response** `204 No Content`
+
+**Response** `404` — шаблон или вопрос не найден.
+
+---
+
+### `POST /api/survey-template/{id}/create-survey`
+
+Создаёт новый опрос на основе шаблона. Копирует название, описание и все вопросы. Новый опрос получает статус «Черновик».
+
+**Response** `200 OK` — id нового опроса (число).
+
+**Response** `404` — шаблон не найден.
+
+---
+
 ## Database — служебное (только Development)
 
 ### `DELETE /api/database`
