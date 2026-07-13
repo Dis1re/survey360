@@ -5,18 +5,22 @@ interface QuestionListProps {
   questions: Question[]
   activeQuestionId: number | null
   creating?: boolean
+  deleting?: boolean
   readOnly?: boolean
   onQuestionSelect: (id: number) => void
   onQuestionCreate: (text: string) => Promise<void>
+  onQuestionDelete: (id: number) => Promise<void>
 }
 
 export function QuestionList({
   questions,
   activeQuestionId,
   creating = false,
+  deleting = false,
   readOnly = false,
   onQuestionSelect,
   onQuestionCreate,
+  onQuestionDelete,
 }: QuestionListProps) {
   const [newQuestionText, setNewQuestionText] = useState('')
   const [showInput, setShowInput] = useState(false)
@@ -61,9 +65,25 @@ export function QuestionList({
                   <span className="text-gray-400 mr-1.5">{index + 1}.</span>
                   {question.text}
                 </span>
-                <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M4 16h16" />
-                </svg>
+                <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M4 16h16" />
+                  </svg>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      onQuestionDelete(question.id)
+                    }}
+                    disabled={deleting}
+                    className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition disabled:opacity-50 cursor-pointer"
+                    title="Удалить вопрос"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a1 1 0 01-1 1H7a1 1 0 01-1-1V6h12z" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             )
           })

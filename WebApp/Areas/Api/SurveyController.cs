@@ -184,6 +184,54 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         return NoContent();
     }
 
+    [HttpDelete("{id:int}/participants")]
+    public async Task<IActionResult> RemoveParticipant(
+        int id,
+        [FromQuery] int userId,
+        [FromQuery] string role,
+        CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        var roleNormalized = role.Trim().ToLowerInvariant();
+        if (roleNormalized is not ("target" or "respondent"))
+            return BadRequest("Role должен быть target или respondent");
+
+        if (!await context.Users.AnyAsync(u => u.Id == userId, ct))
+            return NotFound($"Пользователь с id {userId} не найден");
+
+        var participant = await context.Set<SurveyParticipant>()
+            .FirstOrDefaultAsync(p => p.SurveyId == id && p.UserId == userId, ct);
+
+        if (participant is null)
+            return NoContent();
+
+        if (roleNormalized == "target")
+            participant.IsTarget = false;
+        else
+            participant.IsRespondent = false;
+
+        if (!participant.IsTarget && !participant.IsRespondent)
+        {
+            await context.Set<SurveyParticipant>()
+                .Where(p => p.Id == participant.Id)
+                .ExecuteDeleteAsync(ct);
+        }
+        else
+        {
+            await context.SaveChangesAsync(ct);
+        }
+
+        await context.SurveyAssignments
+            .Where(a => a.SurveyId == id &&
+                ((roleNormalized == "target" && a.TargetId == userId) ||
+                 (roleNormalized == "respondent" && a.ReviewerId == userId)))
+            .ExecuteDeleteAsync(ct);
+
+        return NoContent();
+    }
+
     [HttpPut("{id:int}/assignments")]
     public async Task<IActionResult> SaveAssignments(
         int id,
