@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { buildSurveyResponseLink } from '../routing'
-import type { ApiUser, Participant } from '../types'
+import { buildInviteMailto, buildRespondentInviteLink, buildSurveyResponseLink } from '../routing'
+import type { ApiUser, Participant, RespondentLink } from '../types'
 
 interface MatrixTableProps {
   surveyId: number
@@ -13,6 +13,9 @@ interface MatrixTableProps {
   adding?: boolean
   exporting?: boolean
   readOnly?: boolean
+  surveyActive?: boolean
+  surveyName?: string
+  respondentLinks?: RespondentLink[]
   onExportReport?: () => void | Promise<void>
   onAddParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
   onRemoveParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
@@ -48,6 +51,9 @@ export function MatrixTable({
   adding = false,
   exporting = false,
   readOnly = false,
+  surveyActive = false,
+  surveyName = '',
+  respondentLinks = [],
   onExportReport,
   onAddParticipant,
   onRemoveParticipant,
@@ -57,6 +63,21 @@ export function MatrixTable({
     useState<Record<string, Record<string, boolean>>>(initialAssignments)
   const [pickerRole, setPickerRole] = useState<'target' | 'respondent' | null>(null)
   const [search, setSearch] = useState('')
+  const [copiedReviewerId, setCopiedReviewerId] = useState<number | null>(null)
+
+  const linkByReviewerId = Object.fromEntries(
+    respondentLinks.map((l) => [l.reviewerId, l]),
+  ) as Record<number, RespondentLink>
+
+  const handleCopyInviteLink = async (reviewerId: number, token: string) => {
+    try {
+      await navigator.clipboard.writeText(buildRespondentInviteLink(token))
+      setCopiedReviewerId(reviewerId)
+      window.setTimeout(() => setCopiedReviewerId(null), 2000)
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   useEffect(() => {
     setAssignments(initialAssignments)
@@ -171,7 +192,11 @@ export function MatrixTable({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
-                  {respondents.map((respondent) => (
+                  {respondents.map((respondent) => {
+                    const invite = linkByReviewerId[respondent.id]
+                    const inviteLink = invite ? buildRespondentInviteLink(invite.token) : null
+
+                    return (
                     <tr key={respondent.id} className="hover:bg-blue-50/30 transition">
                       <td className="p-4 font-medium text-gray-900 border-r border-gray-100">
                         <div className="flex items-center gap-2">
@@ -188,7 +213,36 @@ export function MatrixTable({
                               ✕
                             </button>
                           </div>
-                          {respondent.name}
+                          <div className="min-w-0">
+                            <div>{respondent.name}</div>
+                            {surveyActive && inviteLink && (
+                              <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => handleCopyInviteLink(respondent.id, invite.token)}
+                                  className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] cursor-pointer"
+                                  title="Скопировать персональную ссылку"
+                                >
+                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                                  </svg>
+                                  {copiedReviewerId === respondent.id ? 'Скопировано' : 'Ссылка'}
+                                </button>
+                                {invite.reviewerEmail && (
+                                  <a
+                                    href={buildInviteMailto(invite.reviewerEmail, surveyName, inviteLink)}
+                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-gray-700"
+                                    title="Отправить приглашение по email"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                    </svg>
+                                    Email
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </td>
                       {targets.map((target) => {
@@ -230,7 +284,8 @@ export function MatrixTable({
                         )
                       })}
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>
