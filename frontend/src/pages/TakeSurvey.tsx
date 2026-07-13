@@ -424,10 +424,8 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
     return (
       <div className="max-w-2xl mx-auto p-6 text-center">
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-          <div className="mx-auto w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
-            <svg className="w-7 h-7 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
+          <div className="mx-auto w-20 h-20 rounded-full bg-green-100 flex items-center justify-center overflow-hidden">
+            <img src="/dog_icon.webp" alt="Успешное завершение" className="w-full h-full object-cover" />
           </div>
           <h2 className="text-xl font-semibold text-gray-900 mt-4">Спасибо!</h2>
           <p className="text-sm text-gray-500 mt-1">Ваши ответы успешно сохранены в базе данных.</p>
@@ -450,32 +448,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
             )}
           </div>
         </div>
-        <DogThumbsAnimation />
       </div>
-    )
-  }
-
-  function DogThumbsAnimation() {
-    return (
-      <>
-        <style>{`
-          .dog-toast { pointer-events: none; }
-          .dog-card { animation: pop .45s cubic-bezier(.2,.9,.2,1); }
-          @keyframes pop { from { transform: translateY(12px) scale(.98); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
-          .dog-emoji { font-size: 28px; line-height: 1; }
-          .paw { display: inline-block; transform-origin: 50% 60%; animation: paw-wave 0.9s ease-in-out 0.15s 3 both; }
-          @keyframes paw-wave { 0% { transform: rotate(0deg) } 40% { transform: rotate(-25deg) } 70% { transform: rotate(8deg) } 100% { transform: rotate(0deg) } }
-        `}</style>
-        <div className="dog-toast fixed bottom-8 right-8 z-50">
-          <div className="dog-card bg-white border border-gray-200 rounded-2xl p-3 shadow-lg flex items-center gap-3">
-            <div className="dog-emoji">🐶<span className="ml-1 paw">👍</span></div>
-            <div className="text-left">
-              <div className="text-sm font-semibold text-gray-900">Спасибо!</div>
-              <div className="text-xs text-gray-500">Ответы сохранены — вы молодец</div>
-            </div>
-          </div>
-        </div>
-      </>
     )
   }
 
