@@ -69,13 +69,13 @@ function SaveTemplate({
     <Modal title="Сохранить как шаблон">
       {done ? (
         <div className="space-y-4">
-          <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+          <p className="text-base text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
             Шаблон «{name}» сохранён
           </p>
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-base font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition cursor-pointer"
             >
               Закрыть
             </button>
@@ -84,24 +84,24 @@ function SaveTemplate({
       ) : (
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <label className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">
               Название шаблона
             </label>
             <input
               type="text"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-500"
               value={name}
               onChange={(e) => setName(e.target.value)}
               autoFocus
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <label className="block text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">
               Описание
             </label>
             <input
               type="text"
-              className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
+              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-blue-500"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Необязательно"
@@ -112,14 +112,14 @@ function SaveTemplate({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={saving || !name.trim()}
-              className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
+              className="px-5 py-2 text-base font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
             >
               {saving ? 'Сохранение…' : 'Сохранить'}
             </button>
