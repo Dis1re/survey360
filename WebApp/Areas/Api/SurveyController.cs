@@ -292,6 +292,9 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
             .OrderBy(q => q.Id)
             .ToListAsync(ct);
 
+        if (questions.Count == 0)
+            return BadRequest("Нельзя создать шаблон без вопросов");
+
         var template = new SurveyTemplate
         {
             Name = request.Name,
