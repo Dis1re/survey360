@@ -13,8 +13,6 @@ const btnPrimary =
   'px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition shadow-sm disabled:opacity-50 cursor-pointer'
 const btnSecondary =
   'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition disabled:opacity-50 cursor-pointer'
-const btnDanger =
-  'px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-xl transition disabled:opacity-50 cursor-pointer'
 const btnDangerOutline =
   'px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-xl transition disabled:opacity-50 cursor-pointer'
 
@@ -97,6 +95,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
 
   const [answerQuestionId, setAnswerQuestionId] = useState('')
   const [answerUserId, setAnswerUserId] = useState('')
+  const [answerTargetId, setAnswerTargetId] = useState('')
   const [answerText, setAnswerText] = useState('5')
   const [answerType, setAnswerType] = useState('rating')
   const [answerGetId, setAnswerGetId] = useState('')
@@ -291,7 +290,8 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     e.preventDefault()
     const questionId = Number(answerQuestionId)
     const userId = Number(answerUserId)
-    if (!questionId || !userId) return
+    const targetId = Number(answerTargetId)
+    if (!questionId || !userId || !targetId) return
 
     setAnswerBusy(true)
     setError(null)
@@ -299,6 +299,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
       const id = await answerApi.create({
         questionId,
         userId,
+        targetId,
         text: answerText,
         type: answerType,
       })
@@ -713,6 +714,19 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                     placeholder="1"
                     value={answerUserId}
                     onChange={(e) => setAnswerUserId(e.target.value)}
+                    required
+                  />
+                </Field>
+              </div>
+              <div className="md:col-span-2">
+                <Field label="Target id" hint="Id пользователя, которого оценивают. Поле targetId.">
+                  <input
+                    className={inputClass}
+                    type="number"
+                    min={1}
+                    placeholder="1"
+                    value={answerTargetId}
+                    onChange={(e) => setAnswerTargetId(e.target.value)}
                     required
                   />
                 </Field>
