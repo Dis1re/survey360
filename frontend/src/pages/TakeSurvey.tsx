@@ -216,6 +216,20 @@ function TargetPicker({
   )
 }
 
+function DogThumbsAnimation() {
+  return (
+    <div className="dog-toast fixed bottom-8 right-8 z-50">
+      <div className="dog-card bg-white border border-gray-200 rounded-2xl p-3 shadow-lg flex items-center gap-3">
+        <div className="dog-emoji">🐶<span className="ml-1 paw">👍</span></div>
+        <div className="text-left">
+          <div className="text-sm font-semibold text-gray-900">Спасибо!</div>
+          <div className="text-xs text-gray-500">Ответы сохранены — вы молодец</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyProps) {
   const initialParams = parseSurveyResponseParams()
   const [survey, setSurvey] = useState<ApiSurvey | null>(null)
@@ -450,9 +464,12 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
             )}
           </div>
         </div>
+        <DogThumbsAnimation />
       </div>
     )
   }
+
+
 
   return (
     <div className="max-w-2xl mx-auto p-6">
