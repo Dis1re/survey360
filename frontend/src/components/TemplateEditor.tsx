@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { templateApi } from '../api'
 import { QuestionEditor } from './QuestionEditor'
-import { mapQuestionType, mapQuestionTypeToApi, apiQuestionToQuestion } from '../mappers'
+import { mapQuestionType, mapQuestionTypeToApi } from '../mappers'
 import type { ApiQuestionTemplate, Question } from '../types'
 
 interface TemplateEditorProps {

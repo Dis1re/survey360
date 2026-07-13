@@ -169,7 +169,6 @@ export interface SurveyReportInfo {
   allAssignedCompleted: boolean
 }
 
-<<<<<<< HEAD
 export interface SaveAsTemplateRequest {
   name: string
   description: string
