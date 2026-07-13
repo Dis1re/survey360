@@ -474,19 +474,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                   onReorder={handleReorderQuestions}
                   deleting={deletingQuestion}
                 />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1">
-                <QuestionList
-                  questions={questions}
-                  activeQuestionId={activeQuestionId}
-                  creating={creatingQuestion}
-                  readOnly={!surveyEditable}
-                  onQuestionSelect={setActiveQuestionId}
-                  onQuestionCreate={handleCreateQuestion}
-                  onQuestionDelete={handleDeleteQuestion}
-                  deleting={deletingQuestion}
-                />
               </div>
               <div className="lg:col-span-2">
                 <QuestionEditor
