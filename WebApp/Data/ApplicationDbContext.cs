@@ -67,6 +67,12 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .HasIndex(sp => new { sp.SurveyId, sp.UserId })
             .IsUnique();
 
+        modelBuilder.Entity<QuestionTemplate>()
+            .HasOne<SurveyTemplate>()
+            .WithMany()
+            .HasForeignKey(qt => qt.SurveyTemplateId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         modelBuilder.Entity<SurveyRespondentLink>()
             .HasOne<Survey>()
             .WithMany()
@@ -94,5 +100,7 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<Answer> Answers { get; set; }
     public DbSet<SurveyAssignment> SurveyAssignments { get; set; }
     public DbSet<SurveyParticipant> SurveyParticipants => Set<SurveyParticipant>();
+    public DbSet<SurveyTemplate> SurveyTemplates { get; set; }
+    public DbSet<QuestionTemplate> QuestionTemplates { get; set; }
     public DbSet<SurveyRespondentLink> SurveyRespondentLinks => Set<SurveyRespondentLink>();
 }

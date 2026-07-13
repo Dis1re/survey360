@@ -5,12 +5,15 @@ import type {
   ApiSurvey,
   ApiSurveyDetails,
   ApiSurveyMatrix,
+  ApiSurveyTemplate,
+  ApiSurveyTemplateDetails,
   ApiUser,
   AssignmentEntry,
   CreateAnswerRequest,
   CreateQuestionRequest,
   CreateUserRequest,
   CompleteAssignmentRequest,
+  SaveAsTemplateRequest,
   SurveyReportInfo,
   RespondentLink,
   InviteInfo,
@@ -90,6 +93,12 @@ export const surveyApi = {
   delete: (id: number) =>
     sendRequest<void>(`${API}/survey/${id}`, { method: 'DELETE' }),
 
+  reorderQuestions: (id: number, orderedIds: number[]) =>
+    sendRequest<void>(`${API}/survey/${id}/questions/order`, {
+      method: 'PUT',
+      body: JSON.stringify({ orderedIds }),
+    }),
+
   getReportInfo: (id: number) =>
     sendRequest<SurveyReportInfo>(`${API}/survey/${id}/report/info`),
 
@@ -122,6 +131,46 @@ export const surveyApi = {
     link.click()
     URL.revokeObjectURL(url)
   },
+  saveAsTemplate: (id: number, data: SaveAsTemplateRequest) =>
+    sendRequest<number>(`${API}/survey/${id}/save-as-template`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+}
+
+export const templateApi = {
+  list: () => sendRequest<ApiSurveyTemplate[]>(`${API}/survey-template`),
+
+  get: (id: number) => sendRequest<ApiSurveyTemplateDetails>(`${API}/survey-template/${id}`),
+
+  update: (id: number, data: { name: string; description: string; props: string }) =>
+    sendRequest<void>(`${API}/survey-template/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: number) =>
+    sendRequest<void>(`${API}/survey-template/${id}`, { method: 'DELETE' }),
+
+  createQuestion: (templateId: number, data: { text: string; type: string }) =>
+    sendRequest<number>(`${API}/survey-template/${templateId}/questions`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateQuestion: (templateId: number, questionId: number, data: { text: string; type: string }) =>
+    sendRequest<void>(`${API}/survey-template/${templateId}/questions/${questionId}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteQuestion: (templateId: number, questionId: number) =>
+    sendRequest<void>(`${API}/survey-template/${templateId}/questions/${questionId}`, {
+      method: 'DELETE',
+    }),
+
+  createSurveyFromTemplate: (id: number) =>
+    sendRequest<number>(`${API}/survey-template/${id}/create-survey`, { method: 'POST' }),
 }
 
 export const userApi = {
