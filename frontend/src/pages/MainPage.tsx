@@ -16,7 +16,7 @@ import {
   mapSurveyStatusToApi,
   usersToParticipants,
 } from '../mappers'
-import type { ApiSurvey, ApiUser, Participant, Question } from '../types'
+import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink } from '../types'
 
 interface MainPageProps {
   surveyId: number | null
@@ -44,6 +44,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [exportingReport, setExportingReport] = useState(false)
+  const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
 
   const loadUsers = useCallback(async () => {
@@ -57,6 +58,16 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     setRespondents(usersToParticipants(matrix.respondents))
     setAssignments(assignmentsToMatrix(matrix.assignments))
     setCompletedAssignments(assignmentsToCompletionMatrix(matrix.assignments))
+  }, [])
+
+  const loadRespondentLinks = useCallback(async (id: number) => {
+    try {
+      const links = await surveyApi.getRespondentLinks(id)
+      setRespondentLinks(links)
+    } catch (err) {
+      console.error(err)
+      setRespondentLinks([])
+    }
   }, [])
 
   const loadSurvey = useCallback(async (id: number) => {
@@ -77,7 +88,12 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       setAssignments({})
       setCompletedAssignments({})
     }
-  }, [loadMatrix])
+    if (mapSurveyStatus(details.survey.status) === 'active') {
+      await loadRespondentLinks(id)
+    } else {
+      setRespondentLinks([])
+    }
+  }, [loadMatrix, loadRespondentLinks])
 
   useEffect(() => {
     if (surveyId === null) {
@@ -88,6 +104,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       setRespondents([])
       setAssignments({})
       setCompletedAssignments({})
+      setRespondentLinks([])
       setActiveQuestionId(null)
       return
     }
@@ -164,6 +181,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       })
       setSurvey(updated)
       onSurveyUpdated?.()
+      await loadRespondentLinks(surveyId)
     } catch (err) {
       console.error(err)
       throw err
@@ -419,6 +437,9 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               adding={addingMatrixParticipant}
               exporting={exportingReport}
               readOnly={!surveyEditable}
+              surveyActive={surveyStatus === 'active'}
+              surveyName={survey?.name ?? ''}
+              respondentLinks={respondentLinks}
               onExportReport={handleExportReport}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}

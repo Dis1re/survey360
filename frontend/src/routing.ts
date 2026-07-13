@@ -1,3 +1,8 @@
+export function getInviteToken(): string | null {
+  const match = window.location.pathname.match(/^\/survey\/invite\/([a-f0-9]{32})\/?$/i)
+  return match?.[1] ?? null
+}
+
 export function getPublicSurveyId(): number | null {
   const match = window.location.pathname.match(/^\/survey\/(\d+)\/?$/)
   if (!match) return null
@@ -20,4 +25,16 @@ export function buildSurveyResponseLink(surveyId: number, reviewerId: number, ta
   url.searchParams.set('reviewer', String(reviewerId))
   url.searchParams.set('target', String(targetId))
   return url.toString()
+}
+
+export function buildRespondentInviteLink(token: string): string {
+  return `${window.location.origin}/survey/invite/${token}`
+}
+
+export function buildInviteMailto(email: string, surveyName: string, inviteLink: string): string {
+  const subject = encodeURIComponent(`Приглашение к опросу: ${surveyName}`)
+  const body = encodeURIComponent(
+    `Здравствуйте!\n\nВас приглашают пройти опрос «${surveyName}».\n\nПерейдите по персональной ссылке:\n${inviteLink}\n\nПо этой ссылке вам не нужно указывать свои данные — система уже знает, кто вы.`,
+  )
+  return `mailto:${email}?subject=${subject}&body=${body}`
 }
