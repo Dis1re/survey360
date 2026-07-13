@@ -87,6 +87,7 @@ export function apiQuestionToQuestion(api: ApiQuestion): Question {
     surveyId: api.surveyId,
     text: api.text,
     type,
+    isRequired: api.isRequired ?? false,
     options:
       type === 'scale'
         ? [

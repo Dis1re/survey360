@@ -19,12 +19,14 @@ export interface Question {
   surveyId: number
   text: string
   type: 'radio' | 'scale' | 'text'
+  isRequired?: boolean
   options?: { value: number; label: string }[]
 }
 
 export interface QuestionInput {
   text: string
   type: Question['type']
+  isRequired?: boolean
   options?: Question['options']
 }
 
@@ -66,11 +68,13 @@ export interface CreateQuestionRequest {
   surveyId: number
   text: string
   type: string
+  isRequired?: boolean
 }
 
 export interface UpdateQuestionRequest {
   text: string
   type: string
+  isRequired?: boolean
 }
 
 export interface CreateAnswerRequest {
@@ -96,6 +100,7 @@ export interface ApiQuestion {
   surveyId: number
   text: string
   type: string
+  isRequired?: boolean
 }
 
 export interface ApiQuestionDetails {

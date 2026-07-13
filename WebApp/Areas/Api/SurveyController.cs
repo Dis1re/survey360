@@ -303,6 +303,38 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         if (assignment is null || !assignment.IsAssigned)
             return BadRequest("Назначение не найдено в матрице опроса");
 
+        var requiredQuestions = await context.Questions
+            .AsNoTracking()
+            .Where(q => q.SurveyId == id && q.IsRequired)
+            .ToListAsync(ct);
+
+        if (requiredQuestions.Count > 0)
+        {
+            var requiredIds = requiredQuestions.Select(q => q.Id).ToHashSet();
+            var answeredRequiredIds = await context.Answers
+                .AsNoTracking()
+                .Where(a => a.UserId == request.ReviewerId
+                            && a.TargetId == request.TargetId
+                            && requiredIds.Contains(a.QuestionId)
+                            && a.Text != null && a.Text != "")
+                .Select(a => a.QuestionId)
+                .ToListAsync(ct);
+
+            var missing = requiredQuestions
+                .Where(q => !answeredRequiredIds.Contains(q.Id))
+                .Select(q => new { q.Id, q.Text })
+                .ToList();
+
+            if (missing.Count > 0)
+            {
+                return BadRequest(new
+                {
+                    message = "Не заполнены обязательные вопросы",
+                    missingQuestionIds = missing.Select(m => m.Id).ToList(),
+                });
+            }
+        }
+
         assignment.IsCompleted = true;
 
         await context.SaveChangesAsync(ct);

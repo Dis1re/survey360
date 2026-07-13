@@ -368,6 +368,15 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
       setError('Заполните хотя бы один вопрос')
       return
     }
+
+    const missingRequired = questions.filter(
+      (q) => q.isRequired && (answers[q.id] ?? '').trim() === '',
+    )
+    if (missingRequired.length > 0) {
+      setError('Не заполнены обязательные вопросы')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
     try {
@@ -391,7 +400,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
       }
     } catch (err) {
       console.error(err)
-      setError('Не удалось сохранить ответы')
+      setError(err instanceof Error ? err.message : 'Не удалось сохранить ответы')
     } finally {
       setSubmitting(false)
     }
@@ -546,6 +555,11 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
               <label className="block text-sm font-medium text-gray-900 mb-3">
                 <span className="text-gray-400 mr-1.5">{index + 1}.</span>
                 {question.text}
+                {question.isRequired && (
+                  <span className="ml-1.5 text-red-500" title="Обязательный вопрос">
+                    *
+                  </span>
+                )}
               </label>
               <QuestionInput
                 question={question}

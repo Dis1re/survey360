@@ -18,12 +18,14 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
   const [text, setText] = useState('')
   const [type, setType] = useState<Question['type']>('scale')
   const [options, setOptions] = useState<{ value: number; label: string }[]>([])
+  const [isRequired, setIsRequired] = useState(false)
 
   useEffect(() => {
     if (question) {
       setText(question.text)
       setType(question.type)
       setOptions(question.options ?? [])
+      setIsRequired(question.isRequired ?? false)
     }
   }, [question])
 
@@ -35,6 +37,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
         ...question,
         text,
         type,
+        isRequired,
         options: type === 'scale' || type === 'radio' ? options : undefined,
       })
     } catch (err) {
@@ -47,6 +50,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
     setText(question.text)
     setType(question.type)
     setOptions(question.options ?? [])
+    setIsRequired(question.isRequired ?? false)
   }
 
   if (!question) {
@@ -121,6 +125,21 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
             ))}
           </div>
         </div>
+      )}
+
+      {!readOnly && (
+        <label className="flex items-center gap-3 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={isRequired}
+            onChange={(e) => setIsRequired(e.target.checked)}
+            className="w-4 h-4 text-[#FF8600] rounded focus:ring-[#FF8600]"
+          />
+          <span className="text-sm text-gray-700">
+            Обязательный вопрос
+            <span className="text-gray-400"> — нельзя отправить опрос, не ответив на него</span>
+          </span>
+        </label>
       )}
 
       {!readOnly && (
