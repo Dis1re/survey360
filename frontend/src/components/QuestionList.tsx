@@ -10,6 +10,7 @@ interface QuestionListProps {
   onQuestionSelect: (id: number) => void
   onQuestionCreate: (text: string) => Promise<void>
   onQuestionDelete: (id: number) => Promise<void>
+  onReorder: (orderedIds: number[]) => Promise<void>
 }
 
 export function QuestionList({
@@ -21,9 +22,43 @@ export function QuestionList({
   onQuestionSelect,
   onQuestionCreate,
   onQuestionDelete,
+  onReorder,
 }: QuestionListProps) {
   const [newQuestionText, setNewQuestionText] = useState('')
   const [showInput, setShowInput] = useState(false)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const [overIndex, setOverIndex] = useState<number | null>(null)
+
+  const handleDragStart = (index: number) => (e: React.DragEvent) => {
+    if (readOnly) return
+    setDragIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (index: number) => (e: React.DragEvent) => {
+    if (readOnly || dragIndex === null) return
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (overIndex !== index) setOverIndex(index)
+  }
+
+  const handleDrop = (index: number) => async (e: React.DragEvent) => {
+    e.preventDefault()
+    const from = dragIndex
+    setDragIndex(null)
+    setOverIndex(null)
+    if (readOnly || from === null || from === index) return
+
+    const next = [...questions]
+    const [moved] = next.splice(from, 1)
+    next.splice(index, 0, moved)
+    await onReorder(next.map((q) => q.id))
+  }
+
+  const handleDragEnd = () => {
+    setDragIndex(null)
+    setOverIndex(null)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,6 +78,9 @@ export function QuestionList({
     <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col">
       <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
         Вопросы анкеты ({questions.length})
+        {!readOnly && questions.length > 1 && (
+          <span className="ml-1 font-normal normal-case text-gray-300">· перетащите для сортировки</span>
+        )}
       </span>
 
       <div className="space-y-2 flex-1 overflow-y-auto pr-1">
@@ -51,22 +89,37 @@ export function QuestionList({
         ) : (
           questions.map((question, index) => {
             const isActive = question.id === activeQuestionId
+            const isDragging = dragIndex === index
+            const isOver = overIndex === index && dragIndex !== null && dragIndex !== index
             return (
               <div
                 key={question.id}
+                draggable={!readOnly}
+                onDragStart={handleDragStart(index)}
+                onDragOver={handleDragOver(index)}
+                onDrop={handleDrop(index)}
+                onDragEnd={handleDragEnd}
                 onClick={() => onQuestionSelect(question.id)}
                 className={`p-3 rounded-xl cursor-pointer text-sm font-medium flex items-center justify-between transition ${
                   isActive
                     ? 'bg-gray-50 border border-blue-500 text-gray-900'
                     : 'hover:bg-gray-50 border border-gray-100 text-gray-600'
+                } ${isDragging ? 'opacity-40' : ''} ${
+                  isOver ? 'border-blue-400 ring-2 ring-blue-100' : ''
                 }`}
               >
-                <span className="truncate">
+                <span className="truncate min-w-0">
                   <span className="text-gray-400 mr-1.5">{index + 1}.</span>
                   {question.text}
                 </span>
                 <div className="flex items-center gap-1.5 shrink-0 ml-2">
-                  <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg
+                    className={`w-4 h-4 shrink-0 ${readOnly ? 'text-gray-300' : 'text-gray-400 cursor-grab active:cursor-grabbing'}`}
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                    strokeWidth={2}
+                  >
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 8h16M4 16h16" />
                   </svg>
                   {!readOnly && (

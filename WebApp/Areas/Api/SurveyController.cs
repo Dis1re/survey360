@@ -85,7 +85,8 @@ public class SurveyController(
         var questions = await context.Questions
             .AsNoTracking()
             .Where(q => q.SurveyId == id)
-            .OrderBy(q => q.Id)
+            .OrderBy(q => q.Order)
+            .ThenBy(q => q.Id)
             .ToListAsync(ct);
 
         var questionIds = questions.Select(q => q.Id).ToList();
@@ -110,6 +111,24 @@ public class SurveyController(
         var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == id, ct);
         if (survey is null)
             return NotFound();
+
+        var targetStatus = (request.Status ?? "").Trim();
+        var isActive = targetStatus.Contains("актив", StringComparison.OrdinalIgnoreCase)
+            || targetStatus.Equals("active", StringComparison.OrdinalIgnoreCase);
+
+        if (isActive)
+        {
+            var hasQuestions = await context.Questions.AnyAsync(q => q.SurveyId == id, ct);
+            var hasAssignments = await context.SurveyAssignments
+                .AnyAsync(a => a.SurveyId == id && a.IsAssigned, ct);
+
+            if (!hasQuestions || !hasAssignments)
+            {
+                return BadRequest(
+                    "Нельзя запустить опрос: добавьте хотя бы один вопрос и заполните матрицу " +
+                    "назначений (хотя бы одну пару «оценивающий → оцениваемый»).");
+            }
+        }
 
         survey.Name = request.Name;
         survey.Description = request.Description;
@@ -337,6 +356,43 @@ public class SurveyController(
             .ExecuteDeleteAsync(ct);
 
         return deleted == 0 ? NotFound() : NoContent();
+    }
+
+    public record ReorderQuestionsRequest(List<int> OrderedIds);
+
+    [HttpPut("{id:int}/questions/order")]
+    public async Task<IActionResult> ReorderQuestions(
+        int id,
+        [FromBody] ReorderQuestionsRequest request,
+        CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        var ids = request.OrderedIds.Distinct().ToList();
+        if (ids.Count == 0)
+            return NoContent();
+
+        var questions = await context.Questions
+            .Where(q => q.SurveyId == id)
+            .ToListAsync(ct);
+
+        var byId = questions.ToDictionary(q => q.Id);
+        var order = 0;
+        foreach (var questionId in ids)
+        {
+            if (byId.TryGetValue(questionId, out var question))
+                question.Order = order++;
+        }
+
+        foreach (var question in questions)
+        {
+            if (!ids.Contains(question.Id))
+                question.Order = order++;
+        }
+
+        await context.SaveChangesAsync(ct);
+        return NoContent();
     }
 
     [HttpPost("{id:int}/assignments/complete")]
