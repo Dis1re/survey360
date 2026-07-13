@@ -167,6 +167,4 @@ export interface RespondentLink {
 export interface InviteInfo {
   surveyId: number
   reviewerId: number
-  reviewer: ApiUser
-  survey: ApiSurvey
 }

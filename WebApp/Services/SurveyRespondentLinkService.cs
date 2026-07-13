@@ -6,7 +6,7 @@ namespace WebApp.Services;
 
 public record RespondentLinkDto(int ReviewerId, string ReviewerName, string ReviewerEmail, string Token);
 
-public record InviteInfoDto(int SurveyId, int ReviewerId, User Reviewer, Survey Survey);
+public record InviteInfoDto(int SurveyId, int ReviewerId);
 
 public class SurveyRespondentLinkService(ApplicationDbContext context)
 {
@@ -90,15 +90,10 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
         if (link is null)
             return null;
 
-        var survey = await context.Surveys
-            .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.Id == link.SurveyId, ct);
+        if (!await context.Surveys.AnyAsync(s => s.Id == link.SurveyId, ct))
+            return null;
 
-        var reviewer = await context.Users
-            .AsNoTracking()
-            .FirstOrDefaultAsync(u => u.Id == link.ReviewerId, ct);
-
-        if (survey is null || reviewer is null)
+        if (!await context.Users.AnyAsync(u => u.Id == link.ReviewerId, ct))
             return null;
 
         var isRespondent = await context.SurveyParticipants
@@ -117,7 +112,7 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
         if (!hasAssignment)
             return null;
 
-        return new InviteInfoDto(link.SurveyId, link.ReviewerId, reviewer, survey);
+        return new InviteInfoDto(link.SurveyId, link.ReviewerId);
     }
 
     public async Task DeleteLinkAsync(int surveyId, int reviewerId, CancellationToken ct)
