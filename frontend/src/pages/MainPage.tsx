@@ -5,6 +5,8 @@ import { QuestionEditor } from '../components/QuestionEditor'
 import { QuestionList } from '../components/QuestionList'
 import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '../components/SurveyHeader'
 import { TabBar, type Tab } from '../components/TabBar'
+import { TemplatesModal } from '../components/TemplatesModal'
+import { TemplateEditor } from '../components/TemplateEditor'
 import {
   apiDateToInput,
   apiQuestionToQuestion,
@@ -46,6 +48,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [exportingReport, setExportingReport] = useState(false)
   const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
+  const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null)
 
   const loadUsers = useCallback(async () => {
     const users = await userApi.list()
@@ -96,7 +100,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }, [loadMatrix, loadRespondentLinks])
 
   useEffect(() => {
-    if (surveyId === null) {
+  if (surveyId === null) {
       setSurvey(null)
       setQuestions([])
       setAllUsers([])
@@ -145,6 +149,21 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
 
   const surveyStatus = survey ? mapSurveyStatus(survey.status) : 'draft'
   const surveyEditable = surveyStatus === 'draft'
+
+  const hasQuestions = questions.length > 0
+  const matrixFilled =
+    targets.length > 0 &&
+    respondents.length > 0 &&
+    Object.values(assignments).some((row) => Object.values(row).some(Boolean))
+  const canStart = hasQuestions && matrixFilled
+  const startHint = !hasQuestions && !matrixFilled
+    ? 'Добавьте хотя бы один вопрос и заполните матрицу назначений'
+    : !hasQuestions
+      ? 'Добавьте хотя бы один вопрос'
+      : !matrixFilled
+        ? 'Заполните матрицу назначений (хотя бы одну пару «оценивающий → оцениваемый»)'
+        : ''
+
   const activeQuestion = questions.find((q) => q.id === activeQuestionId) ?? null
 
   const handleSaveSurvey = async (data: SurveyHeaderForm) => {
@@ -172,6 +191,13 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     if (surveyId === null || !survey) return
     setStartingSurvey(true)
     try {
+      const entries = matrixToEntries(assignments, respondents, targets).map((e) => ({
+        reviewerId: e.reviewerId,
+        targetId: e.targetId,
+        isAssigned: e.isAssigned,
+      }))
+      await surveyApi.saveAssignments(surveyId, entries)
+
       const updated = await surveyApi.update(surveyId, {
         name: data.title.trim(),
         description: data.description.trim(),
@@ -217,7 +243,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     if (surveyId === null || !surveyEditable) return
     setCreatingQuestion(true)
     try {
-      const id = await questionApi.create({ surveyId, text, type: 'rating' })
+      const id = await questionApi.create({ surveyId, text, type: 'rating', isRequired: false })
       setQuestions((prev) => [...prev, apiQuestionToQuestion({ id, surveyId, text, type: 'rating' })])
       setActiveQuestionId(id)
     } catch (err) {
@@ -235,8 +261,10 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       const saved = await questionApi.update(updated.id, {
         text: updated.text,
         type: mapQuestionTypeToApi(updated.type),
+        isRequired: updated.isRequired ?? false,
+        props: updated.props,
       })
-      const mapped = { ...apiQuestionToQuestion(saved), options: updated.options }
+      const mapped = apiQuestionToQuestion(saved)
       setQuestions((prev) => prev.map((q) => (q.id === updated.id ? mapped : q)))
     } catch (err) {
       console.error(err)
@@ -292,7 +320,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }
 
   const handleDeleteQuestion = async (id: number) => {
-    if (surveyId === null) return
+    if (surveyId === null || !surveyEditable) return
     setDeletingQuestion(true)
     try {
       await questionApi.delete(id)
@@ -306,9 +334,21 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       })
     } catch (err) {
       console.error(err)
-      throw err
     } finally {
       setDeletingQuestion(false)
+    }
+  }
+
+  const handleReorderQuestions = async (orderedIds: number[]) => {
+    if (surveyId === null || !surveyEditable) return
+    const map = new Map(questions.map((q) => [q.id, q]))
+    const next = orderedIds.map((id) => map.get(id)).filter((q): q is Question => q !== undefined)
+    setQuestions(next)
+    try {
+      await surveyApi.reorderQuestions(surveyId, orderedIds)
+    } catch (err) {
+      console.error(err)
+      if (surveyId !== null) void loadSurvey(surveyId)
     }
   }
 
@@ -348,6 +388,18 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }
 
+  if (editingTemplateId !== null) {
+    return (
+      <TemplateEditor
+        templateId={editingTemplateId}
+        onBack={() => {
+          setEditingTemplateId(null)
+          setTemplateModal('load')
+        }}
+      />
+    )
+  }
+
   if (surveyId === null) {
     return (
       <div className="flex items-center justify-center h-full p-6">
@@ -385,7 +437,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
         saving={savingSurvey}
         starting={startingSurvey}
         stopping={stoppingSurvey}
-        questionsCount={questions.length}
+        canStart={canStart}
+        startHint={startHint}
         onSave={handleSaveSurvey}
         onStartSurvey={handleStartSurvey}
         onStopSurvey={handleStopSurvey}
@@ -396,26 +449,49 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
 
       {activeTab === 'editor' && (
         <div className="p-6">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <QuestionList
-                questions={questions}
-                activeQuestionId={activeQuestionId}
-                creating={creatingQuestion}
-                readOnly={!surveyEditable}
-                onQuestionSelect={setActiveQuestionId}
-                onQuestionCreate={handleCreateQuestion}
-                onQuestionDelete={handleDeleteQuestion}
-                deleting={deletingQuestion}
-              />
+          <div className="max-w-6xl mx-auto space-y-3">
+            <div className="flex justify-start gap-2">
+              <button
+                type="button"
+                onClick={() => setTemplateModal('save')}
+                disabled={questions.length === 0}
+                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default transition cursor-pointer"
+                title={questions.length === 0 ? 'Добавьте хотя бы один вопрос' : ''}
+              >
+                Сохранить как шаблон
+              </button>
+              {surveyEditable && (
+                <button
+                  type="button"
+                  onClick={() => setTemplateModal('load')}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Загрузить из шаблона
+                </button>
+              )}
             </div>
-            <div className="lg:col-span-2">
-              <QuestionEditor
-                question={activeQuestion}
-                saving={savingQuestion}
-                readOnly={!surveyEditable}
-                onSave={handleSaveQuestion}
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <QuestionList
+                  questions={questions}
+                  activeQuestionId={activeQuestionId}
+                  creating={creatingQuestion}
+                  readOnly={!surveyEditable}
+                  onQuestionSelect={setActiveQuestionId}
+                  onQuestionCreate={handleCreateQuestion}
+                  onQuestionDelete={handleDeleteQuestion}
+                  onReorder={handleReorderQuestions}
+                  deleting={deletingQuestion}
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <QuestionEditor
+                  question={activeQuestion}
+                  saving={savingQuestion}
+                  readOnly={!surveyEditable}
+                  onSave={handleSaveQuestion}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -447,6 +523,23 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
             />
           </div>
         </div>
+      )}
+
+      {templateModal && (
+        <TemplatesModal
+          surveyId={surveyId}
+          surveyName={survey?.name ?? ''}
+          mode={templateModal}
+          onClose={() => setTemplateModal(null)}
+          onLoaded={() => {
+            setTemplateModal(null)
+            if (surveyId) loadSurvey(surveyId)
+          }}
+          onEditTemplate={(id) => {
+            setTemplateModal(null)
+            setEditingTemplateId(id)
+          }}
+        />
       )}
     </>
   )
