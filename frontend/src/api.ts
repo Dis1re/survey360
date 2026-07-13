@@ -5,12 +5,15 @@ import type {
   ApiSurvey,
   ApiSurveyDetails,
   ApiSurveyMatrix,
+  ApiSurveyTemplate,
+  ApiSurveyTemplateDetails,
   ApiUser,
   AssignmentEntry,
   CreateAnswerRequest,
   CreateQuestionRequest,
   CreateUserRequest,
   CompleteAssignmentRequest,
+  SaveAsTemplateRequest,
   SurveyReportInfo,
   UpdateQuestionRequest,
   UpdateSurveyRequest,
@@ -106,6 +109,20 @@ export const surveyApi = {
     link.click()
     URL.revokeObjectURL(url)
   },
+  saveAsTemplate: (id: number, data: SaveAsTemplateRequest) =>
+    sendRequest<number>(`${API}/survey/${id}/save-as-template`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+}
+
+export const templateApi = {
+  list: () => sendRequest<ApiSurveyTemplate[]>(`${API}/survey-template`),
+
+  get: (id: number) => sendRequest<ApiSurveyTemplateDetails>(`${API}/survey-template/${id}`),
+
+  createSurveyFromTemplate: (id: number) =>
+    sendRequest<number>(`${API}/survey-template/${id}/create-survey`, { method: 'POST' }),
 }
 
 export const userApi = {

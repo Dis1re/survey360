@@ -9,9 +9,9 @@ public record CreateSurveyTemplateRequest(string Name, string Description, strin
 
 public record UpdateSurveyTemplateRequest(string Name, string Description, string Props);
 
-public record CreateQuestionTemplateRequest(string Text, string Type);
+public record CreateQuestionTemplateRequest(string Text, string Type, bool IsRequired = false, string? Props = null);
 
-public record UpdateQuestionTemplateRequest(string Text, string Type);
+public record UpdateQuestionTemplateRequest(string Text, string Type, bool IsRequired = false, string? Props = null);
 
 public record SurveyTemplateDetailsDto(
     SurveyTemplate Template,
@@ -101,6 +101,8 @@ public class SurveyTemplateController(ApplicationDbContext context) : Controller
             SurveyTemplateId = id,
             Text = request.Text,
             Type = request.Type,
+            IsRequired = request.IsRequired,
+            Props = request.Props,
         };
         await context.QuestionTemplates.AddAsync(question, ct);
         await context.SaveChangesAsync(ct);
@@ -121,6 +123,8 @@ public class SurveyTemplateController(ApplicationDbContext context) : Controller
 
         question.Text = request.Text;
         question.Type = request.Type;
+        question.IsRequired = request.IsRequired;
+        question.Props = request.Props;
 
         await context.SaveChangesAsync(ct);
         return Ok(question);
@@ -170,6 +174,8 @@ public class SurveyTemplateController(ApplicationDbContext context) : Controller
                 SurveyId = survey.Id,
                 Text = qt.Text,
                 Type = qt.Type,
+                IsRequired = qt.IsRequired,
+                Props = qt.Props,
             });
         }
         await context.SaveChangesAsync(ct);

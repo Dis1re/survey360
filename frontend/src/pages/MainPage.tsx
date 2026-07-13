@@ -5,6 +5,7 @@ import { QuestionEditor } from '../components/QuestionEditor'
 import { QuestionList } from '../components/QuestionList'
 import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '../components/SurveyHeader'
 import { TabBar, type Tab } from '../components/TabBar'
+import { TemplatesModal } from '../components/TemplatesModal'
 import {
   apiDateToInput,
   apiQuestionToQuestion,
@@ -63,6 +64,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [exportingReport, setExportingReport] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
 
   const loadUsers = useCallback(async () => {
     const users = await userApi.list()
@@ -399,26 +401,46 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
 
       {activeTab === 'editor' && (
         <div className="p-6">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <QuestionList
-                questions={questions}
-                activeQuestionId={activeQuestionId}
-                creating={creatingQuestion}
-                readOnly={!surveyEditable}
-                onQuestionSelect={setActiveQuestionId}
-                onQuestionCreate={handleCreateQuestion}
-                onQuestionDelete={handleDeleteQuestion}
-                deleting={deletingQuestion}
-              />
-            </div>
-            <div className="lg:col-span-2">
-              <QuestionEditor
-                question={activeQuestion}
-                saving={savingQuestion}
-                readOnly={!surveyEditable}
-                onSave={handleSaveQuestion}
-              />
+          <div className="max-w-6xl mx-auto space-y-3">
+            {surveyEditable && (
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setTemplateModal('save')}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Сохранить как шаблон
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTemplateModal('load')}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Загрузить из шаблона
+                </button>
+              </div>
+            )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <QuestionList
+                  questions={questions}
+                  activeQuestionId={activeQuestionId}
+                  creating={creatingQuestion}
+                  readOnly={!surveyEditable}
+                  onQuestionSelect={setActiveQuestionId}
+                  onQuestionCreate={handleCreateQuestion}
+                  onQuestionDelete={handleDeleteQuestion}
+                  deleting={deletingQuestion}
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <QuestionEditor
+                  question={activeQuestion}
+                  saving={savingQuestion}
+                  readOnly={!surveyEditable}
+                  onSave={handleSaveQuestion}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -447,6 +469,19 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
             />
           </div>
         </div>
+      )}
+
+      {templateModal && (
+        <TemplatesModal
+          surveyId={surveyId}
+          surveyName={survey?.name ?? ''}
+          mode={templateModal}
+          onClose={() => setTemplateModal(null)}
+          onLoaded={() => {
+            setTemplateModal(null)
+            if (surveyId) loadSurvey(surveyId)
+          }}
+        />
       )}
     </>
   )

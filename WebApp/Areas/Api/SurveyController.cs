@@ -35,6 +35,8 @@ public record AssignmentEntry(int ReviewerId, int TargetId, bool IsAssigned);
 
 public record CompleteAssignmentRequest(int ReviewerId, int TargetId);
 
+public record SaveAsTemplateRequest(string Name, string Description);
+
 public record SurveyReportInfoDto(int AnswerCount, int AssignedCount, int CompletedCount, bool AllAssignedCompleted);
 
 [Area("api")]
@@ -270,6 +272,49 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
 
         await context.SaveChangesAsync(ct);
         return NoContent();
+    }
+
+    [HttpPost("{id:int}/save-as-template")]
+    public async Task<ActionResult<int>> SaveAsTemplate(
+        int id,
+        [FromBody] SaveAsTemplateRequest request,
+        CancellationToken ct)
+    {
+        var survey = await context.Surveys
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == id, ct);
+        if (survey is null)
+            return NotFound();
+
+        var questions = await context.Questions
+            .AsNoTracking()
+            .Where(q => q.SurveyId == id)
+            .OrderBy(q => q.Id)
+            .ToListAsync(ct);
+
+        var template = new SurveyTemplate
+        {
+            Name = request.Name,
+            Description = request.Description,
+            CreatedAt = DateTime.UtcNow,
+        };
+        await context.SurveyTemplates.AddAsync(template, ct);
+        await context.SaveChangesAsync(ct);
+
+        foreach (var q in questions)
+        {
+            context.QuestionTemplates.Add(new QuestionTemplate
+            {
+                SurveyTemplateId = template.Id,
+                Text = q.Text,
+                Type = q.Type,
+                IsRequired = q.IsRequired,
+                Props = q.Props,
+            });
+        }
+        await context.SaveChangesAsync(ct);
+
+        return template.Id;
     }
 
     [HttpDelete("{id:int}")]
