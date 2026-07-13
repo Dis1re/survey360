@@ -6,6 +6,7 @@ import { QuestionList } from '../components/QuestionList'
 import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '../components/SurveyHeader'
 import { TabBar, type Tab } from '../components/TabBar'
 import { TemplatesModal } from '../components/TemplatesModal'
+import { TemplateEditor } from '../components/TemplateEditor'
 import {
   apiDateToInput,
   apiQuestionToQuestion,
@@ -65,6 +66,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [exportingReport, setExportingReport] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
+  const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null)
 
   const loadUsers = useCallback(async () => {
     const users = await userApi.list()
@@ -100,7 +102,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }, [loadMatrix])
 
   useEffect(() => {
-    if (surveyId === null) {
+  if (surveyId === null) {
       setSurvey(null)
       setQuestions([])
       setAllUsers([])
@@ -353,6 +355,18 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }
 
+  if (editingTemplateId !== null) {
+    return (
+      <TemplateEditor
+        templateId={editingTemplateId}
+        onBack={() => {
+          setEditingTemplateId(null)
+          setTemplateModal('load')
+        }}
+      />
+    )
+  }
+
   if (surveyId === null) {
     return (
       <div className="flex items-center justify-center h-full p-6">
@@ -482,6 +496,10 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
           onLoaded={() => {
             setTemplateModal(null)
             if (surveyId) loadSurvey(surveyId)
+          }}
+          onEditTemplate={(id) => {
+            setTemplateModal(null)
+            setEditingTemplateId(id)
           }}
         />
       )}
