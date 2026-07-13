@@ -138,7 +138,6 @@ export function Sidebar({
   onSearch,
   onOpenDev,
   onOpenDetails,
-  onOpenTake,
 }: SidebarProps) {
   const [query, setQuery] = useState('')
   const [collapsed, setCollapsed] = useState(false)

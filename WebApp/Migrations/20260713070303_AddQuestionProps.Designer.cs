@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApp.Data;
 
@@ -10,9 +11,11 @@ using WebApp.Data;
 namespace WebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260713070303_AddQuestionProps")]
+    partial class AddQuestionProps
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
@@ -59,9 +62,6 @@ namespace WebApp.Migrations
 
                     b.Property<bool>("IsRequired")
                         .HasColumnType("INTEGER");
-
-                    b.Property<string>("Props")
-                        .HasColumnType("TEXT");
 
                     b.Property<int>("SurveyId")
                         .HasColumnType("INTEGER");
@@ -225,6 +225,33 @@ namespace WebApp.Migrations
                         .WithMany()
                         .HasForeignKey("SurveyId")
                         .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.OwnsOne("WebApp.Models.QuestionProps", "Props", b1 =>
+                        {
+                            b1.Property<int>("QuestionId");
+
+                            b1.Property<int?>("Max");
+
+                            b1.Property<int?>("Min");
+
+                            b1.PrimitiveCollection<string>("Options");
+
+                            b1.Property<string>("Placeholder");
+
+                            b1.Property<int?>("Step");
+
+                            b1.HasKey("QuestionId");
+
+                            b1.ToTable("Questions");
+
+                            b1.ToJson("Props");
+
+                            b1.WithOwner()
+                                .HasForeignKey("QuestionId");
+                        });
+
+                    b.Navigation("Props")
                         .IsRequired();
                 });
 

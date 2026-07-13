@@ -24,24 +24,6 @@ interface MainPageProps {
   onSurveyDeleted?: () => void | Promise<void>
 }
 
-const thClass =
-  'text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider'
-const tdClass = 'px-4 py-3 text-sm text-gray-600'
-
-function formatDate(value: string) {
-  if (!value || value.startsWith('0001')) return '—'
-  return new Date(value).toLocaleString()
-}
-
-function matrixRoleLabel(userId: number, targetIds: Set<number>, respondentIds: Set<number>) {
-  const isTarget = targetIds.has(userId)
-  const isRespondent = respondentIds.has(userId)
-  if (isTarget && isRespondent) return 'Объект + респондент'
-  if (isTarget) return 'Объект'
-  if (isRespondent) return 'Респондент'
-  return '—'
-}
-
 export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('editor')
   const [loading, setLoading] = useState(false)
@@ -147,9 +129,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const surveyStatus = survey ? mapSurveyStatus(survey.status) : 'draft'
   const surveyEditable = surveyStatus === 'draft'
   const activeQuestion = questions.find((q) => q.id === activeQuestionId) ?? null
-
-  const targetIds = useMemo(() => new Set(targets.map((t) => t.id)), [targets])
-  const respondentIds = useMemo(() => new Set(respondents.map((r) => r.id)), [respondents])
 
   const handleSaveSurvey = async (data: SurveyHeaderForm) => {
     if (surveyId === null || !survey || !surveyEditable) return
