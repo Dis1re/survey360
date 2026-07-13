@@ -1,14 +1,22 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import App from './App.tsx'
+import { InviteSurveyPage } from './pages/InviteSurveyPage.tsx'
 import { PublicSurveyPage } from './pages/PublicSurveyPage.tsx'
-import { getPublicSurveyId } from './routing.ts'
+import { getInviteToken, getPublicSurveyId } from './routing.ts'
 import './site.css'
 
-const publicSurveyId = getPublicSurveyId()
+const inviteToken = getInviteToken()
+const publicSurveyId = inviteToken === null ? getPublicSurveyId() : null
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {publicSurveyId !== null ? <PublicSurveyPage surveyId={publicSurveyId} /> : <App />}
+    {inviteToken !== null ? (
+      <InviteSurveyPage token={inviteToken} />
+    ) : publicSurveyId !== null ? (
+      <PublicSurveyPage surveyId={publicSurveyId} />
+    ) : (
+      <App />
+    )}
   </StrictMode>,
 )
