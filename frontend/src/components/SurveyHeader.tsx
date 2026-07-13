@@ -36,7 +36,7 @@ const statusConfig = {
 }
 
 const inputClass =
-  'w-full bg-white/15 border border-white/30 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-white/50 focus:outline-none focus:border-white/60'
+  'w-full bg-white/20 backdrop-blur-sm border border-white/40 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-white/60 focus:outline-none focus:border-white/70 focus:bg-white/25'
 
 const modalDateClass =
   'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#FF8600]'
@@ -226,10 +226,10 @@ export function SurveyHeader({
 
   return (
     <header
-      className="flex-shrink-0"
+      className="flex-shrink-0 relative overflow-hidden survey-header-wave"
       style={{
         background:
-          'linear-gradient(90deg, rgba(255,134,0,1) 0%, rgba(255,107,0,1) 55%, rgba(232,93,4,1) 100%)',
+          'linear-gradient(90deg, rgb(255,134,0) 0%, rgb(255,130,0) 15%, rgb(255,120,0) 30%, rgb(255,110,0) 45%, rgb(255,105,0) 55%, rgb(245,95,5) 70%, rgb(235,90,4) 85%, rgb(232,93,4) 100%)',
         backgroundSize: '150% 100%',
         backgroundRepeat: 'no-repeat',
       }}
@@ -320,7 +320,7 @@ export function SurveyHeader({
                     </button>
                   </div>
                   <p className="text-[11px] text-white/60 leading-relaxed">
-                    Одна ссылка для всех — респондент выбирает себя при заполнении.
+                    Персональные ссылки для каждого респондента — на вкладке «Матрица участников».
                   </p>
                 </div>
                 <button
@@ -375,7 +375,7 @@ export function SurveyHeader({
               <div
                 className="rounded-xl border p-3.5 space-y-3"
                 style={{
-                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  background: 'linear-gradient(90deg, rgb(255,134,0) 0%, rgb(255,130,0) 15%, rgb(255,120,0) 30%, rgb(255,110,0) 45%, rgb(255,105,0) 55%, rgb(245,95,5) 70%, rgb(235,90,4) 85%, rgb(232,93,4) 100%)',
                   borderColor: 'rgba(255,255,255,0.25)',
                 }}
               >
@@ -426,7 +426,7 @@ export function SurveyHeader({
                   Опубликовать опрос
                 </h2>
                 <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                  Опрос станет доступен по ссылке. Респонденты выбирают себя из списка участников.
+                  Опрос станет доступен по персональным ссылкам. Каждый респондент получит свою ссылку на вкладке «Матрица участников».
                 </p>
               </div>
               <button

@@ -72,6 +72,25 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .WithMany()
             .HasForeignKey(qt => qt.SurveyTemplateId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SurveyRespondentLink>()
+            .HasOne<Survey>()
+            .WithMany()
+            .HasForeignKey(l => l.SurveyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SurveyRespondentLink>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(l => l.ReviewerId);
+
+        modelBuilder.Entity<SurveyRespondentLink>()
+            .HasIndex(l => l.Token)
+            .IsUnique();
+
+        modelBuilder.Entity<SurveyRespondentLink>()
+            .HasIndex(l => new { l.SurveyId, l.ReviewerId })
+            .IsUnique();
     }
 
     // Тут указываются все сущности БД, с которыми нужно уметь работать
@@ -83,4 +102,5 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<SurveyParticipant> SurveyParticipants => Set<SurveyParticipant>();
     public DbSet<SurveyTemplate> SurveyTemplates { get; set; }
     public DbSet<QuestionTemplate> QuestionTemplates { get; set; }
+    public DbSet<SurveyRespondentLink> SurveyRespondentLinks => Set<SurveyRespondentLink>();
 }

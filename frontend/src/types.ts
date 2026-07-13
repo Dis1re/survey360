@@ -157,6 +157,7 @@ export interface SurveyReportInfo {
   allAssignedCompleted: boolean
 }
 
+<<<<<<< HEAD
 export interface SaveAsTemplateRequest {
   name: string
   description: string
@@ -182,4 +183,16 @@ export interface ApiQuestionTemplate {
 export interface ApiSurveyTemplateDetails {
   template: ApiSurveyTemplate
   questions: ApiQuestionTemplate[]
+}
+
+export interface RespondentLink {
+  reviewerId: number
+  reviewerName: string
+  reviewerEmail: string
+  token: string
+}
+
+export interface InviteInfo {
+  surveyId: number
+  reviewerId: number
 }

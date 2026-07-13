@@ -42,7 +42,10 @@ public record SurveyReportInfoDto(int AnswerCount, int AssignedCount, int Comple
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
-public class SurveyController(ApplicationDbContext context, SurveyDocxReportService reportService) : Controller
+public class SurveyController(
+    ApplicationDbContext context,
+    SurveyDocxReportService reportService,
+    SurveyRespondentLinkService linkService) : Controller
 {
     [HttpPost]
     public async Task<int> Create(CancellationToken ct)
@@ -113,6 +116,9 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         survey.Status = request.Status;
         survey.StartedAt = request.StartedAt ?? default;
         survey.ClosedAt = request.ClosedAt ?? default;
+
+        if (request.Status == "Активен")
+            await linkService.SyncRespondentLinksAsync(id, ct);
 
         await context.SaveChangesAsync(ct);
         return survey;
@@ -212,7 +218,10 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         if (roleNormalized == "target")
             participant.IsTarget = false;
         else
+        {
             participant.IsRespondent = false;
+            await linkService.DeleteLinkAsync(id, userId, ct);
+        }
 
         if (!participant.IsTarget && !participant.IsRespondent)
         {
@@ -398,5 +407,21 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
 
         const string contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
         return File(result.Value.Stream, contentType, result.Value.FileName);
+    }
+
+    [HttpGet("{id:int}/links")]
+    public async Task<ActionResult<List<RespondentLinkDto>>> GetRespondentLinks(int id, CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        return await linkService.GetLinksAsync(id, ct);
+    }
+
+    [HttpGet("invite/{token}")]
+    public async Task<ActionResult<InviteInfoDto>> ResolveInvite(string token, CancellationToken ct)
+    {
+        var info = await linkService.ResolveTokenAsync(token, ct);
+        return info is null ? NotFound() : info;
     }
 }

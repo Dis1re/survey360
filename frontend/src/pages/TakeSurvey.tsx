@@ -9,6 +9,7 @@ interface TakeSurveyProps {
   surveyId: number
   onBack?: () => void
   standalone?: boolean
+  lockedReviewerId?: number
 }
 
 interface TargetEntry {
@@ -110,11 +111,13 @@ function TargetPicker({
   userId,
   onSelect,
   onBack,
+  reviewerLocked = false,
 }: {
   surveyId: number
   userId: number
   onSelect: (id: number, completed: boolean) => void
   onBack: () => void
+  reviewerLocked?: boolean
 }) {
   const [targets, setTargets] = useState<TargetEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -192,13 +195,15 @@ function TargetPicker({
         )}
       </div>
       <div className="mt-6 flex gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
-        >
-          Сменить пользователя
-        </button>
+        {!reviewerLocked && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
+          >
+            Сменить пользователя
+          </button>
+        )}
         <button
           type="button"
           onClick={() => {
@@ -207,7 +212,7 @@ function TargetPicker({
             onSelect(selectedId, entry?.completed ?? false)
           }}
           disabled={selectedId === null}
-          className="flex-1 bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm cursor-pointer"
+          className={`${reviewerLocked ? 'w-full' : 'flex-1'} bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm cursor-pointer`}
         >
           {targets.find((t) => t.user.id === selectedId)?.completed ? 'Просмотреть ответы' : 'Перейти к опросу'}
         </button>
@@ -216,8 +221,23 @@ function TargetPicker({
   )
 }
 
-export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyProps) {
+function DogThumbsAnimation() {
+  return (
+    <div className="dog-toast fixed bottom-8 right-8 z-50">
+      <div className="dog-card bg-white border border-gray-200 rounded-2xl p-3 shadow-lg flex items-center gap-3">
+        <div className="dog-emoji">🐶<span className="ml-1 paw">👍</span></div>
+        <div className="text-left">
+          <div className="text-sm font-semibold text-gray-900">Спасибо!</div>
+          <div className="text-xs text-gray-500">Ответы сохранены — вы молодец</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewerId }: TakeSurveyProps) {
   const initialParams = parseSurveyResponseParams()
+  const initialReviewerId = lockedReviewerId ?? initialParams.reviewerId
   const [survey, setSurvey] = useState<ApiSurvey | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [users, setUsers] = useState<ApiUser[]>([])
@@ -227,18 +247,19 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [userId, setUserId] = useState<number | null>(initialParams.reviewerId)
+  const [userId, setUserId] = useState<number | null>(initialReviewerId)
   const [targetId, setTargetId] = useState<number | null>(initialParams.targetId)
   const [userModalOpen, setUserModalOpen] = useState(false)
   const [targetModalOpen, setTargetModalOpen] = useState(false)
   const [readOnly, setReadOnly] = useState(false)
   const [assignmentChecked, setAssignmentChecked] = useState(
-    initialParams.reviewerId === null || initialParams.targetId === null,
+    initialReviewerId === null || initialParams.targetId === null,
   )
 
   const [surveyClosed, setSurveyClosed] = useState(false)
 
-  const showUserModal = userModalOpen || userId === null
+  const reviewerLocked = lockedReviewerId !== undefined
+  const showUserModal = !reviewerLocked && (userModalOpen || userId === null)
   const showTargetModal = !showUserModal && (targetModalOpen || targetId === null)
 
   useEffect(() => {
@@ -357,7 +378,12 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
   const handleBackToUsers = () => {
     setSubmitted(false)
     setTargetModalOpen(false)
-    setUserModalOpen(true)
+    if (reviewerLocked) {
+      setTargetId(null)
+      setTargetModalOpen(true)
+    } else {
+      setUserModalOpen(true)
+    }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -437,7 +463,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
               onClick={handleBackToUsers}
               className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
             >
-              {standalone ? 'Оценить ещё' : 'Другой пользователь'}
+              {reviewerLocked ? 'Оценить ещё' : standalone ? 'Оценить ещё' : 'Другой пользователь'}
             </button>
             {!standalone && onBack && (
               <button
@@ -450,9 +476,12 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
             )}
           </div>
         </div>
+        <DogThumbsAnimation />
       </div>
     )
   }
+
+
 
   return (
     <div className="max-w-2xl mx-auto p-6">
@@ -469,13 +498,15 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
             Назад
           </button>
           <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => setUserModalOpen(true)}
-              className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
-            >
-              Сменить пользователя
-            </button>
+            {!reviewerLocked && (
+              <button
+                type="button"
+                onClick={() => setUserModalOpen(true)}
+                className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+              >
+                Сменить пользователя
+              </button>
+            )}
             <button
               type="button"
               onClick={() => setTargetModalOpen(true)}
@@ -489,13 +520,15 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
 
       {standalone && userId !== null && targetId !== null && (
         <div className="flex justify-end gap-2 mb-4">
-          <button
-            type="button"
-            onClick={() => setUserModalOpen(true)}
-            className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
-          >
-            Сменить пользователя
-          </button>
+          {!reviewerLocked && (
+            <button
+              type="button"
+              onClick={() => setUserModalOpen(true)}
+              className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+            >
+              Сменить пользователя
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setTargetModalOpen(true)}
@@ -588,6 +621,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyP
             userId={userId}
             onSelect={handleSelectTarget}
             onBack={handleBackToUsers}
+            reviewerLocked={reviewerLocked}
           />
         </Modal>
       )}

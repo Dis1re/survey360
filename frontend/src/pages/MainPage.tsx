@@ -18,30 +18,12 @@ import {
   mapSurveyStatusToApi,
   usersToParticipants,
 } from '../mappers'
-import type { ApiSurvey, ApiUser, Participant, Question } from '../types'
+import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink } from '../types'
 
 interface MainPageProps {
   surveyId: number | null
   onSurveyUpdated?: () => void
   onSurveyDeleted?: () => void | Promise<void>
-}
-
-const thClass =
-  'text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider'
-const tdClass = 'px-4 py-3 text-sm text-gray-600'
-
-function formatDate(value: string) {
-  if (!value || value.startsWith('0001')) return '—'
-  return new Date(value).toLocaleString()
-}
-
-function matrixRoleLabel(userId: number, targetIds: Set<number>, respondentIds: Set<number>) {
-  const isTarget = targetIds.has(userId)
-  const isRespondent = respondentIds.has(userId)
-  if (isTarget && isRespondent) return 'Объект + респондент'
-  if (isTarget) return 'Объект'
-  if (isRespondent) return 'Респондент'
-  return '—'
 }
 
 export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPageProps) {
@@ -64,6 +46,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [exportingReport, setExportingReport] = useState(false)
+  const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null)
@@ -79,6 +62,16 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     setRespondents(usersToParticipants(matrix.respondents))
     setAssignments(assignmentsToMatrix(matrix.assignments))
     setCompletedAssignments(assignmentsToCompletionMatrix(matrix.assignments))
+  }, [])
+
+  const loadRespondentLinks = useCallback(async (id: number) => {
+    try {
+      const links = await surveyApi.getRespondentLinks(id)
+      setRespondentLinks(links)
+    } catch (err) {
+      console.error(err)
+      setRespondentLinks([])
+    }
   }, [])
 
   const loadSurvey = useCallback(async (id: number) => {
@@ -99,7 +92,12 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       setAssignments({})
       setCompletedAssignments({})
     }
-  }, [loadMatrix])
+    if (mapSurveyStatus(details.survey.status) === 'active') {
+      await loadRespondentLinks(id)
+    } else {
+      setRespondentLinks([])
+    }
+  }, [loadMatrix, loadRespondentLinks])
 
   useEffect(() => {
   if (surveyId === null) {
@@ -110,6 +108,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       setRespondents([])
       setAssignments({})
       setCompletedAssignments({})
+      setRespondentLinks([])
       setActiveQuestionId(null)
       return
     }
@@ -152,9 +151,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const surveyEditable = surveyStatus === 'draft'
   const activeQuestion = questions.find((q) => q.id === activeQuestionId) ?? null
 
-  const targetIds = useMemo(() => new Set(targets.map((t) => t.id)), [targets])
-  const respondentIds = useMemo(() => new Set(respondents.map((r) => r.id)), [respondents])
-
   const handleSaveSurvey = async (data: SurveyHeaderForm) => {
     if (surveyId === null || !survey || !surveyEditable) return
     setSavingSurvey(true)
@@ -189,6 +185,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       })
       setSurvey(updated)
       onSurveyUpdated?.()
+      await loadRespondentLinks(surveyId)
     } catch (err) {
       console.error(err)
       throw err
@@ -478,6 +475,9 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               adding={addingMatrixParticipant}
               exporting={exportingReport}
               readOnly={!surveyEditable}
+              surveyActive={surveyStatus === 'active'}
+              surveyName={survey?.name ?? ''}
+              respondentLinks={respondentLinks}
               onExportReport={handleExportReport}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
