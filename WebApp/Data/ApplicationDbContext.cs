@@ -21,6 +21,10 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .HasOne<Survey>()
             .WithMany()
             .HasForeignKey(q => q.SurveyId);
+
+        modelBuilder.Entity<Question>()
+            .OwnsOne(q => q.Props)
+            .ToJson();
         
         modelBuilder.Entity<Answer>()
             .HasOne<Question>()
