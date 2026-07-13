@@ -375,7 +375,7 @@ export function SurveyHeader({
               <div
                 className="rounded-xl border p-3.5 space-y-3"
                 style={{
-                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  background: 'linear-gradient(90deg, rgb(255,134,0) 0%, rgb(255,130,0) 15%, rgb(255,120,0) 30%, rgb(255,110,0) 45%, rgb(255,105,0) 55%, rgb(245,95,5) 70%, rgb(235,90,4) 85%, rgb(232,93,4) 100%)',
                   borderColor: 'rgba(255,255,255,0.25)',
                 }}
               >
