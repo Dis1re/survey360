@@ -82,16 +82,22 @@ export function mapQuestionType(type: string): Question['type'] {
 
 export function apiQuestionToQuestion(api: ApiQuestion): Question {
   const type = mapQuestionType(api.type)
+  const parsedProps: Record<string, string | number> | undefined =
+    api.props == null
+      ? undefined
+      : typeof api.props === 'string'
+        ? JSON.parse(api.props)
+        : api.props
   return {
     id: api.id,
     surveyId: api.surveyId,
     text: api.text,
     type,
     isRequired: api.isRequired ?? false,
-    props: api.props ?? undefined,
+    props: parsedProps,
     options:
       type === 'radio'
-        ? Object.entries(api.props ?? {})
+        ? Object.entries(parsedProps ?? {})
             .map(([k, v]) => ({ value: Number(k), label: String(v) }))
             .sort((a, b) => a.value - b.value)
         : undefined,
