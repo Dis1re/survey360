@@ -12,6 +12,8 @@ import type {
   CreateUserRequest,
   CompleteAssignmentRequest,
   SurveyReportInfo,
+  RespondentLink,
+  InviteInfo,
   UpdateQuestionRequest,
   UpdateSurveyRequest,
 } from './types'
@@ -82,6 +84,12 @@ export const surveyApi = {
 
   getReportInfo: (id: number) =>
     sendRequest<SurveyReportInfo>(`${API}/survey/${id}/report/info`),
+
+  getRespondentLinks: (id: number) =>
+    sendRequest<RespondentLink[]>(`${API}/survey/${id}/links`),
+
+  resolveInvite: (token: string) =>
+    sendRequest<InviteInfo>(`${API}/survey/invite/${token}`),
 
   downloadReport: async (id: number) => {
     const response = await fetch(`${API}/survey/${id}/report.docx`)

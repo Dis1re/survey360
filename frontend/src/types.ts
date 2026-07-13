@@ -156,3 +156,15 @@ export interface SurveyReportInfo {
   completedCount: number
   allAssignedCompleted: boolean
 }
+
+export interface RespondentLink {
+  reviewerId: number
+  reviewerName: string
+  reviewerEmail: string
+  token: string
+}
+
+export interface InviteInfo {
+  surveyId: number
+  reviewerId: number
+}
