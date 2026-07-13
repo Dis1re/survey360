@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
-import { surveyApi } from '../api'
-import type { ApiSurveyDetails } from '../types'
+import { surveyApi, userApi } from '../api'
+import type { ApiSurveyDetails, ApiUser } from '../types'
 
 interface EntityPageProps {
   id: number
@@ -22,6 +22,7 @@ const tdClass = 'px-4 py-3 text-sm text-gray-600'
 
 export function EntityPage({ id, onBack }: EntityPageProps) {
   const [details, setDetails] = useState<ApiSurveyDetails | null>(null)
+  const [users, setUsers] = useState<ApiUser[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -29,9 +30,11 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
     setLoading(true)
     setError(null)
 
-    surveyApi
-      .get(id)
-      .then(setDetails)
+    Promise.all([surveyApi.get(id), userApi.list()])
+      .then(([surveyDetails, allUsers]) => {
+        setDetails(surveyDetails)
+        setUsers(allUsers)
+      })
       .catch((err: Error) => setError(err.message))
       .finally(() => setLoading(false))
   }, [id])
@@ -151,7 +154,8 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
                     <tr className="bg-gray-50/80 border-b border-gray-200">
                       <th className={thClass}>Id</th>
                       <th className={thClass}>Вопрос</th>
-                      <th className={thClass}>Пользователь</th>
+                      <th className={thClass}>Респондент</th>
+                      <th className={thClass}>Оцениваемый</th>
                       <th className={thClass}>Текст</th>
                       <th className={thClass}>Тип</th>
                     </tr>
@@ -162,6 +166,7 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
                         <td className={tdClass}>{answer.id}</td>
                         <td className={tdClass}>{answer.questionId}</td>
                         <td className={tdClass}>{answer.userId}</td>
+                        <td className={tdClass}>{answer.targetId}</td>
                         <td className={tdClass}>{answer.text || '—'}</td>
                         <td className={tdClass}>{answer.type || '—'}</td>
                       </tr>
@@ -205,9 +210,42 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
           </section>
 
           <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <h2 className="text-lg font-bold text-gray-900 mb-1">Пользователи ({users.length})</h2>
+            <p className="text-xs text-gray-400 font-mono mb-4">GET /api/user</p>
+            {users.length === 0 ? (
+              <p className="text-sm text-gray-500">Пользователей нет</p>
+            ) : (
+              <div className="border border-gray-200 rounded-xl overflow-hidden">
+                <table className="w-full">
+                  <thead>
+                    <tr className="bg-gray-50/80 border-b border-gray-200">
+                      <th className={thClass}>Id</th>
+                      <th className={thClass}>Имя</th>
+                      <th className={thClass}>Email</th>
+                      <th className={thClass}>Создан</th>
+                      <th className={thClass}>Обновлён</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {users.map((user) => (
+                      <tr key={user.id}>
+                        <td className={`${tdClass} font-mono`}>{user.id}</td>
+                        <td className={tdClass}>{user.name || '—'}</td>
+                        <td className={tdClass}>{user.email || '—'}</td>
+                        <td className={tdClass}>{formatDate(user.createdAt)}</td>
+                        <td className={tdClass}>{formatDate(user.updatedAt)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+          <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <h2 className="text-lg font-bold text-gray-900 mb-4">Ответ API (JSON)</h2>
             <pre className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-700 overflow-x-auto">
-              {JSON.stringify(details, null, 2)}
+              {JSON.stringify({ ...details, users }, null, 2)}
             </pre>
           </section>
         </div>

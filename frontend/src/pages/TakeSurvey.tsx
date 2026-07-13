@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react'
 import { answerApi, surveyApi, userApi } from '../api'
 import { Modal } from '../components/Modal'
-import { apiQuestionToQuestion, mapQuestionTypeToApi } from '../mappers'
+import { apiQuestionToQuestion, mapQuestionTypeToApi, mapSurveyStatus } from '../mappers'
+import { parseSurveyResponseParams } from '../routing'
 import type { ApiSurvey, ApiUser, Question } from '../types'
 
 interface TakeSurveyProps {
   surveyId: number
-  onBack: () => void
+  onBack?: () => void
+  standalone?: boolean
 }
 
 interface TargetEntry {
@@ -18,10 +20,12 @@ function UserPicker({
   surveyId,
   onSelect,
   onBack,
+  showBack = true,
 }: {
   surveyId: number
   onSelect: (id: number) => void
   onBack: () => void
+  showBack?: boolean
 }) {
   const [users, setUsers] = useState<ApiUser[]>([])
   const [loading, setLoading] = useState(true)
@@ -79,18 +83,20 @@ function UserPicker({
         )}
       </div>
       <div className="mt-6 flex gap-3">
-        <button
-          type="button"
-          onClick={onBack}
-          className="px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
-        >
-          Назад
-        </button>
+        {showBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
+          >
+            Назад
+          </button>
+        )}
         <button
           type="button"
           onClick={() => selectedId !== null && onSelect(selectedId)}
           disabled={selectedId === null}
-          className="flex-1 bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm cursor-pointer"
+          className={`${showBack ? 'flex-1' : 'w-full'} bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm cursor-pointer`}
         >
           Далее
         </button>
@@ -107,7 +113,7 @@ function TargetPicker({
 }: {
   surveyId: number
   userId: number
-  onSelect: (id: number) => void
+  onSelect: (id: number, completed: boolean) => void
   onBack: () => void
 }) {
   const [targets, setTargets] = useState<TargetEntry[]>([])
@@ -126,7 +132,7 @@ function TargetPicker({
           })
           .filter((e): e is TargetEntry => e !== null)
         setTargets(entries)
-        setSelectedId(entries.find((t) => !t.completed)?.user.id ?? null)
+        setSelectedId(entries.find((t) => !t.completed)?.user.id ?? entries[0]?.user.id ?? null)
       })
       .catch(console.error)
       .finally(() => setLoading(false))
@@ -146,23 +152,24 @@ function TargetPicker({
         ) : (
           <div className="mt-3 space-y-2 max-h-72 overflow-y-auto pr-1">
             {targets.map(({ user, completed }) => {
-              const isActive = user.id === selectedId && !completed
+              const isActive = user.id === selectedId
               return (
                 <label
                   key={user.id}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition ${
+                  className={`flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer ${
                     completed
-                      ? 'border-gray-100 bg-gray-50 opacity-60 cursor-not-allowed'
+                      ? isActive
+                        ? 'border-green-500 bg-green-50'
+                        : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
                       : isActive
-                        ? 'border-blue-500 bg-blue-50 cursor-pointer'
-                        : 'border-gray-100 hover:bg-gray-50 cursor-pointer'
+                        ? 'border-blue-500 bg-blue-50'
+                        : 'border-gray-100 hover:bg-gray-50'
                   }`}
                 >
                   <input
                     type="radio"
                     name="target"
                     checked={isActive}
-                    disabled={completed}
                     onChange={() => setSelectedId(user.id)}
                     className="w-4 h-4 text-blue-600"
                   />
@@ -194,18 +201,23 @@ function TargetPicker({
         </button>
         <button
           type="button"
-          onClick={() => selectedId !== null && onSelect(selectedId)}
+          onClick={() => {
+            if (selectedId === null) return
+            const entry = targets.find((t) => t.user.id === selectedId)
+            onSelect(selectedId, entry?.completed ?? false)
+          }}
           disabled={selectedId === null}
           className="flex-1 bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm cursor-pointer"
         >
-          Перейти к опросу
+          {targets.find((t) => t.user.id === selectedId)?.completed ? 'Просмотреть ответы' : 'Перейти к опросу'}
         </button>
       </div>
     </div>
   )
 }
 
-export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
+export function TakeSurvey({ surveyId, onBack, standalone = false }: TakeSurveyProps) {
+  const initialParams = parseSurveyResponseParams()
   const [survey, setSurvey] = useState<ApiSurvey | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [users, setUsers] = useState<ApiUser[]>([])
@@ -215,10 +227,16 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [userId, setUserId] = useState<number | null>(null)
-  const [targetId, setTargetId] = useState<number | null>(null)
+  const [userId, setUserId] = useState<number | null>(initialParams.reviewerId)
+  const [targetId, setTargetId] = useState<number | null>(initialParams.targetId)
   const [userModalOpen, setUserModalOpen] = useState(false)
   const [targetModalOpen, setTargetModalOpen] = useState(false)
+  const [readOnly, setReadOnly] = useState(false)
+  const [assignmentChecked, setAssignmentChecked] = useState(
+    initialParams.reviewerId === null || initialParams.targetId === null,
+  )
+
+  const [surveyClosed, setSurveyClosed] = useState(false)
 
   const showUserModal = userModalOpen || userId === null
   const showTargetModal = !showUserModal && (targetModalOpen || targetId === null)
@@ -231,13 +249,66 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
         setSurvey(details.survey)
         setQuestions(details.questions.map(apiQuestionToQuestion))
         setUsers(await userApi.list())
+        const status = mapSurveyStatus(details.survey.status)
+        setSurveyClosed(status !== 'active')
       })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [surveyId])
 
+  useEffect(() => {
+    if (userId === null || targetId === null) {
+      setReadOnly(false)
+      setAssignmentChecked(true)
+      return
+    }
+
+    let cancelled = false
+    setAssignmentChecked(false)
+    surveyApi
+      .get(surveyId)
+      .then((details) => {
+        if (cancelled) return
+        const assignment = details.assignments.find(
+          (a) => a.reviewerId === userId && a.targetId === targetId && a.isAssigned,
+        )
+        if (!assignment) {
+          setError('Назначение не найдено в матрице опроса')
+          setReadOnly(false)
+          return
+        }
+
+        if (assignment.isCompleted) {
+          setReadOnly(true)
+          const saved: Record<number, string> = {}
+          for (const answer of details.answers) {
+            if (answer.userId === userId && answer.targetId === targetId) {
+              saved[answer.questionId] = answer.text
+            }
+          }
+          setAnswers(saved)
+        } else {
+          setReadOnly(false)
+        }
+        setError(null)
+      })
+      .catch(console.error)
+      .finally(() => {
+        if (!cancelled) setAssignmentChecked(true)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [surveyId, userId, targetId])
+
   const storageKey =
-    userId !== null && targetId !== null ? `take-survey:${surveyId}:${userId}:${targetId}` : null
+    assignmentChecked &&
+    !readOnly &&
+    userId !== null &&
+    targetId !== null
+      ? `take-survey:${surveyId}:${userId}:${targetId}`
+      : null
 
   useEffect(() => {
     if (!storageKey) {
@@ -265,6 +336,7 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
   const target = targetId !== null ? users.find((u) => u.id === targetId) ?? null : null
 
   const setAnswer = (questionId: number, value: string) => {
+    if (readOnly) return
     setAnswers((prev) => ({ ...prev, [questionId]: value }))
   }
 
@@ -275,9 +347,11 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
     setTargetModalOpen(true)
   }
 
-  const handleSelectTarget = (id: number) => {
+  const handleSelectTarget = (id: number, completed: boolean) => {
     setTargetId(id)
     setTargetModalOpen(false)
+    setReadOnly(completed)
+    if (!completed) setAnswers({})
   }
 
   const handleBackToUsers = () => {
@@ -288,7 +362,7 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (userId === null || targetId === null) return
+    if (readOnly || userId === null || targetId === null) return
     const answered = questions.filter((q) => (answers[q.id] ?? '').trim() !== '')
     if (answered.length === 0) {
       setError('Заполните хотя бы один вопрос')
@@ -301,6 +375,7 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
         await answerApi.create({
           questionId: question.id,
           userId,
+          targetId,
           text: answers[question.id].trim(),
           type: mapQuestionTypeToApi(question.type),
         })
@@ -324,8 +399,23 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full p-6">
+      <div className="flex items-center justify-center h-full min-h-[50vh] p-6">
         <p className="text-sm text-gray-500">Загрузка опроса…</p>
+      </div>
+    )
+  }
+
+  if (surveyClosed && !readOnly) {
+    return (
+      <div className="max-w-2xl mx-auto p-6 text-center">
+        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900">{survey?.name ?? 'Опрос'}</h2>
+          <p className="text-sm text-gray-500 mt-3">
+            {mapSurveyStatus(survey?.status ?? '') === 'closed'
+              ? 'Этот опрос завершён и больше недоступен для заполнения.'
+              : 'Опрос ещё не опубликован. Дождитесь, пока организатор запустит его.'}
+          </p>
+        </div>
       </div>
     )
   }
@@ -347,15 +437,17 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
               onClick={handleBackToUsers}
               className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
             >
-              Другой пользователь
+              {standalone ? 'Оценить ещё' : 'Другой пользователь'}
             </button>
-            <button
-              type="button"
-              onClick={onBack}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl cursor-pointer"
-            >
-              Вернуться к опросам
-            </button>
+            {!standalone && onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl cursor-pointer"
+              >
+                Вернуться к опросам
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -364,18 +456,39 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
 
   return (
     <div className="max-w-2xl mx-auto p-6">
-      <div className="flex items-start justify-between gap-3 mb-4">
-        <button
-          type="button"
-          onClick={onBack}
-          className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-          </svg>
-          Назад
-        </button>
-        <div className="flex gap-2">
+      {!standalone && onBack && (
+        <div className="flex items-start justify-between gap-3 mb-4">
+          <button
+            type="button"
+            onClick={onBack}
+            className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Назад
+          </button>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => setUserModalOpen(true)}
+              className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+            >
+              Сменить пользователя
+            </button>
+            <button
+              type="button"
+              onClick={() => setTargetModalOpen(true)}
+              className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+            >
+              Сменить цель
+            </button>
+          </div>
+        </div>
+      )}
+
+      {standalone && userId !== null && targetId !== null && (
+        <div className="flex justify-end gap-2 mb-4">
           <button
             type="button"
             onClick={() => setUserModalOpen(true)}
@@ -391,10 +504,18 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
             Сменить цель
           </button>
         </div>
-      </div>
+      )}
 
       <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm mb-5">
         <h1 className="text-2xl font-semibold text-gray-900">{survey?.name}</h1>
+        {readOnly && (
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-gray-100 border border-gray-200 px-4 py-2.5 text-sm text-gray-600">
+            <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            Режим просмотра — ответы нельзя изменить
+          </div>
+        )}
         {survey?.description && (
           <p className="text-sm text-gray-500 mt-1">{survey.description}</p>
         )}
@@ -416,7 +537,7 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className={`space-y-4 ${readOnly ? 'opacity-75' : ''}`}>
         {questions.length === 0 ? (
           <p className="text-sm text-gray-400">В этом опросе пока нет вопросов.</p>
         ) : (
@@ -426,25 +547,37 @@ export function TakeSurvey({ surveyId, onBack }: TakeSurveyProps) {
                 <span className="text-gray-400 mr-1.5">{index + 1}.</span>
                 {question.text}
               </label>
-              <QuestionInput question={question} value={answers[question.id] ?? ''} onChange={(v) => setAnswer(question.id, v)} />
+              <QuestionInput
+                question={question}
+                value={answers[question.id] ?? ''}
+                onChange={(v) => setAnswer(question.id, v)}
+                readOnly={readOnly}
+              />
             </div>
           ))
         )}
 
         {error && <p className="text-sm text-red-500">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={submitting || questions.length === 0}
-          className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-3 px-4 rounded-xl transition shadow-sm cursor-pointer"
-        >
-          {submitting ? 'Отправка…' : 'Отправить ответы'}
-        </button>
+        {!readOnly && (
+          <button
+            type="submit"
+            disabled={submitting || questions.length === 0}
+            className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-3 px-4 rounded-xl transition shadow-sm cursor-pointer"
+          >
+            {submitting ? 'Отправка…' : 'Отправить ответы'}
+          </button>
+        )}
       </form>
 
       {showUserModal && (
         <Modal title="Выбор пользователя">
-          <UserPicker surveyId={surveyId} onSelect={handleSelectUser} onBack={onBack} />
+          <UserPicker
+            surveyId={surveyId}
+            onSelect={handleSelectUser}
+            onBack={onBack ?? (() => {})}
+            showBack={!standalone || userId !== null}
+          />
         </Modal>
       )}
 
@@ -466,10 +599,12 @@ function QuestionInput({
   question,
   value,
   onChange,
+  readOnly = false,
 }: {
   question: Question
   value: string
   onChange: (value: string) => void
+  readOnly?: boolean
 }) {
   if (question.type === 'scale') {
     const selected = value ? Number(value) : null
@@ -479,11 +614,16 @@ function QuestionInput({
           <button
             key={n}
             type="button"
+            disabled={readOnly}
             onClick={() => onChange(String(n))}
-            className={`flex-1 py-3 rounded-xl border text-sm font-semibold transition cursor-pointer ${
+            className={`flex-1 py-3 rounded-xl border text-sm font-semibold transition ${
+              readOnly ? 'cursor-default' : 'cursor-pointer'
+            } ${
               selected === n
                 ? 'border-[#FF8600] bg-orange-50 text-[#FF6B00]'
-                : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                : readOnly
+                  ? 'border-gray-200 text-gray-400 bg-gray-50'
+                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
             }`}
           >
             {n}
@@ -500,9 +640,13 @@ function QuestionInput({
         <input
           type="text"
           value={value}
+          readOnly={readOnly}
+          disabled={readOnly}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Ваш ответ"
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500"
+          className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 ${
+            readOnly ? 'bg-gray-50 text-gray-600 cursor-default' : ''
+          }`}
         />
       )
     }
@@ -511,14 +655,17 @@ function QuestionInput({
         {options.map((opt) => (
           <label
             key={opt.value}
-            className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ${
+            className={`flex items-center gap-3 p-3 rounded-xl border transition ${
+              readOnly ? 'cursor-default' : 'cursor-pointer'
+            } ${
               value === opt.label ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
-            }`}
+            } ${readOnly ? 'opacity-80' : ''}`}
           >
             <input
               type="radio"
               name={`q-${question.id}`}
               checked={value === opt.label}
+              disabled={readOnly}
               onChange={() => onChange(opt.label)}
               className="w-4 h-4 text-blue-600"
             />
@@ -532,10 +679,14 @@ function QuestionInput({
   return (
     <textarea
       value={value}
+      readOnly={readOnly}
+      disabled={readOnly}
       onChange={(e) => onChange(e.target.value)}
       rows={4}
       placeholder="Ваш развёрнутый ответ…"
-      className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 resize-none"
+      className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-blue-500 resize-none ${
+        readOnly ? 'bg-gray-50 text-gray-600 cursor-default' : ''
+      }`}
     />
   )
 }

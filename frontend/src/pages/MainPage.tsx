@@ -3,15 +3,17 @@ import { questionApi, surveyApi, userApi } from '../api'
 import { MatrixTable, matrixToEntries } from '../components/MatrixTable'
 import { QuestionEditor } from '../components/QuestionEditor'
 import { QuestionList } from '../components/QuestionList'
-import { SurveyHeader, type SurveyHeaderForm } from '../components/SurveyHeader'
+import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '../components/SurveyHeader'
 import { TabBar, type Tab } from '../components/TabBar'
 import {
   apiDateToInput,
   apiQuestionToQuestion,
+  assignmentsToCompletionMatrix,
   assignmentsToMatrix,
   inputDateToApi,
   mapQuestionTypeToApi,
   mapSurveyStatus,
+  mapSurveyStatusToApi,
   usersToParticipants,
 } from '../mappers'
 import type { ApiSurvey, ApiUser, Participant, Question } from '../types'
@@ -31,13 +33,18 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [targets, setTargets] = useState<Participant[]>([])
   const [respondents, setRespondents] = useState<Participant[]>([])
   const [assignments, setAssignments] = useState<Record<string, Record<string, boolean>>>({})
+  const [completedAssignments, setCompletedAssignments] = useState<Record<string, Record<string, boolean>>>({})
   const [activeQuestionId, setActiveQuestionId] = useState<number | null>(null)
   const [savingSurvey, setSavingSurvey] = useState(false)
+  const [startingSurvey, setStartingSurvey] = useState(false)
+  const [stoppingSurvey, setStoppingSurvey] = useState(false)
   const [creatingQuestion, setCreatingQuestion] = useState(false)
   const [savingQuestion, setSavingQuestion] = useState(false)
   const [deletingQuestion, setDeletingQuestion] = useState(false)
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
+  const [exportingReport, setExportingReport] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   const loadUsers = useCallback(async () => {
     const users = await userApi.list()
@@ -49,6 +56,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     setTargets(usersToParticipants(matrix.targets))
     setRespondents(usersToParticipants(matrix.respondents))
     setAssignments(assignmentsToMatrix(matrix.assignments))
+    setCompletedAssignments(assignmentsToCompletionMatrix(matrix.assignments))
   }, [])
 
   const loadSurvey = useCallback(async (id: number) => {
@@ -67,6 +75,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       setTargets([])
       setRespondents([])
       setAssignments({})
+      setCompletedAssignments({})
     }
   }, [loadMatrix])
 
@@ -78,15 +87,30 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       setTargets([])
       setRespondents([])
       setAssignments({})
+      setCompletedAssignments({})
       setActiveQuestionId(null)
       return
     }
 
     let cancelled = false
     setLoading(true)
+    setLoadError(null)
+    setSurvey(null)
+    setQuestions([])
+    setTargets([])
+    setRespondents([])
+    setAssignments({})
+    setCompletedAssignments({})
+    setActiveQuestionId(null)
 
     Promise.all([loadSurvey(surveyId), loadUsers()])
-      .catch(console.error)
+      .catch((err) => {
+        console.error(err)
+        if (!cancelled) {
+          setLoadError('Не удалось загрузить опрос')
+          setSurvey(null)
+        }
+      })
       .finally(() => {
         if (!cancelled) setLoading(false)
       })
@@ -98,25 +122,24 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     () => ({
       title: survey?.name ?? '',
       description: survey?.description ?? '',
-      startDate: apiDateToInput(survey?.startedAt ?? ''),
-      endDate: apiDateToInput(survey?.closedAt ?? ''),
     }),
     [survey],
   )
 
   const surveyStatus = survey ? mapSurveyStatus(survey.status) : 'draft'
+  const surveyEditable = surveyStatus === 'draft'
   const activeQuestion = questions.find((q) => q.id === activeQuestionId) ?? null
 
   const handleSaveSurvey = async (data: SurveyHeaderForm) => {
-    if (surveyId === null || !survey) return
+    if (surveyId === null || !survey || !surveyEditable) return
     setSavingSurvey(true)
     try {
       const updated = await surveyApi.update(surveyId, {
         name: data.title.trim(),
         description: data.description.trim(),
         status: survey.status,
-        startedAt: inputDateToApi(data.startDate),
-        closedAt: inputDateToApi(data.endDate),
+        startedAt: inputDateToApi(apiDateToInput(survey.startedAt ?? '')),
+        closedAt: inputDateToApi(apiDateToInput(survey.closedAt ?? '')),
       })
       setSurvey(updated)
       onSurveyUpdated?.()
@@ -128,8 +151,52 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }
 
+  const handleStartSurvey = async (data: StartSurveyPayload) => {
+    if (surveyId === null || !survey) return
+    setStartingSurvey(true)
+    try {
+      const updated = await surveyApi.update(surveyId, {
+        name: data.title.trim(),
+        description: data.description.trim(),
+        status: mapSurveyStatusToApi('active'),
+        startedAt: inputDateToApi(data.startDate),
+        closedAt: inputDateToApi(data.endDate),
+      })
+      setSurvey(updated)
+      onSurveyUpdated?.()
+    } catch (err) {
+      console.error(err)
+      throw err
+    } finally {
+      setStartingSurvey(false)
+    }
+  }
+
+  const handleStopSurvey = async (data: SurveyHeaderForm) => {
+    if (surveyId === null || !survey) return
+    setStoppingSurvey(true)
+    try {
+      const today = new Date()
+      const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+      const updated = await surveyApi.update(surveyId, {
+        name: data.title.trim(),
+        description: data.description.trim(),
+        status: mapSurveyStatusToApi('closed'),
+        startedAt: inputDateToApi(apiDateToInput(survey.startedAt ?? '')),
+        closedAt: inputDateToApi(todayStr),
+      })
+      setSurvey(updated)
+      onSurveyUpdated?.()
+    } catch (err) {
+      console.error(err)
+      throw err
+    } finally {
+      setStoppingSurvey(false)
+    }
+  }
+
   const handleCreateQuestion = async (text: string) => {
-    if (surveyId === null) return
+    if (surveyId === null || !surveyEditable) return
     setCreatingQuestion(true)
     try {
       const id = await questionApi.create({ surveyId, text, type: 'rating' })
@@ -144,6 +211,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }
 
   const handleSaveQuestion = async (updated: Question) => {
+    if (!surveyEditable) return
     setSavingQuestion(true)
     try {
       const saved = await questionApi.update(updated.id, {
@@ -161,7 +229,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }
 
   const handleAddMatrixParticipant = async (userId: number, role: 'target' | 'respondent') => {
-    if (surveyId === null) return
+    if (surveyId === null || !surveyEditable) return
     setAddingMatrixParticipant(true)
     try {
       await surveyApi.addParticipant(surveyId, { userId, role })
@@ -186,7 +254,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }
 
   const handleSaveMatrix = async (next: Record<string, Record<string, boolean>>) => {
-    if (surveyId === null) return
+    if (surveyId === null || !surveyEditable) return
     setSavingMatrix(true)
     try {
       const entries = matrixToEntries(next, respondents, targets).map((e) => ({
@@ -196,6 +264,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       }))
       await surveyApi.saveAssignments(surveyId, entries)
       setAssignments(next)
+      await loadMatrix(surveyId)
     } catch (err) {
       console.error(err)
       throw err
@@ -233,7 +302,32 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     setTargets([])
     setRespondents([])
     setAssignments({})
+    setCompletedAssignments({})
     await onSurveyDeleted?.()
+  }
+
+  const handleExportReport = async () => {
+    if (surveyId === null) return
+    setExportingReport(true)
+    try {
+      const info = await surveyApi.getReportInfo(surveyId)
+      if (info.answerCount === 0) {
+        alert('Нет ответов для формирования отчёта.')
+        return
+      }
+      if (!info.allAssignedCompleted) {
+        const confirmed = confirm(
+          'Ещё не все опрашиваемые дали свои ответы — всё равно сформировать?',
+        )
+        if (!confirmed) return
+      }
+      await surveyApi.downloadReport(surveyId)
+    } catch (err) {
+      console.error(err)
+      alert('Не удалось сформировать отчёт')
+    } finally {
+      setExportingReport(false)
+    }
   }
 
   if (surveyId === null) {
@@ -257,7 +351,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   if (!survey) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <p className="text-sm text-gray-500">Не удалось загрузить опрос</p>
+        <p className="text-sm text-gray-500">{loadError ?? 'Не удалось загрузить опрос'}</p>
       </div>
     )
   }
@@ -265,10 +359,18 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   return (
     <>
       <SurveyHeader
+        surveyId={surveyId}
         initial={surveyHeaderInitial}
         status={surveyStatus}
+        startedAt={survey.startedAt}
+        closedAt={survey.closedAt}
         saving={savingSurvey}
+        starting={startingSurvey}
+        stopping={stoppingSurvey}
+        questionsCount={questions.length}
         onSave={handleSaveSurvey}
+        onStartSurvey={handleStartSurvey}
+        onStopSurvey={handleStopSurvey}
         onUserCreated={loadUsers}
         onDelete={handleDeleteSurvey}
       />
@@ -282,6 +384,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                 questions={questions}
                 activeQuestionId={activeQuestionId}
                 creating={creatingQuestion}
+                readOnly={!surveyEditable}
                 onQuestionSelect={setActiveQuestionId}
                 onQuestionCreate={handleCreateQuestion}
                 onQuestionDelete={handleDeleteQuestion}
@@ -289,7 +392,12 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               />
             </div>
             <div className="lg:col-span-2">
-              <QuestionEditor question={activeQuestion} saving={savingQuestion} onSave={handleSaveQuestion} />
+              <QuestionEditor
+                question={activeQuestion}
+                saving={savingQuestion}
+                readOnly={!surveyEditable}
+                onSave={handleSaveQuestion}
+              />
             </div>
           </div>
         </div>
@@ -297,15 +405,21 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
 
       {activeTab === 'matrix' && (
         <div className="p-6">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-6xl mx-auto space-y-6">
+            
             <MatrixTable
               key={surveyId}
+              surveyId={surveyId}
               targets={targets}
               respondents={respondents}
               allUsers={allUsers}
               initialAssignments={assignments}
+              completedAssignments={completedAssignments}
               saving={savingMatrix}
               adding={addingMatrixParticipant}
+              exporting={exportingReport}
+              readOnly={!surveyEditable}
+              onExportReport={handleExportReport}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
               onSave={handleSaveMatrix}

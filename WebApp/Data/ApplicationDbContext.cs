@@ -32,6 +32,11 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .HasOne<User>()
             .WithMany()
             .HasForeignKey(a => a.UserId);
+
+        modelBuilder.Entity<Answer>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(a => a.TargetId);
     
         modelBuilder.Entity<SurveyAssignment>()
             .HasOne<Survey>()

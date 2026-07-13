@@ -4,6 +4,7 @@ import type { Question } from '../types'
 interface QuestionEditorProps {
   question: Question | null
   saving?: boolean
+  readOnly?: boolean
   onSave: (question: Question) => Promise<void>
 }
 
@@ -13,7 +14,7 @@ const typeLabels: Record<Question['type'], string> = {
   text: 'Развернутый текстовый ответ',
 }
 
-export function QuestionEditor({ question, saving = false, onSave }: QuestionEditorProps) {
+export function QuestionEditor({ question, saving = false, readOnly = false, onSave }: QuestionEditorProps) {
   const [text, setText] = useState('')
   const [type, setType] = useState<Question['type']>('scale')
   const [options, setOptions] = useState<{ value: number; label: string }[]>([])
@@ -57,16 +58,23 @@ export function QuestionEditor({ question, saving = false, onSave }: QuestionEdi
   }
 
   return (
-    <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5">
+    <form onSubmit={handleSubmit} className={`bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5 ${readOnly ? 'opacity-80' : ''}`}>
+      {readOnly && (
+        <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          Режим просмотра — изменить вопросы нельзя
+        </p>
+      )}
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
           Формулировка вопроса
         </label>
         <input
           type="text"
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 text-sm shadow-sm font-medium"
+          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 text-sm shadow-sm font-medium disabled:bg-gray-50 disabled:cursor-default"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          readOnly={readOnly}
+          disabled={readOnly}
         />
       </div>
 
@@ -75,9 +83,10 @@ export function QuestionEditor({ question, saving = false, onSave }: QuestionEdi
           Тип ответа
         </label>
         <select
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-blue-500 text-sm shadow-sm"
+          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-blue-500 text-sm shadow-sm disabled:bg-gray-50 disabled:cursor-default"
           value={type}
           onChange={(e) => setType(e.target.value as Question['type'])}
+          disabled={readOnly}
         >
           {(Object.keys(typeLabels) as Question['type'][]).map((key) => (
             <option key={key} value={key}>{typeLabels[key]}</option>
@@ -98,13 +107,15 @@ export function QuestionEditor({ question, saving = false, onSave }: QuestionEdi
                 </span>
                 <input
                   type="text"
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500"
+                  className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-default"
                   value={opt.label}
                   onChange={(e) => {
                     const next = [...options]
                     next[i] = { ...opt, label: e.target.value }
                     setOptions(next)
                   }}
+                  readOnly={readOnly}
+                  disabled={readOnly}
                 />
               </div>
             ))}
@@ -112,23 +123,25 @@ export function QuestionEditor({ question, saving = false, onSave }: QuestionEdi
         </div>
       )}
 
-      <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
-        <button
-          type="button"
-          onClick={handleReset}
-          disabled={saving}
-          className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
-        >
-          Сбросить
-        </button>
-        <button
-          type="submit"
-          disabled={saving || !text.trim()}
-          className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
-        >
-          {saving ? 'Сохранение…' : 'Сохранить изменения'}
-        </button>
-      </div>
+      {!readOnly && (
+        <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={saving}
+            className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
+          >
+            Сбросить
+          </button>
+          <button
+            type="submit"
+            disabled={saving || !text.trim()}
+            className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
+          >
+            {saving ? 'Сохранение…' : 'Сохранить изменения'}
+          </button>
+        </div>
+      )}
     </form>
   )
 }
