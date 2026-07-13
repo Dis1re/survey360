@@ -19,12 +19,12 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
 
         modelBuilder.Entity<Question>()
             .HasOne<Survey>()
-            .WithMany()
+            .WithMany(s => s.Questions)
             .HasForeignKey(q => q.SurveyId);
         
         modelBuilder.Entity<Answer>()
             .HasOne<Question>()
-            .WithMany()
+            .WithMany(q => q.Answers)
             .HasForeignKey(a => a.QuestionId)
             .OnDelete(DeleteBehavior.Cascade);
         
@@ -40,7 +40,7 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     
         modelBuilder.Entity<SurveyAssignment>()
             .HasOne<Survey>()
-            .WithMany()
+            .WithMany(s => s.Assignments)
             .HasForeignKey(sa => sa.SurveyId);
         
         modelBuilder.Entity<SurveyAssignment>()

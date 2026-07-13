@@ -104,6 +104,29 @@ public class SurveyController(
 
         return new SurveyDetailsDto(survey, questions, answers, assignments);
     }
+    
+    [HttpGet("{id:int}/v2")]
+    public async Task<ActionResult<SurveyDetailsDto>> GetV2(int id, CancellationToken ct)
+    {
+        var survey = await context.Surveys
+            .AsNoTracking()
+            .Include(s => s.Questions)
+                .ThenInclude(q => q.Answers)
+            .Include(s => s.Assignments)
+            .FirstOrDefaultAsync(s => s.Id == id, ct);
+
+        if (survey is null)
+            return NotFound();
+        
+        var questions = survey.Questions
+            .OrderBy(q => q.Order)
+            .ThenBy(q => q.Id)
+            .ToList();
+
+        var answers = questions.SelectMany(q => q.Answers).ToList();
+
+        return new SurveyDetailsDto(survey, questions, answers, survey.Assignments);
+    }
 
     [HttpPut("{id:int}")]
     public async Task<ActionResult<Survey>> Update(int id, [FromBody] UpdateSurveyRequest request, CancellationToken ct)

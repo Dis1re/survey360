@@ -9,4 +9,7 @@ public class Survey
     public DateTime CreatedAt { get; set; }
     public DateTime StartedAt { get; set; }
     public DateTime ClosedAt { get; set; }
+
+    public List<Question> Questions { get; set; } = [];
+    public List<SurveyAssignment> Assignments { get; set; } = [];
 }
