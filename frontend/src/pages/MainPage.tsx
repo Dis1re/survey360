@@ -191,6 +191,13 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     if (surveyId === null || !survey) return
     setStartingSurvey(true)
     try {
+      const entries = matrixToEntries(assignments, respondents, targets).map((e) => ({
+        reviewerId: e.reviewerId,
+        targetId: e.targetId,
+        isAssigned: e.isAssigned,
+      }))
+      await surveyApi.saveAssignments(surveyId, entries)
+
       const updated = await surveyApi.update(surveyId, {
         name: data.title.trim(),
         description: data.description.trim(),
