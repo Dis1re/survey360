@@ -156,13 +156,13 @@ export const templateApi = {
   createQuestion: (templateId: number, data: { text: string; type: string; isRequired?: boolean; props?: QuestionProps }) =>
     sendRequest<number>(`${API}/survey-template/${templateId}/questions`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, props: data.props != null ? JSON.stringify(data.props) : null }),
     }),
 
   updateQuestion: (templateId: number, questionId: number, data: { text: string; type: string; isRequired?: boolean; props?: QuestionProps }) =>
     sendRequest<void>(`${API}/survey-template/${templateId}/questions/${questionId}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, props: data.props != null ? JSON.stringify(data.props) : null }),
     }),
 
   deleteQuestion: (templateId: number, questionId: number) =>
@@ -190,7 +190,7 @@ export const questionApi = {
   create: (data: CreateQuestionRequest) =>
     sendRequest<number>(`${API}/question`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, props: data.props != null ? JSON.stringify(data.props) : null }),
     }),
 
   get: (id: number) => sendRequest<ApiQuestionDetails>(`${API}/question/${id}`),
@@ -198,7 +198,7 @@ export const questionApi = {
   update: (id: number, data: UpdateQuestionRequest) =>
     sendRequest<ApiQuestionDetails['question']>(`${API}/question/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, props: data.props != null ? JSON.stringify(data.props) : null }),
     }),
 
   delete: (id: number) =>
