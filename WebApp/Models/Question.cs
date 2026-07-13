@@ -1,5 +1,3 @@
-using System.Text.Json.Nodes;
-
 namespace WebApp.Models;
 
 public class Question
@@ -9,5 +7,5 @@ public class Question
     public string Text { get; set; } = "";
     public string Type { get; set; } = "";
     public bool IsRequired { get; set; }
-    public JsonObject? Props { get; set; }
+    public string? Props { get; set; }
 }

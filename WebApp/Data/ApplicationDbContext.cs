@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Nodes;
 using WebApp.Models;
 
 namespace WebApp.Data;
@@ -22,13 +21,6 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .HasOne<Survey>()
             .WithMany()
             .HasForeignKey(q => q.SurveyId);
-
-        modelBuilder.Entity<Question>()
-            .Property(q => q.Props)
-            .HasConversion(
-                v => v == null ? null : v.ToJsonString(),
-                v => v == null ? null : JsonNode.Parse(v) as JsonObject)
-            .HasColumnType("TEXT");
         
         modelBuilder.Entity<Answer>()
             .HasOne<Question>()

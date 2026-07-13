@@ -1,14 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json.Nodes;
 using WebApp.Data;
 using WebApp.Models;
 
 namespace WebApp.Areas.Api;
 
-public record CreateQuestionRequest(int SurveyId, string Text, string Type, bool IsRequired = false, JsonObject? Props = null);
+public record CreateQuestionRequest(int SurveyId, string Text, string Type, bool IsRequired = false, string? Props = null);
 
-public record UpdateQuestionRequest(string Text, string Type, bool IsRequired = false, JsonObject? Props = null);
+public record UpdateQuestionRequest(string Text, string Type, bool IsRequired = false, string? Props = null);
 
 public record QuestionDetailsDto(Question Question, List<Answer> Answers);
 
