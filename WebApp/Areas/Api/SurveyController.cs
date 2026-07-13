@@ -35,12 +35,17 @@ public record AssignmentEntry(int ReviewerId, int TargetId, bool IsAssigned);
 
 public record CompleteAssignmentRequest(int ReviewerId, int TargetId);
 
+public record SaveAsTemplateRequest(string Name, string Description);
+
 public record SurveyReportInfoDto(int AnswerCount, int AssignedCount, int CompletedCount, bool AllAssignedCompleted);
 
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
-public class SurveyController(ApplicationDbContext context, SurveyDocxReportService reportService) : Controller
+public class SurveyController(
+    ApplicationDbContext context,
+    SurveyDocxReportService reportService,
+    SurveyRespondentLinkService linkService) : Controller
 {
     [HttpPost]
     public async Task<int> Create(CancellationToken ct)
@@ -130,6 +135,9 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         survey.Status = request.Status;
         survey.StartedAt = request.StartedAt ?? default;
         survey.ClosedAt = request.ClosedAt ?? default;
+
+        if (request.Status == "Активен")
+            await linkService.SyncRespondentLinksAsync(id, ct);
 
         await context.SaveChangesAsync(ct);
         return survey;
@@ -229,7 +237,10 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         if (roleNormalized == "target")
             participant.IsTarget = false;
         else
+        {
             participant.IsRespondent = false;
+            await linkService.DeleteLinkAsync(id, userId, ct);
+        }
 
         if (!participant.IsTarget && !participant.IsRespondent)
         {
@@ -289,6 +300,52 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
 
         await context.SaveChangesAsync(ct);
         return NoContent();
+    }
+
+    [HttpPost("{id:int}/save-as-template")]
+    public async Task<ActionResult<int>> SaveAsTemplate(
+        int id,
+        [FromBody] SaveAsTemplateRequest request,
+        CancellationToken ct)
+    {
+        var survey = await context.Surveys
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == id, ct);
+        if (survey is null)
+            return NotFound();
+
+        var questions = await context.Questions
+            .AsNoTracking()
+            .Where(q => q.SurveyId == id)
+            .OrderBy(q => q.Id)
+            .ToListAsync(ct);
+
+        if (questions.Count == 0)
+            return BadRequest("Нельзя создать шаблон без вопросов");
+
+        var template = new SurveyTemplate
+        {
+            Name = request.Name,
+            Description = request.Description,
+            CreatedAt = DateTime.UtcNow,
+        };
+        await context.SurveyTemplates.AddAsync(template, ct);
+        await context.SaveChangesAsync(ct);
+
+        foreach (var q in questions)
+        {
+            context.QuestionTemplates.Add(new QuestionTemplate
+            {
+                SurveyTemplateId = template.Id,
+                Text = q.Text,
+                Type = q.Type,
+                IsRequired = q.IsRequired,
+                Props = q.Props,
+            });
+        }
+        await context.SaveChangesAsync(ct);
+
+        return template.Id;
     }
 
     [HttpDelete("{id:int}")]
@@ -406,5 +463,21 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
 
         const string contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
         return File(result.Value.Stream, contentType, result.Value.FileName);
+    }
+
+    [HttpGet("{id:int}/links")]
+    public async Task<ActionResult<List<RespondentLinkDto>>> GetRespondentLinks(int id, CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        return await linkService.GetLinksAsync(id, ct);
+    }
+
+    [HttpGet("invite/{token}")]
+    public async Task<ActionResult<InviteInfoDto>> ResolveInvite(string token, CancellationToken ct)
+    {
+        var info = await linkService.ResolveTokenAsync(token, ct);
+        return info is null ? NotFound() : info;
     }
 }

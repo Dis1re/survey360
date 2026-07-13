@@ -5,6 +5,8 @@ import { QuestionEditor } from '../components/QuestionEditor'
 import { QuestionList } from '../components/QuestionList'
 import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '../components/SurveyHeader'
 import { TabBar, type Tab } from '../components/TabBar'
+import { TemplatesModal } from '../components/TemplatesModal'
+import { TemplateEditor } from '../components/TemplateEditor'
 import {
   apiDateToInput,
   apiQuestionToQuestion,
@@ -16,7 +18,7 @@ import {
   mapSurveyStatusToApi,
   usersToParticipants,
 } from '../mappers'
-import type { ApiSurvey, ApiUser, Participant, Question } from '../types'
+import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink } from '../types'
 
 interface MainPageProps {
   surveyId: number | null
@@ -44,7 +46,10 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [exportingReport, setExportingReport] = useState(false)
+  const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
+  const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null)
 
   const loadUsers = useCallback(async () => {
     const users = await userApi.list()
@@ -57,6 +62,16 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     setRespondents(usersToParticipants(matrix.respondents))
     setAssignments(assignmentsToMatrix(matrix.assignments))
     setCompletedAssignments(assignmentsToCompletionMatrix(matrix.assignments))
+  }, [])
+
+  const loadRespondentLinks = useCallback(async (id: number) => {
+    try {
+      const links = await surveyApi.getRespondentLinks(id)
+      setRespondentLinks(links)
+    } catch (err) {
+      console.error(err)
+      setRespondentLinks([])
+    }
   }, [])
 
   const loadSurvey = useCallback(async (id: number) => {
@@ -77,10 +92,15 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       setAssignments({})
       setCompletedAssignments({})
     }
-  }, [loadMatrix])
+    if (mapSurveyStatus(details.survey.status) === 'active') {
+      await loadRespondentLinks(id)
+    } else {
+      setRespondentLinks([])
+    }
+  }, [loadMatrix, loadRespondentLinks])
 
   useEffect(() => {
-    if (surveyId === null) {
+  if (surveyId === null) {
       setSurvey(null)
       setQuestions([])
       setAllUsers([])
@@ -88,6 +108,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       setRespondents([])
       setAssignments({})
       setCompletedAssignments({})
+      setRespondentLinks([])
       setActiveQuestionId(null)
       return
     }
@@ -179,6 +200,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       })
       setSurvey(updated)
       onSurveyUpdated?.()
+      await loadRespondentLinks(surveyId)
     } catch (err) {
       console.error(err)
       throw err
@@ -357,6 +379,18 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }
 
+  if (editingTemplateId !== null) {
+    return (
+      <TemplateEditor
+        templateId={editingTemplateId}
+        onBack={() => {
+          setEditingTemplateId(null)
+          setTemplateModal('load')
+        }}
+      />
+    )
+  }
+
   if (surveyId === null) {
     return (
       <div className="flex items-center justify-center h-full p-6">
@@ -406,27 +440,62 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
 
       {activeTab === 'editor' && (
         <div className="p-6">
-          <div className="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-1">
-              <QuestionList
-                questions={questions}
-                activeQuestionId={activeQuestionId}
-                creating={creatingQuestion}
-                readOnly={!surveyEditable}
-                onQuestionSelect={setActiveQuestionId}
-                onQuestionCreate={handleCreateQuestion}
-                onQuestionDelete={handleDeleteQuestion}
-                onReorder={handleReorderQuestions}
-                deleting={deletingQuestion}
-              />
+          <div className="max-w-6xl mx-auto space-y-3">
+            <div className="flex justify-start gap-2">
+              <button
+                type="button"
+                onClick={() => setTemplateModal('save')}
+                disabled={questions.length === 0}
+                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default transition cursor-pointer"
+                title={questions.length === 0 ? 'Добавьте хотя бы один вопрос' : ''}
+              >
+                Сохранить как шаблон
+              </button>
+              {surveyEditable && (
+                <button
+                  type="button"
+                  onClick={() => setTemplateModal('load')}
+                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+                >
+                  Загрузить из шаблона
+                </button>
+              )}
             </div>
-            <div className="lg:col-span-2">
-              <QuestionEditor
-                question={activeQuestion}
-                saving={savingQuestion}
-                readOnly={!surveyEditable}
-                onSave={handleSaveQuestion}
-              />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <QuestionList
+                  questions={questions}
+                  activeQuestionId={activeQuestionId}
+                  creating={creatingQuestion}
+                  readOnly={!surveyEditable}
+                  onQuestionSelect={setActiveQuestionId}
+                  onQuestionCreate={handleCreateQuestion}
+                  onQuestionDelete={handleDeleteQuestion}
+                  onReorder={handleReorderQuestions}
+                  deleting={deletingQuestion}
+                />
+            </div>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <QuestionList
+                  questions={questions}
+                  activeQuestionId={activeQuestionId}
+                  creating={creatingQuestion}
+                  readOnly={!surveyEditable}
+                  onQuestionSelect={setActiveQuestionId}
+                  onQuestionCreate={handleCreateQuestion}
+                  onQuestionDelete={handleDeleteQuestion}
+                  deleting={deletingQuestion}
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <QuestionEditor
+                  question={activeQuestion}
+                  saving={savingQuestion}
+                  readOnly={!surveyEditable}
+                  onSave={handleSaveQuestion}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -448,6 +517,9 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               adding={addingMatrixParticipant}
               exporting={exportingReport}
               readOnly={!surveyEditable}
+              surveyActive={surveyStatus === 'active'}
+              surveyName={survey?.name ?? ''}
+              respondentLinks={respondentLinks}
               onExportReport={handleExportReport}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
@@ -455,6 +527,23 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
             />
           </div>
         </div>
+      )}
+
+      {templateModal && (
+        <TemplatesModal
+          surveyId={surveyId}
+          surveyName={survey?.name ?? ''}
+          mode={templateModal}
+          onClose={() => setTemplateModal(null)}
+          onLoaded={() => {
+            setTemplateModal(null)
+            if (surveyId) loadSurvey(surveyId)
+          }}
+          onEditTemplate={(id) => {
+            setTemplateModal(null)
+            setEditingTemplateId(id)
+          }}
+        />
       )}
     </>
   )

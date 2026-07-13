@@ -156,3 +156,43 @@ export interface SurveyReportInfo {
   completedCount: number
   allAssignedCompleted: boolean
 }
+
+<<<<<<< HEAD
+export interface SaveAsTemplateRequest {
+  name: string
+  description: string
+}
+
+export interface ApiSurveyTemplate {
+  id: number
+  name: string
+  description: string
+  props: string
+  createdAt: string
+}
+
+export interface ApiQuestionTemplate {
+  id: number
+  surveyTemplateId: number
+  text: string
+  type: string
+  isRequired: boolean
+  props: string | null
+}
+
+export interface ApiSurveyTemplateDetails {
+  template: ApiSurveyTemplate
+  questions: ApiQuestionTemplate[]
+}
+
+export interface RespondentLink {
+  reviewerId: number
+  reviewerName: string
+  reviewerEmail: string
+  token: string
+}
+
+export interface InviteInfo {
+  surveyId: number
+  reviewerId: number
+}
