@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { buildInviteMailto, buildRespondentInviteLink, buildSurveyResponseLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
+import { Modal } from './Modal'
 
 interface MatrixTableProps {
   surveyId: number
@@ -316,48 +317,53 @@ export function MatrixTable({
       </form>
 
       {pickerRole && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => !adding && setPickerRole(null)}>
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-5 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-base font-bold text-gray-900 mb-4">
-              {pickerRole === 'target' ? 'Добавить объект оценки' : 'Добавить респондента'}
-            </h2>
-            {availableUsers.length === 0 ? (
-              <p className="text-sm text-gray-500 py-4">Все пользователи уже добавлены</p>
-            ) : (
-              <>
-                <input
-                  type="text"
-                  placeholder="Поиск по имени или email…"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#FF8600] shadow-sm mb-3"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  autoFocus
-                />
-                {filteredUsers.length === 0 ? (
-                  <p className="text-sm text-gray-500 py-4">Ничего не найдено</p>
-                ) : (
-                  <div className="overflow-y-auto space-y-1">
-                    {filteredUsers.map((user) => (
-                      <button
-                        key={user.id}
-                        type="button"
-                        disabled={adding}
-                        onClick={() => onAddParticipant(user.id, pickerRole).then(() => { setPickerRole(null); setSearch('') }).catch(console.error)}
-                        className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-gray-50 border border-orange-200 hover:border-orange-300 transition disabled:opacity-50 cursor-pointer"
-                      >
-                        <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                        <div className="text-xs text-gray-400">{user.email}</div>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </>
-            )}
-            <button type="button" onClick={() => setPickerRole(null)} disabled={adding} className="mt-4 text-sm text-gray-500 hover:text-gray-700 cursor-pointer">
-              Отмена
-            </button>
-          </div>
-        </div>
+        <Modal
+          title={pickerRole === 'target' ? 'Добавить объект оценки' : 'Добавить респондента'}
+          size="md"
+          onClose={() => setPickerRole(null)}
+          preventClose={adding}
+        >
+          {availableUsers.length === 0 ? (
+            <p className="text-sm text-gray-500 py-4">Все пользователи уже добавлены</p>
+          ) : (
+            <>
+              <input
+                type="text"
+                placeholder="Поиск по имени или email…"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#FF8600] shadow-sm mb-3"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                autoFocus
+              />
+              {filteredUsers.length === 0 ? (
+                <p className="text-sm text-gray-500 py-4">Ничего не найдено</p>
+              ) : (
+                <div className="overflow-y-auto space-y-1 max-h-[50vh]">
+                  {filteredUsers.map((user) => (
+                    <button
+                      key={user.id}
+                      type="button"
+                      disabled={adding}
+                      onClick={() => onAddParticipant(user.id, pickerRole).then(() => { setPickerRole(null); setSearch('') }).catch(console.error)}
+                      className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-gray-50 border border-orange-200 hover:border-orange-300 transition disabled:opacity-50 cursor-pointer"
+                    >
+                      <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                      <div className="text-xs text-gray-400">{user.email}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </>
+          )}
+          <button
+            type="button"
+            onClick={() => setPickerRole(null)}
+            disabled={adding}
+            className="mt-4 text-sm text-gray-500 hover:text-gray-700 cursor-pointer disabled:opacity-50"
+          >
+            Отмена
+          </button>
+        </Modal>
       )}
     </>
   )
