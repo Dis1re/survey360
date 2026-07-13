@@ -402,26 +402,24 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       {activeTab === 'editor' && (
         <div className="p-6">
           <div className="max-w-6xl mx-auto space-y-3">
-            {surveyEditable && (
-              <div className="flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTemplateModal('save')}
-                  disabled={questions.length === 0}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default transition cursor-pointer"
-                  title={questions.length === 0 ? 'Добавьте хотя бы один вопрос' : ''}
-                >
-                  Сохранить как шаблон
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTemplateModal('load')}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
-                >
-                  Загрузить из шаблона
-                </button>
-              </div>
-            )}
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setTemplateModal('save')}
+                disabled={questions.length === 0}
+                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default transition cursor-pointer"
+                title={questions.length === 0 ? 'Добавьте хотя бы один вопрос' : ''}
+              >
+                Сохранить как шаблон
+              </button>
+              <button
+                type="button"
+                onClick={() => setTemplateModal('load')}
+                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+              >
+                Загрузить из шаблона
+              </button>
+            </div>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1">
                 <QuestionList
