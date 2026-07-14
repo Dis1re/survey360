@@ -122,7 +122,7 @@ export function SurveyHeader({
       onSaveRef.current(formRef.current).catch(() => {
         dirtyRef.current = true
       })
-    }, 600)
+    }, 500)
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current)

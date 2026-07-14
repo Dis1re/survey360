@@ -221,7 +221,7 @@ export function MatrixTable({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
-                  {respondents.map((respondent, index) => {
+                  {respondents.map((respondent) => {
                     const invite = linkByReviewerId[respondent.id]
                     const inviteLink = invite ? buildRespondentInviteLink(invite.token) : null
 

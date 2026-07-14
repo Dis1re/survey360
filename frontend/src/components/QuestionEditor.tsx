@@ -119,7 +119,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
           dirtyRef.current = true
         })
       }
-    }, 600)
+    }, 500)
     return () => {
       if (timerRef.current) {
         clearTimeout(timerRef.current)
@@ -277,12 +277,12 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
                   type="text"
                   className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-default"
                   value={opt.label}
-                   onChange={(e) => {
-                     const next = [...options]
-                     next[i] = { ...opt, label: e.target.value }
-                     setOptions(next)
-                     markDirty()
-                   }}
+                  onChange={(e) => {
+                    const next = [...options]
+                    next[i] = { ...opt, label: e.target.value }
+                    setOptions(next)
+                    markDirty()
+                  }}
                   readOnly={readOnly}
                   disabled={readOnly}
                   placeholder={`Вариант ${i + 1}`}
@@ -290,10 +290,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
                 {!readOnly && (
                   <button
                     type="button"
-                     onClick={() => {
-                       setOptions(options.filter((_, idx) => idx !== i))
-                       markDirty()
-                     }}
+                    onClick={() => {
+                      setOptions(options.filter((_, idx) => idx !== i))
+                      markDirty()
+                    }}
                     className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer shrink-0"
                     title="Удалить вариант"
                   >
@@ -308,10 +308,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
           {!readOnly && (
             <button
               type="button"
-               onClick={() => {
-                 setOptions([...options, { value: options.length + 1, label: '' }])
-                 markDirty()
-               }}
+              onClick={() => {
+                setOptions([...options, { value: options.length + 1, label: '' }])
+                markDirty()
+              }}
               className="mt-2 w-full py-2 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 text-sm font-medium rounded-xl transition flex items-center justify-center gap-1 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -328,10 +328,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
           <input
             type="checkbox"
             checked={isRequired}
-             onChange={(e) => {
-               setIsRequired(e.target.checked)
-               markDirty()
-             }}
+            onChange={(e) => {
+              setIsRequired(e.target.checked)
+              markDirty()
+            }}
             className="w-4 h-4 text-[#FF8600] rounded focus:ring-[#FF8600]"
           />
           <span className="text-sm text-gray-700">
