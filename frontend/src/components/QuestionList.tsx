@@ -88,7 +88,7 @@ export function QuestionList({
           <button
             type="button"
             onClick={onDeleteAll}
-            className="shrink-0 text-xs font-medium text-red-500 hover:text-red-600 border border-red-200 hover:bg-red-50 rounded-lg px-2.5 py-1 transition cursor-pointer"
+            className="soft-press shrink-0 text-xs font-medium text-red-500 hover:text-red-600 border border-red-200 hover:bg-red-50 rounded-lg px-2.5 py-1 cursor-pointer"
             title="Удалить все вопросы анкеты"
           >
             Удалить всё
@@ -113,7 +113,7 @@ export function QuestionList({
                 onDrop={handleDrop(index)}
                 onDragEnd={handleDragEnd}
                 onClick={() => onQuestionSelect(question.id)}
-                className={`p-3 rounded-xl cursor-pointer text-sm font-medium flex items-center justify-between transition ${
+                className={`soft-lift p-3 rounded-xl cursor-pointer text-sm font-medium flex items-center justify-between ${
                   isActive
                     ? 'bg-gray-50 border border-blue-500 text-gray-900'
                     : 'hover:bg-gray-50 border border-gray-100 text-gray-600'
@@ -197,7 +197,7 @@ export function QuestionList({
       ) : (
         <button
           onClick={() => setShowInput(true)}
-          className="mt-4 w-full py-2 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 text-sm font-medium rounded-xl transition flex items-center justify-center gap-1 cursor-pointer"
+          className="mt-4 w-full py-2 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 text-sm font-medium rounded-xl soft-press flex items-center justify-center gap-1 cursor-pointer"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />

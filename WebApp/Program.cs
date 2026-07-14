@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
+using WebApp.Hubs;
 using WebApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -47,6 +48,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddScoped<SurveyDocxReportService>();
 builder.Services.AddScoped<SurveyCsvReportService>();
 builder.Services.AddScoped<SurveyRespondentLinkService>();
@@ -86,5 +88,6 @@ app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+app.MapHub<SurveyHub>("/hubs/survey");
 
 app.Run();

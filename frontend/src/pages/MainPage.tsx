@@ -8,6 +8,7 @@ import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '..
 import { TabBar, type Tab } from '../components/TabBar'
 import { TemplatesModal } from '../components/TemplatesModal'
 import { TemplateEditor } from '../components/TemplateEditor'
+import { useSurveyLive } from '../hooks/useSurveyLive'
 import {
   apiDateToInput,
   apiQuestionToQuestion,
@@ -77,7 +78,7 @@ interface MainPageProps {
 
 export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('editor')
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(() => surveyId !== null)
   const [survey, setSurvey] = useState<ApiSurvey | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [allUsers, setAllUsers] = useState<ApiUser[]>([])
@@ -165,7 +166,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }, [loadMatrix, loadRespondentLinks])
 
   useEffect(() => {
-  if (surveyId === null) {
+    if (surveyId === null) {
       setSurvey(null)
       setQuestions([])
       setAllUsers([])
@@ -203,6 +204,16 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
 
     return () => { cancelled = true }
   }, [surveyId, loadSurvey, loadUsers])
+
+  // Live: when someone completes an assignment, refresh matrix "Ответы" links.
+  useSurveyLive((event) => {
+    if (surveyId === null || event.surveyId !== surveyId) return
+    void loadMatrix(surveyId).catch(console.error)
+    setSurvey((prev) => {
+      if (!prev || prev.status === event.status) return prev
+      return { ...prev, status: event.status }
+    })
+  })
 
   const surveyHeaderInitial = useMemo<SurveyHeaderForm>(
     () => ({
@@ -563,7 +574,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                 type="button"
                 onClick={() => setTemplateModal('save')}
                 disabled={questions.length === 0}
-                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default transition cursor-pointer"
+                className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default cursor-pointer"
                 title={questions.length === 0 ? 'Добавьте хотя бы один вопрос' : ''}
               >
                 Сохранить как шаблон
@@ -572,7 +583,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                 <button
                   type="button"
                   onClick={() => setTemplateModal('load')}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+                  className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
                 >
                   Загрузить из шаблона
                 </button>

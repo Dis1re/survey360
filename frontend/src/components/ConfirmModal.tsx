@@ -113,7 +113,7 @@ export function ConfirmModal({
               type="button"
               onClick={onCancel}
               disabled={loading}
-              className="flex-1 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl transition cursor-pointer"
+              className="soft-press flex-1 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl cursor-pointer"
             >
               {cancelLabel}
             </button>
@@ -122,7 +122,7 @@ export function ConfirmModal({
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`${hideCancel ? 'w-full' : 'flex-1'} py-2.5 text-sm font-semibold rounded-xl transition cursor-pointer ${cfg.confirmClass}`}
+            className={`${hideCancel ? 'w-full' : 'flex-1'} soft-press py-2.5 text-sm font-semibold rounded-xl cursor-pointer ${cfg.confirmClass}`}
           >
             {loading ? (loadingLabel ?? 'Подождите…') : (confirmLabel ?? cfg.defaultConfirmLabel)}
           </button>
