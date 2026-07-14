@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { buildInviteMailto, buildRespondentInviteLink, buildSurveyResponseLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
 import { Modal } from './Modal'
@@ -67,6 +67,15 @@ export function MatrixTable({
   const [search, setSearch] = useState('')
   const [copiedReviewerId, setCopiedReviewerId] = useState<number | null>(null)
 
+  const dirtyRef = useRef(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onSaveRef = useRef(onSave)
+  const assignmentsRef = useRef(assignments)
+  assignmentsRef.current = assignments
+  useEffect(() => {
+    onSaveRef.current = onSave
+  }, [onSave])
+
   const linkByReviewerId = Object.fromEntries(
     respondentLinks.map((l) => [l.reviewerId, l]),
   ) as Record<number, RespondentLink>
@@ -83,6 +92,7 @@ export function MatrixTable({
 
   useEffect(() => {
     setAssignments(initialAssignments)
+    dirtyRef.current = false
   }, [initialAssignments])
 
   const toggle = (respondentId: string, targetId: string) => {
@@ -94,6 +104,7 @@ export function MatrixTable({
         [targetId]: !(prev[respondentId]?.[targetId] ?? false),
       },
     }))
+    dirtyRef.current = true
   }
 
   const isChecked = (respondentId: string, targetId: string) =>
@@ -102,10 +113,37 @@ export function MatrixTable({
   const isCompleted = (respondentId: string, targetId: string) =>
     completedAssignments[respondentId]?.[targetId] ?? false
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    await onSave(assignments)
   }
+
+  useEffect(() => {
+    if (readOnly || !dirtyRef.current) return
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      dirtyRef.current = false
+      onSaveRef.current(assignmentsRef.current).catch(() => {
+        dirtyRef.current = true
+      })
+    }, 500)
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+    }
+  }, [assignments, readOnly])
+
+  useEffect(() => {
+    return () => {
+      if (dirtyRef.current && !readOnly) {
+        dirtyRef.current = false
+        onSaveRef.current(assignmentsRef.current).catch(() => {
+          dirtyRef.current = true
+        })
+      }
+    }
+  }, [readOnly])
 
   const availableUsers = pickerRole
     ? allUsers.filter((user) => {
@@ -313,7 +351,16 @@ export function MatrixTable({
           )}
         </div>
 
-        <div className="flex flex-wrap justify-end gap-3 mt-4">
+        <div className="flex flex-wrap items-center justify-end gap-3 mt-4">
+          {!readOnly && saving && (
+            <span className="text-xs text-gray-400 flex items-center gap-1.5">
+              <span className="w-3 h-3 border-2 border-gray-300 border-t-[#FF8600] rounded-full animate-spin" />
+              Сохранение…
+            </span>
+          )}
+          {!readOnly && (
+            <span className="text-xs text-gray-400">Изменения сохраняются автоматически</span>
+          )}
           {onExportReport && (
             <button
               type="button"
@@ -322,15 +369,6 @@ export function MatrixTable({
               className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl transition cursor-pointer"
             >
               {exporting ? 'Формирование…' : 'Сформировать результаты (.docx)'}
-            </button>
-          )}
-          {(targets.length > 0 || respondents.length > 0) && !readOnly && (
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
-            >
-              {saving ? 'Сохранение…' : 'Сохранить матрицу'}
             </button>
           )}
         </div>

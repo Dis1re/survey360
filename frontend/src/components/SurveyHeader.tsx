@@ -82,8 +82,15 @@ export function SurveyHeader({
   onDelete,
 }: SurveyHeaderProps) {
   const [form, setForm] = useState(initial)
-  const [dirty, setDirty] = useState(false)
   const descriptionRef = useRef<HTMLTextAreaElement>(null)
+  const dirtyRef = useRef(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onSaveRef = useRef(onSave)
+  const formRef = useRef(form)
+  formRef.current = form
+  useEffect(() => {
+    onSaveRef.current = onSave
+  }, [onSave])
   const [userModalOpen, setUserModalOpen] = useState(false)
   const [startModalOpen, setStartModalOpen] = useState(false)
   const [startDates, setStartDates] = useState({ startDate: '', endDate: '' })
@@ -104,8 +111,36 @@ export function SurveyHeader({
 
   useEffect(() => {
     setForm(initial)
-    setDirty(false)
+    dirtyRef.current = false
   }, [initial])
+
+  useEffect(() => {
+    if (readOnly || !dirtyRef.current) return
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      dirtyRef.current = false
+      onSaveRef.current(formRef.current).catch(() => {
+        dirtyRef.current = true
+      })
+    }, 500)
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+    }
+  }, [form, readOnly])
+
+  useEffect(() => {
+    return () => {
+      if (dirtyRef.current && !readOnly) {
+        dirtyRef.current = false
+        onSaveRef.current(formRef.current).catch(() => {
+          dirtyRef.current = true
+        })
+      }
+    }
+  }, [readOnly])
 
   const resizeDescription = () => {
     const el = descriptionRef.current
@@ -126,14 +161,11 @@ export function SurveyHeader({
   const updateField = <K extends keyof SurveyHeaderForm>(key: K, value: SurveyHeaderForm[K]) => {
     if (readOnly) return
     setForm((prev) => ({ ...prev, [key]: value }))
-    setDirty(true)
+    dirtyRef.current = true
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.title.trim()) return
-    await onSave(form)
-    setDirty(false)
   }
 
   const handleCreateUser = async (e: React.FormEvent) => {
@@ -188,7 +220,7 @@ export function SurveyHeader({
         endDate: startDates.endDate,
       })
       setStartModalOpen(false)
-      setDirty(false)
+      dirtyRef.current = false
     } catch (err) {
       console.error(err)
     }
@@ -198,7 +230,7 @@ export function SurveyHeader({
     try {
       await onStopSurvey(form)
       setConfirmDialog(null)
-      setDirty(false)
+      dirtyRef.current = false
     } catch (err) {
       console.error(err)
     }
@@ -274,14 +306,11 @@ export function SurveyHeader({
               </div>
             )}
 
-            {dirty && !readOnly && (
-              <button
-                type="submit"
-                disabled={saving || !form.title.trim()}
-                className="px-4 py-1.5 text-sm font-medium text-[#FF8600] bg-white hover:bg-white/90 disabled:opacity-50 rounded-lg transition cursor-pointer"
-              >
-                {saving ? 'Сохранение…' : 'Сохранить'}
-              </button>
+            {!readOnly && saving && (
+              <span className="text-xs text-white/80 flex items-center gap-1.5">
+                <span className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                Сохранение…
+              </span>
             )}
           </div>
 
