@@ -20,7 +20,7 @@ public class AuthController(ApplicationDbContext context) : Controller
     [HttpPost("login")]
     public async Task<ActionResult<AuthUserDto>> Login([FromBody] LoginRequest request, CancellationToken ct)
     {
-        var email = request.Email.Trim().ToLowerInvariant();
+        var email = request.Email?.Trim().ToLowerInvariant();
         if (string.IsNullOrEmpty(email))
             return BadRequest("Email обязателен");
 
@@ -38,7 +38,7 @@ public class AuthController(ApplicationDbContext context) : Controller
     [HttpPost("admin-login")]
     public async Task<ActionResult<AuthUserDto>> AdminLogin([FromBody] LoginRequest request, CancellationToken ct)
     {
-        var raw = request.Email.Trim();
+        var raw = request.Email?.Trim() ?? string.Empty;
         if (string.IsNullOrEmpty(raw))
             return BadRequest("Email обязателен");
 

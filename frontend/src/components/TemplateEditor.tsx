@@ -272,7 +272,7 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
 
 function templateQuestionToQuestion(q: ApiQuestionTemplate): Question {
   const type = mapQuestionType(q.type)
-  const parsed = q.props ? JSON.parse(q.props) as Record<string, string | number> : undefined
+  const parsed = q.props ? (() => { try { return JSON.parse(q.props) as Record<string, string | number> } catch { return undefined } })() : undefined
   return {
     id: q.id,
     surveyId: q.surveyTemplateId,

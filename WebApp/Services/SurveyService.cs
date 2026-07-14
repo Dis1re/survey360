@@ -347,6 +347,9 @@ public class SurveyService(
         var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == surveyId, ct);
         if (survey is null) return null;
 
+        if (!IsSurveyActive(survey.Status))
+            return -3;
+
         var assignment = await context.SurveyAssignments
             .FirstOrDefaultAsync(
                 a => a.SurveyId == surveyId && a.ReviewerId == reviewerId && a.TargetId == targetId,

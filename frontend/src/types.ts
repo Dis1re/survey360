@@ -100,7 +100,6 @@ export interface UpdateQuestionRequest {
 
 export interface CreateAnswerRequest {
   questionId: number
-  userId: number
   targetId: number
   text: string
 }

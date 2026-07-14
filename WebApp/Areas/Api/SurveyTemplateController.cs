@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Areas.Api;
 
@@ -161,6 +162,7 @@ public class SurveyTemplateController(ApplicationDbContext context) : Controller
             CreatedAt = DateTime.UtcNow,
             StartedAt = default,
             ClosedAt = default,
+            CreatedByUserId = User.GetUserId(),
         };
         await context.Surveys.AddAsync(survey, ct);
         await context.SaveChangesAsync(ct);

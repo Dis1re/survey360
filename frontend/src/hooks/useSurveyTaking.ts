@@ -247,7 +247,6 @@ export function useSurveyTaking({
       for (const question of answered) {
         await answerApi.create({
           questionId: question.id,
-          userId: lockedUserId,
           targetId,
           text: answers[question.id].trim(),
         })

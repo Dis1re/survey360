@@ -117,7 +117,7 @@ export function apiQuestionToQuestion(api: ApiQuestion): Question {
     api.props == null
       ? undefined
       : typeof api.props === 'string'
-        ? JSON.parse(api.props)
+        ? (() => { try { return JSON.parse(api.props) } catch { return undefined } })()
         : api.props
   return {
     id: api.id,

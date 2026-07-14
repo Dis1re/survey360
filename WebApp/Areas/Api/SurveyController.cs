@@ -238,6 +238,8 @@ public class SurveyController(
         if (result == -1) return BadRequest("Назначение не найдено в матрице опроса");
         if (result == -2)
             return BadRequest(new { message = "Не заполнены обязательные вопросы" });
+        if (result == -3)
+            return BadRequest("Опрос не активен");
 
         await NotifySurveyUpdatedAsync(id, null, ct);
         return NoContent();

@@ -54,6 +54,7 @@ public class QuestionController(ApplicationDbContext context) : Controller
         return question.Id;
     }
 
+    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<QuestionDetailsDto>> Get(int id, CancellationToken ct)
     {
@@ -63,6 +64,10 @@ public class QuestionController(ApplicationDbContext context) : Controller
 
         if (question is null)
             return NotFound();
+
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == question.SurveyId, ct);
+        if (survey is null) return NotFound();
+        if (!CanManageSurvey(survey)) return Forbid();
 
         var answers = await context.Answers
             .AsNoTracking()
@@ -81,8 +86,10 @@ public class QuestionController(ApplicationDbContext context) : Controller
             return NotFound();
 
         var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == question.SurveyId, ct);
-        if (survey is null || !CanManageSurvey(survey))
-            return Forbid();
+        if (survey is null) return NotFound();
+        if (!CanManageSurvey(survey)) return Forbid();
+        if (SurveyService.IsSurveyActive(survey.Status))
+            return BadRequest("Нельзя изменять вопросы активного опроса");
 
         question.Text = request.Text;
         question.Type = request.Type;
@@ -103,8 +110,10 @@ public class QuestionController(ApplicationDbContext context) : Controller
             return NotFound();
 
         var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == question.SurveyId, ct);
-        if (survey is null || !CanManageSurvey(survey))
-            return Forbid();
+        if (survey is null) return NotFound();
+        if (!CanManageSurvey(survey)) return Forbid();
+        if (SurveyService.IsSurveyActive(survey.Status))
+            return BadRequest("Нельзя удалять вопросы активного опроса");
 
         await context.Answers
             .Where(a => a.QuestionId == id)
