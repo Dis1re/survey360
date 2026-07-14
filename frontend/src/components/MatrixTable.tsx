@@ -27,6 +27,7 @@ interface MatrixTableProps {
   onRemoveParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
   onSave: (assignments: Record<string, Record<string, boolean>>) => Promise<void>
   onExpand?: () => void
+  expanded?: boolean
 }
 
 export function matrixToEntries(
@@ -71,6 +72,7 @@ export function MatrixTable({
   onExportCsv,
   exportingCsv = false,
   canExport = false,
+  expanded = false,
 }: MatrixTableProps) {
   const [assignments, setAssignments] =
     useState<Record<string, Record<string, boolean>>>(initialAssignments)
@@ -316,7 +318,7 @@ export function MatrixTable({
               Сначала добавьте пользователей через кнопку «Добавить пользователя» в шапке опроса
             </div>
           ) : (
-            <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+            <div className={`overflow-x-auto ${expanded ? 'overflow-y-visible' : 'overflow-y-auto max-h-[600px]'}`}>
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">

@@ -658,6 +658,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                 title="Матрица оценки"
                 description={survey?.name}
                 size="full"
+                scrollable
                 onClose={() => setMatrixExpanded(false)}
                 closeOnBackdrop={false}
               >
@@ -682,6 +683,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                   onAddParticipant={handleAddMatrixParticipant}
                   onRemoveParticipant={handleRemoveMatrixParticipant}
                   onSave={handleSaveMatrix}
+                  expanded
                 />
               </Modal>
             )}
