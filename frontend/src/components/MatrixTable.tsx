@@ -356,7 +356,7 @@ export function MatrixTable({
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
                           disabled={adding || allUsers.length === 0}
-                          className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-[#FF8600] border-2 border-dashed border-orange-200 hover:border-[#FF8600] hover:bg-orange-50 rounded-xl transition cursor-pointer disabled:opacity-50"
+                          className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-[#FF8600] border-2 border-dashed border-orange-200 hover:border-[#FF8600] hover:bg-orange-50 rounded-xl soft-press cursor-pointer disabled:opacity-50"
                         >
                           + Добавить респондента
                         </button>
@@ -396,7 +396,7 @@ export function MatrixTable({
               type="button"
               onClick={() => onExportReport()}
               disabled={exporting}
-              className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl transition cursor-pointer"
+              className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl soft-press cursor-pointer"
             >
               {exporting ? 'Формирование…' : 'Сформировать результаты (.docx)'}
             </button>
@@ -489,7 +489,7 @@ export function MatrixTable({
                   .catch(console.error)
               }
               disabled={adding || selectedUserIds.length === 0}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl soft-press shadow-sm cursor-pointer"
             >
               {adding ? 'Добавление…' : `Добавить выбранных (${selectedUserIds.length})`}
             </button>

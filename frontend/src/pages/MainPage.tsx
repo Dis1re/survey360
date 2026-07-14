@@ -560,7 +560,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                 type="button"
                 onClick={() => setTemplateModal('save')}
                 disabled={questions.length === 0}
-                className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default transition cursor-pointer"
+                className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default cursor-pointer"
                 title={questions.length === 0 ? 'Добавьте хотя бы один вопрос' : ''}
               >
                 Сохранить как шаблон
@@ -569,7 +569,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                 <button
                   type="button"
                   onClick={() => setTemplateModal('load')}
-                  className="px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+                  className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
                 >
                   Загрузить из шаблона
                 </button>

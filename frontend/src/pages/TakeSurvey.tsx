@@ -65,7 +65,7 @@ function UserPicker({
               return (
                 <label
                   key={user.id}
-                  className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                  className={`soft-lift flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${
                     isActive ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
                   }`}
                 >
@@ -100,7 +100,7 @@ function UserPicker({
           type="button"
           onClick={() => selectedId !== null && onSelect(selectedId)}
           disabled={selectedId === null}
-          className={`${showBack ? 'flex-1' : 'w-full'} bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm cursor-pointer`}
+          className={`${showBack ? 'flex-1' : 'w-full'} bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl soft-press shadow-sm cursor-pointer`}
         >
           Далее
         </button>
@@ -164,7 +164,7 @@ function TargetPicker({
               return (
                 <label
                   key={user.id}
-                  className={`flex items-center gap-3 p-3 rounded-xl border transition cursor-pointer ${
+                  className={`soft-lift flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${
                     completed
                       ? isActive
                         ? 'border-green-500 bg-green-50'
@@ -217,7 +217,7 @@ function TargetPicker({
             onSelect(selectedId, entry?.completed ?? false)
           }}
           disabled={selectedId === null}
-          className={`${hideBackButton ? 'w-full' : 'flex-1'} bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm cursor-pointer`}
+          className={`${hideBackButton ? 'w-full' : 'flex-1'} bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl soft-press shadow-sm cursor-pointer`}
         >
           {targets.find((t) => t.user.id === selectedId)?.completed ? 'Просмотреть ответы' : 'Перейти к опросу'}
         </button>
@@ -580,7 +580,7 @@ export function TakeSurvey({
           <button
             type="button"
             onClick={() => setTargetModalOpen(true)}
-            className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+            className="soft-press text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
           >
             Сменить цель
           </button>
@@ -684,12 +684,12 @@ export function TakeSurvey({
         )}
       </div>
 
-      <form onSubmit={handleSubmit} className={`space-y-4 ${effectiveReadOnly ? 'opacity-75' : ''}`}>
+      <form onSubmit={handleSubmit} className={`space-y-4  ${effectiveReadOnly ? 'opacity-75' : ''}`}>
         {questions.length === 0 ? (
           <p className="text-sm text-gray-400">В этом опросе пока нет вопросов.</p>
         ) : (
           questions.map((question, index) => (
-            <div key={question.id} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+            <div key={question.id} className="soft-lift bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
               <label className="block text-sm font-medium text-gray-900 mb-3">
                 <span className="text-gray-400 mr-1.5">{index + 1}.</span>
                 {question.text}
@@ -715,7 +715,7 @@ export function TakeSurvey({
           <button
             type="submit"
             disabled={submitting || questions.length === 0}
-            className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-3 px-4 rounded-xl transition shadow-sm cursor-pointer"
+            className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-3 px-4 rounded-xl soft-press shadow-sm cursor-pointer"
           >
             {submitting ? 'Отправка…' : 'Отправить ответы'}
           </button>
@@ -727,7 +727,7 @@ export function TakeSurvey({
           <button
             type="button"
             onClick={() => window.close()}
-            className="px-6 py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition shadow-sm cursor-pointer"
+            className="px-6 py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl soft-press shadow-sm cursor-pointer"
           >
             Выйти из предпросмотра
           </button>
@@ -796,7 +796,7 @@ function QuestionInput({
             type="button"
             disabled={readOnly}
             onClick={() => onChange(String(n))}
-            className={`flex-1 min-w-[44px] py-3 rounded-xl border text-sm font-semibold transition ${
+            className={`soft-press flex-1 min-w-[44px] py-3 rounded-xl border text-sm font-semibold ${
               readOnly ? 'cursor-default' : 'cursor-pointer'
             } ${
               selected === n
@@ -835,7 +835,7 @@ function QuestionInput({
         {options.map((opt) => (
           <label
             key={opt.value}
-            className={`flex items-start gap-3 p-3 rounded-xl border transition ${
+            className={`soft-lift flex items-start gap-3 p-3 rounded-xl border ${
               readOnly ? 'cursor-default' : 'cursor-pointer'
             } ${
               value === String(opt.value) ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'

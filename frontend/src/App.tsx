@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react'
 import { surveyApi } from './api'
 import { Sidebar } from './components/Sidebar'
 import { apiSurveyToSurvey } from './mappers'
-import { openDevPage } from './routing'
 import { MainPage } from './pages/MainPage'
 import { EntityPage } from './pages/SurveyDetails'
 import { TakeSurvey } from './pages/TakeSurvey'
@@ -40,8 +39,6 @@ export default function App() {
       )
     : surveys
 
-  const handleOpenDev = () => openDevPage()
-
   const handleOpenDetails = () => setView('details')
 
   const handleBack = () => {
@@ -72,7 +69,6 @@ export default function App() {
         onSurveySelect={(id) => setSelectedSurveyId(id)}
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
-        onOpenDev={handleOpenDev}
         onOpenDetails={handleOpenDetails}
       />
       <main className="flex-1 overflow-y-auto bg-gray-100">

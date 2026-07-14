@@ -44,9 +44,6 @@ const inputClass =
 const modalDateClass =
   'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#FF8600]'
 
-const DESCRIPTION_MIN_ROWS = 3
-const DESCRIPTION_MAX_HEIGHT = 168
-
 function todayInputDate() {
   const now = new Date()
   const y = now.getFullYear()
@@ -82,7 +79,6 @@ export function SurveyHeader({
   onDelete,
 }: SurveyHeaderProps) {
   const [form, setForm] = useState(initial)
-  const descriptionRef = useRef<HTMLTextAreaElement>(null)
   const dirtyRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onSaveRef = useRef(onSave)
@@ -91,6 +87,9 @@ export function SurveyHeader({
   useEffect(() => {
     onSaveRef.current = onSave
   }, [onSave])
+  const [descOpen, setDescOpen] = useState(false)
+  const descAreaRef = useRef<HTMLDivElement>(null)
+  const descTextareaRef = useRef<HTMLTextAreaElement>(null)
   const [userModalOpen, setUserModalOpen] = useState(false)
   const [startModalOpen, setStartModalOpen] = useState(false)
   const [startDates, setStartDates] = useState({ startDate: '', endDate: '' })
@@ -142,21 +141,35 @@ export function SurveyHeader({
     }
   }, [readOnly])
 
-  const resizeDescription = () => {
-    const el = descriptionRef.current
-    if (!el) return
-    el.style.height = 'auto'
-    const nextHeight = Math.min(el.scrollHeight, DESCRIPTION_MAX_HEIGHT)
-    el.style.height = `${nextHeight}px`
-    el.style.overflowY = el.scrollHeight > DESCRIPTION_MAX_HEIGHT ? 'auto' : 'hidden'
-  }
+  useEffect(() => {
+    if (!descOpen) return
+
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setDescOpen(false)
+    }
+    const onPointerDown = (e: MouseEvent) => {
+      if (descAreaRef.current && !descAreaRef.current.contains(e.target as Node)) {
+        setDescOpen(false)
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('mousedown', onPointerDown)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('mousedown', onPointerDown)
+    }
+  }, [descOpen])
 
   useEffect(() => {
-    resizeDescription()
-  }, [form.description, initial.description])
+    if (descOpen && !readOnly) {
+      requestAnimationFrame(() => descTextareaRef.current?.focus())
+    }
+  }, [descOpen, readOnly])
 
   const cfg = statusConfig[status]
   const surveyTitle = form.title.trim() || 'этот опрос'
+  const descriptionPreview = form.description.trim()
+  const canOpenDescription = !readOnly || Boolean(descriptionPreview)
 
   const updateField = <K extends keyof SurveyHeaderForm>(key: K, value: SurveyHeaderForm[K]) => {
     if (readOnly) return
@@ -250,7 +263,7 @@ export function SurveyHeader({
 
   return (
     <header
-      className="flex-shrink-0 relative overflow-hidden survey-header-wave"
+      className={`flex-shrink-0 relative survey-header-wave ${descOpen ? 'z-30 overflow-visible' : 'overflow-hidden'}`}
       style={{
         background:
           'linear-gradient(90deg, rgb(255,134,0) 0%, rgb(255,130,0) 15%, rgb(255,120,0) 30%, rgb(255,110,0) 45%, rgb(255,105,0) 55%, rgb(245,95,5) 70%, rgb(235,90,4) 85%, rgb(232,93,4) 100%)',
@@ -258,45 +271,126 @@ export function SurveyHeader({
         backgroundRepeat: 'no-repeat',
       }}
     >
-      <form onSubmit={handleSubmit} className="p-6">
-        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row lg:items-start justify-between gap-4">
-          <div className="flex-1 space-y-3">
-            <div className="flex items-start gap-3 flex-wrap">
+      <form onSubmit={handleSubmit} className="px-5 py-3">
+        <div className="max-w-6xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          <div className="flex-1 min-w-0 space-y-1.5">
+            <div className="flex items-end gap-2.5 flex-wrap">
               <div className="flex-1 min-w-[200px]">
+                <label className="block text-[10px] font-semibold uppercase tracking-wider text-white/70 mb-1">
+                  Название
+                </label>
                 <input
                   type="text"
-                  className={`${inputClass} text-xl font-bold ${readOnly ? 'opacity-90 cursor-default' : ''}`}
+                  className={`${inputClass} text-lg font-bold ${readOnly ? 'opacity-90 cursor-default' : ''}`}
                   value={form.title}
                   onChange={(e) => updateField('title', e.target.value)}
-                  placeholder="Название опроса"
+                  placeholder="Например: Оценка руководителя 2026"
                   readOnly={readOnly}
+                  aria-label="Название опроса"
                 />
               </div>
               <span
-                className="px-2.5 py-1 text-xs font-medium rounded-md border flex items-center gap-1.5 shrink-0 mt-1"
+                className="px-2 py-0.5 text-xs font-medium rounded-md border flex items-center gap-1.5 shrink-0 mb-1.5"
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.15)',
                   borderColor: 'rgba(255,255,255,0.35)',
                   color: '#fff',
                 }}
               >
-                <span className={`w-2 h-2 rounded-full ${cfg.dot}`} />
+                <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
                 {cfg.label}
               </span>
+              {!readOnly && saving && (
+                <span className="text-[11px] text-white/80 flex items-center gap-1.5 mb-1.5">
+                  <span className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
+                  Сохранение…
+                </span>
+              )}
             </div>
 
-            <textarea
-              ref={descriptionRef}
-              className={`${inputClass} resize-none leading-relaxed ${readOnly ? 'opacity-90 cursor-default' : ''}`}
-              rows={DESCRIPTION_MIN_ROWS}
-              value={form.description}
-              onChange={(e) => updateField('description', e.target.value)}
-              placeholder="Описание опроса"
-              readOnly={readOnly}
-            />
+            <div
+              ref={descAreaRef}
+              className={`relative w-fit max-w-xs ${descOpen ? 'z-40' : ''}`}
+            >
+              <span className="block text-[10px] font-semibold uppercase tracking-wider text-white/70 mb-1">
+                Описание
+              </span>
+              <button
+                type="button"
+                onClick={() => canOpenDescription && setDescOpen(true)}
+                disabled={!canOpenDescription}
+                aria-expanded={descOpen}
+                aria-label="Описание опроса"
+                className={`desc-chip w-full max-w-xs inline-flex items-center gap-1.5 px-2.5 py-1 text-xs rounded-lg border text-left truncate ${
+                  descOpen ? 'invisible pointer-events-none' : ''
+                } ${
+                  canOpenDescription
+                    ? 'text-white/90 cursor-pointer hover:bg-white/25'
+                    : 'text-white/55 cursor-default opacity-80'
+                }`}
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.12)',
+                  borderColor: 'rgba(255,255,255,0.28)',
+                }}
+                title={
+                  canOpenDescription
+                    ? readOnly
+                      ? 'Открыть описание'
+                      : descriptionPreview
+                        ? 'Редактировать описание'
+                        : 'Добавить описание'
+                    : undefined
+                }
+              >
+                <span className="truncate">
+                  {descriptionPreview || (readOnly ? 'Не указано' : 'Нажмите, чтобы добавить')}
+                </span>
+              </button>
+
+              {descOpen && (
+                <div
+                  className="desc-popover absolute left-0 top-0 z-40 w-[min(28rem,calc(100vw-2.5rem))] rounded-xl border p-3 shadow-2xl"
+                  style={{
+                    background:
+                      'linear-gradient(135deg, rgba(255,140,20,0.98) 0%, rgba(232,93,4,0.98) 100%)',
+                    borderColor: 'rgba(255,255,255,0.45)',
+                    backdropFilter: 'blur(8px)',
+                  }}
+                  role="dialog"
+                  aria-label="Описание опроса"
+                >
+                  <span className="block text-[10px] font-semibold uppercase tracking-wider text-white/70 mb-1.5">
+                    Описание
+                  </span>
+                  {readOnly ? (
+                    <p className="text-sm text-white whitespace-pre-wrap leading-relaxed max-h-48 overflow-y-auto">
+                      {descriptionPreview}
+                    </p>
+                  ) : (
+                    <textarea
+                      ref={descTextareaRef}
+                      className="w-full min-h-[7.5rem] max-h-52 bg-white/20 border border-white/40 rounded-lg px-3 py-2 text-sm text-white placeholder:text-white/60 resize-none focus:outline-none focus:border-white/70 focus:bg-white/25 leading-relaxed"
+                      value={form.description}
+                      onChange={(e) => updateField('description', e.target.value)}
+                      placeholder="Кратко опишите цель опроса…"
+                      aria-label="Текст описания"
+                    />
+                  )}
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setDescOpen(false)}
+                      className="px-3 py-1 text-xs font-medium text-[#FF8600] bg-white hover:bg-white/90 rounded-lg transition cursor-pointer"
+                    >
+                      Готово
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {readOnly && status === 'active' && (startDateLabel || endDateLabel) && (
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-white/75">
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-white/75">
                 {startDateLabel && <span>Начало: {startDateLabel}</span>}
                 {endDateLabel ? (
                   <span>Окончание: {endDateLabel}</span>
@@ -305,61 +399,43 @@ export function SurveyHeader({
                 )}
               </div>
             )}
-
-            {!readOnly && saving && (
-              <span className="text-xs text-white/80 flex items-center gap-1.5">
-                <span className="w-3 h-3 border-2 border-white/50 border-t-white rounded-full animate-spin" />
-                Сохранение…
-              </span>
-            )}
           </div>
 
-          <div className="flex flex-col gap-3 self-start shrink-0 w-full lg:w-72">
+          <div className="relative z-0 flex flex-col gap-2 self-stretch lg:self-center shrink-0 w-full lg:w-64 header-actions-enter">
             {showPublicLink ? (
               <div className="space-y-2">
-                <div
-                  className="border p-3 rounded-xl space-y-2"
-                  style={{
-                    backgroundColor: 'rgba(255,255,255,0.12)',
-                    borderColor: 'rgba(255,255,255,0.25)',
-                  }}
-                >
-                  <span className="block text-xs text-white/70 font-medium">Ссылка на опрос</span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="text"
-                      readOnly
-                      value={publicLink}
-                      className="flex-1 min-w-0 bg-white/15 border border-white/30 rounded-lg px-2.5 py-1.5 text-xs text-white truncate"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => handleCopyLink(publicLink, 'header')}
-                      className="shrink-0 px-2.5 py-1.5 text-xs font-medium text-[#FF8600] bg-white hover:bg-white/90 rounded-lg transition cursor-pointer"
-                    >
-                      {linkCopied ? 'Скопировано' : 'Копировать'}
-                    </button>
-                  </div>
-                  <p className="text-[11px] text-white/60 leading-relaxed">
-                    Персональные ссылки для каждого респондента — на вкладке «Матрица участников».
-                  </p>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    readOnly
+                    value={publicLink}
+                    title="Ссылка на опрос"
+                    className="flex-1 min-w-0 bg-white/15 border border-white/30 rounded-lg px-2.5 py-1.5 text-xs text-white truncate"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleCopyLink(publicLink, 'header')}
+                    className="shrink-0 px-2.5 py-1.5 text-xs font-medium text-[#FF8600] bg-white hover:bg-white/90 rounded-lg transition cursor-pointer"
+                  >
+                    {linkCopied ? 'Скопировано' : 'Копировать'}
+                  </button>
                 </div>
                 <button
                   type="button"
                   onClick={() => setConfirmDialog('stop')}
                   disabled={stopping}
-                  className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl transition cursor-pointer border border-red-700"
+                  className="w-full px-3 py-2 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition cursor-pointer border border-red-700"
                 >
                   {stopping ? 'Остановка…' : 'Остановить опрос'}
                 </button>
               </div>
             ) : status === 'draft' ? (
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 <button
                   type="button"
                   onClick={handleOpenStartModal}
                   disabled={!canStart}
-                  className="w-full px-4 py-2.5 text-sm font-semibold text-[#FF8600] bg-white hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-xl transition cursor-pointer shadow-sm"
+                  className="w-full px-3 py-2 text-sm font-semibold text-[#FF8600] bg-white hover:bg-white/90 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition cursor-pointer shadow-sm"
                 >
                   Начать опрос
                 </button>
@@ -371,64 +447,39 @@ export function SurveyHeader({
               </div>
             ) : null}
 
-            {!readOnly && (
-              <button
-                type="button"
-                onClick={() => setUserModalOpen(true)}
-                className="w-full px-3 py-2 text-xs font-medium text-white border rounded-xl transition cursor-pointer hover:bg-white/10"
-                style={{
-                  backgroundColor: 'rgba(255,255,255,0.12)',
-                  borderColor: 'rgba(255,255,255,0.25)',
-                }}
-              >
-                + Добавить пользователя
-              </button>
-            )}
-            {onDelete && (
-              <button
-                type="button"
-                onClick={() => setConfirmDialog('delete')}
-                disabled={deleting}
-                className="w-full px-3 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl transition cursor-pointer border border-red-700"
-              >
-                {deleting ? 'Удаление…' : 'Удалить опрос'}
-              </button>
+            {(!readOnly || onDelete) && (
+              <div className="flex gap-2">
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => setUserModalOpen(true)}
+                    className="flex-1 px-2.5 py-1.5 text-xs font-medium text-white border rounded-lg transition cursor-pointer hover:bg-white/10"
+                    style={{
+                      backgroundColor: 'rgba(255,255,255,0.12)',
+                      borderColor: 'rgba(255,255,255,0.25)',
+                    }}
+                  >
+                    + Пользователь
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDialog('delete')}
+                    disabled={deleting}
+                    className={`px-2.5 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-lg transition cursor-pointer border border-red-700 ${
+                      readOnly ? 'w-full' : 'shrink-0'
+                    }`}
+                  >
+                    {deleting ? 'Удаление…' : 'Удалить'}
+                  </button>
+                )}
+              </div>
             )}
             {status === 'closed' && (startDateLabel || endDateLabel) && (
-              <div
-                className="rounded-xl border p-3.5 space-y-3"
-                style={{
-                  background: 'linear-gradient(90deg, rgb(255,134,0) 0%, rgb(255,130,0) 15%, rgb(255,120,0) 30%, rgb(255,110,0) 45%, rgb(255,105,0) 55%, rgb(245,95,5) 70%, rgb(235,90,4) 85%, rgb(232,93,4) 100%)',
-                  borderColor: 'rgba(255,255,255,0.25)',
-                }}
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
-                    style={{ backgroundColor: 'rgba(255,255,255,0.15)' }}
-                  >
-                    <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <span className="text-xs font-semibold text-white/90 uppercase tracking-wide">
-                    Период проведения
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {startDateLabel && (
-                    <div className="flex items-center justify-between gap-3 text-sm">
-                      <span className="text-white/60 text-xs">Начало</span>
-                      <span className="text-white font-medium tabular-nums">{startDateLabel}</span>
-                    </div>
-                  )}
-                  {endDateLabel && (
-                    <div className="flex items-center justify-between gap-3 text-sm">
-                      <span className="text-white/60 text-xs">Окончание</span>
-                      <span className="text-white font-medium tabular-nums">{endDateLabel}</span>
-                    </div>
-                  )}
-                </div>
+              <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-white/80 px-0.5">
+                {startDateLabel && <span>Начало: {startDateLabel}</span>}
+                {endDateLabel && <span>Окончание: {endDateLabel}</span>}
               </div>
             )}
           </div>
@@ -448,7 +499,7 @@ export function SurveyHeader({
               type="button"
               onClick={handleStartSurvey}
               disabled={starting || !form.title.trim()}
-              className="w-full py-2.5 text-sm font-semibold text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition cursor-pointer"
+              className="w-full py-2.5 text-sm font-semibold text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl soft-press cursor-pointer"
             >
               {starting ? 'Запуск…' : 'Начать опрос'}
             </button>
@@ -469,7 +520,7 @@ export function SurveyHeader({
                 <button
                   type="button"
                   onClick={() => handleCopyLink(publicLink, 'modal')}
-                  className="shrink-0 px-3 py-2 text-sm font-medium text-[#FF8600] border border-[#FF8600]/30 hover:bg-[#FF8600]/5 rounded-xl transition cursor-pointer"
+                  className="shrink-0 px-3 py-2 text-sm font-medium text-[#FF8600] border border-[#FF8600]/30 hover:bg-[#FF8600]/5 rounded-xl soft-press cursor-pointer"
                 >
                   {modalLinkCopied ? 'Скопировано' : 'Копировать'}
                 </button>
@@ -565,7 +616,7 @@ export function SurveyHeader({
             <button
               type="submit"
               disabled={userSaving || !userName.trim() || !userEmail.trim()}
-              className="w-full py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition cursor-pointer"
+              className="w-full py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl soft-press cursor-pointer"
             >
               {userSaving ? 'Добавление…' : 'Добавить'}
             </button>
