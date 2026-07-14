@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
 import { answerApi, databaseApi, questionApi, surveyApi, userApi } from '../api'
+import { ConfirmModal } from '../components/ConfirmModal'
 import type { ApiAnswer, ApiQuestion, ApiQuestionDetails, ApiSurvey, ApiUser } from '../types'
 
 interface EntitiesPageProps {
@@ -102,6 +103,13 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
   const [answerResult, setAnswerResult] = useState<ApiAnswer | null>(null)
   const [answerBusy, setAnswerBusy] = useState(false)
   const [clearingDb, setClearingDb] = useState(false)
+  const [deletingSurveyId, setDeletingSurveyId] = useState<number | null>(null)
+  const [confirmAction, setConfirmAction] = useState<
+    | { kind: 'delete-survey'; id: number; name: string }
+    | { kind: 'delete-question'; id: number }
+    | { kind: 'clear-database' }
+    | null
+  >(null)
   const [knownQuestions, setKnownQuestions] = useState<ApiQuestion[]>([])
   const [knownAnswers, setKnownAnswers] = useState<ApiAnswer[]>([])
   const [knownUserIds, setKnownUserIds] = useState<number[]>([])
@@ -164,17 +172,25 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     }
   }
 
-  const handleDeleteSurvey = async (id: number, name: string) => {
-    const isConfirmed = confirm(`Удалить опрос «${name}» (id ${id})?`)
-    if (!isConfirmed) return
+  const handleDeleteSurvey = (id: number, name: string) => {
+    setConfirmAction({ kind: 'delete-survey', id, name })
+  }
 
+  const confirmDeleteSurvey = async () => {
+    if (confirmAction?.kind !== 'delete-survey') return
+    const { id } = confirmAction
+
+    setDeletingSurveyId(id)
     setError(null)
     try {
       await surveyApi.delete(id)
+      setConfirmAction(null)
       await loadSurveys()
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Не удалось удалить опрос')
       await loadSurveys()
+    } finally {
+      setDeletingSurveyId(null)
     }
   }
 
@@ -261,21 +277,25 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     }
   }
 
-  const handleDeleteQuestion = async (idOverride?: number) => {
+  const handleDeleteQuestion = (idOverride?: number) => {
     const id = idOverride ?? Number(questionGetId)
     if (!id) {
       setError('Укажите id вопроса')
       return
     }
+    setConfirmAction({ kind: 'delete-question', id })
+  }
 
-    const isConfirmed = confirm(`Удалить вопрос id ${id}?`)
-    if (!isConfirmed) return
+  const confirmDeleteQuestion = async () => {
+    if (confirmAction?.kind !== 'delete-question') return
+    const { id } = confirmAction
 
     setQuestionGetId(String(id))
     setQuestionBusy(true)
     setError(null)
     try {
       await questionApi.delete(id)
+      setConfirmAction(null)
       setQuestionResult(null)
       setQuestionGetId('')
       await loadSurveys()
@@ -352,16 +372,16 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     setAnswerResult(null)
   }
 
-  const handleClearDatabase = async () => {
-    const isConfirmed = confirm(
-      'Удалить ВСЕ данные из базы?\n\nОпросы, пользователи, вопросы, ответы и назначения будут удалены безвозвратно.',
-    )
-    if (!isConfirmed) return
+  const handleClearDatabase = () => {
+    setConfirmAction({ kind: 'clear-database' })
+  }
 
+  const confirmClearDatabase = async () => {
     setClearingDb(true)
     setError(null)
     try {
       await databaseApi.clearAll()
+      setConfirmAction(null)
       resetLocalState()
       await loadSurveys()
     } catch (err) {
@@ -807,6 +827,63 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
           </Section>
         </div>
       </div>
+
+      {confirmAction?.kind === 'delete-survey' && (
+        <ConfirmModal
+          title="Удалить опрос?"
+          variant="danger"
+          confirmLabel="Удалить"
+          loadingLabel="Удаление…"
+          loading={deletingSurveyId === confirmAction.id}
+          onConfirm={confirmDeleteSurvey}
+          onCancel={() => deletingSurveyId === null && setConfirmAction(null)}
+          message={
+            <>
+              Опрос{' '}
+              <span className="font-semibold text-gray-900">
+                «{confirmAction.name}» (id {confirmAction.id})
+              </span>{' '}
+              будет удалён безвозвратно.
+            </>
+          }
+        />
+      )}
+
+      {confirmAction?.kind === 'delete-question' && (
+        <ConfirmModal
+          title="Удалить вопрос?"
+          variant="danger"
+          confirmLabel="Удалить"
+          loadingLabel="Удаление…"
+          loading={questionBusy}
+          onConfirm={confirmDeleteQuestion}
+          onCancel={() => !questionBusy && setConfirmAction(null)}
+          message={
+            <>
+              Вопрос <span className="font-semibold text-gray-900">id {confirmAction.id}</span> будет
+              удалён безвозвратно.
+            </>
+          }
+        />
+      )}
+
+      {confirmAction?.kind === 'clear-database' && (
+        <ConfirmModal
+          title="Очистить базу данных?"
+          variant="danger"
+          confirmLabel="Очистить"
+          loadingLabel="Очистка…"
+          loading={clearingDb}
+          onConfirm={confirmClearDatabase}
+          onCancel={() => !clearingDb && setConfirmAction(null)}
+          message={
+            <>
+              Будут удалены <span className="font-semibold text-gray-900">все</span> опросы, пользователи,
+              вопросы, ответы и назначения. Это действие нельзя отменить.
+            </>
+          }
+        />
+      )}
     </>
   )
 }
