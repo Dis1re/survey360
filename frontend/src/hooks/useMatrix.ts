@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { surveyApi } from '../api'
 import { matrixToEntries } from '../components/MatrixTable'
 import { assignmentsToCompletionMatrix, assignmentsToMatrix, usersToParticipants } from '../mappers'
@@ -14,14 +14,13 @@ export interface UseMatrixReturn {
   responseView: ResponseView | null
   setResponseView: (v: ResponseView | null) => void
   loadMatrix: (id: number) => Promise<void>
-  handleAddMatrixParticipant: (userIds: number[], role: 'target' | 'respondent') => Promise<void>
-  handleRemoveMatrixParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
-  handleSaveMatrix: (next: Record<string, Record<string, boolean>>) => Promise<void>
-  setTargets: React.Dispatch<React.SetStateAction<Participant[]>>
-  setRespondents: React.Dispatch<React.SetStateAction<Participant[]>>
+  clearMatrix: () => void
+  handleAddMatrixParticipant: (userIds: number[], role: 'target' | 'respondent', surveyEditable: boolean) => Promise<void>
+  handleRemoveMatrixParticipant: (userId: number, role: 'target' | 'respondent', surveyEditable: boolean) => Promise<void>
+  handleSaveMatrix: (next: Record<string, Record<string, boolean>>, surveyEditable: boolean) => Promise<void>
 }
 
-export function useMatrix(surveyId: number | null, surveyEditable: boolean): UseMatrixReturn {
+export function useMatrix(surveyId: number | null): UseMatrixReturn {
   const [targets, setTargets] = useState<Participant[]>([])
   const [respondents, setRespondents] = useState<Participant[]>([])
   const [assignments, setAssignments] = useState<Record<string, Record<string, boolean>>>({})
@@ -29,6 +28,21 @@ export function useMatrix(surveyId: number | null, surveyEditable: boolean): Use
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [responseView, setResponseView] = useState<ResponseView | null>(null)
+
+  useEffect(() => {
+    setTargets([])
+    setRespondents([])
+    setAssignments({})
+    setCompletedAssignments({})
+    setResponseView(null)
+  }, [surveyId])
+
+  const clearMatrix = useCallback(() => {
+    setTargets([])
+    setRespondents([])
+    setAssignments({})
+    setCompletedAssignments({})
+  }, [])
 
   const loadMatrix = useCallback(async (id: number) => {
     const matrix = await surveyApi.getMatrix(id)
@@ -38,7 +52,7 @@ export function useMatrix(surveyId: number | null, surveyEditable: boolean): Use
     setCompletedAssignments(assignmentsToCompletionMatrix(matrix.assignments))
   }, [])
 
-  const handleAddMatrixParticipant = useCallback(async (userIds: number[], role: 'target' | 'respondent') => {
+  const handleAddMatrixParticipant = useCallback(async (userIds: number[], role: 'target' | 'respondent', surveyEditable: boolean) => {
     if (surveyId === null || !surveyEditable || userIds.length === 0) return
     setAddingMatrixParticipant(true)
     try {
@@ -52,19 +66,20 @@ export function useMatrix(surveyId: number | null, surveyEditable: boolean): Use
     } finally {
       setAddingMatrixParticipant(false)
     }
-  }, [surveyId, surveyEditable, loadMatrix])
+  }, [surveyId, loadMatrix])
 
-  const handleRemoveMatrixParticipant = useCallback(async (userId: number, role: 'target' | 'respondent') => {
+  const handleRemoveMatrixParticipant = useCallback(async (userId: number, role: 'target' | 'respondent', surveyEditable: boolean) => {
     if (surveyId === null || !surveyEditable) return
     try {
       await surveyApi.removeParticipant(surveyId, userId, role)
       await loadMatrix(surveyId)
     } catch (err) {
       console.error(err)
+      throw err
     }
-  }, [surveyId, surveyEditable, loadMatrix])
+  }, [surveyId, loadMatrix])
 
-  const handleSaveMatrix = useCallback(async (next: Record<string, Record<string, boolean>>) => {
+  const handleSaveMatrix = useCallback(async (next: Record<string, Record<string, boolean>>, surveyEditable: boolean) => {
     if (surveyId === null || !surveyEditable) return
     setSavingMatrix(true)
     try {
@@ -82,7 +97,7 @@ export function useMatrix(surveyId: number | null, surveyEditable: boolean): Use
     } finally {
       setSavingMatrix(false)
     }
-  }, [surveyId, surveyEditable, respondents, targets, loadMatrix])
+  }, [surveyId, respondents, targets, loadMatrix])
 
   return {
     targets,
@@ -94,10 +109,9 @@ export function useMatrix(surveyId: number | null, surveyEditable: boolean): Use
     responseView,
     setResponseView,
     loadMatrix,
+    clearMatrix,
     handleAddMatrixParticipant,
     handleRemoveMatrixParticipant,
     handleSaveMatrix,
-    setTargets,
-    setRespondents,
   }
 }
