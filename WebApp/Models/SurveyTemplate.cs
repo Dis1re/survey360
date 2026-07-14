@@ -7,4 +7,6 @@ public class SurveyTemplate
     public string Description { get; set; } = "";
     public string Props { get; set; } = "";
     public DateTime CreatedAt { get; set; }
+
+    public List<QuestionTemplate> QuestionTemplates { get; set; } = [];
 }

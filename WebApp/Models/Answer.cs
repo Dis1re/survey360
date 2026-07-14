@@ -8,4 +8,8 @@ public class Answer
     public int TargetId { get; set; }
     public string Text { get; set; } = "";
     public string Type { get; set; } = "";
+
+    public Question? Question { get; set; }
+    public User? User { get; set; }
+    public User? TargetUser { get; set; }
 }

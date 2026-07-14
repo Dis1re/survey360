@@ -7,4 +7,7 @@ public class SurveyParticipant
     public int UserId { get; set; }
     public bool IsTarget { get; set; }
     public bool IsRespondent { get; set; }
+
+    public Survey? Survey { get; set; }
+    public User? User { get; set; }
 }
