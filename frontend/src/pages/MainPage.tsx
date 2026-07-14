@@ -484,6 +484,9 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                   onQuestionDelete={handleDeleteQuestion}
                   onReorder={handleReorderQuestions}
                   deleting={deletingQuestion}
+                  onPreview={() =>
+                    surveyId !== null && window.open(`${window.location.origin}/survey/${surveyId}?preview=1`, '_blank', 'noopener,noreferrer')
+                  }
                 />
               </div>
               <div className="lg:col-span-2">

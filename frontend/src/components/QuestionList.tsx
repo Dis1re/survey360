@@ -11,6 +11,7 @@ interface QuestionListProps {
   onQuestionCreate: (text: string) => Promise<void>
   onQuestionDelete: (id: number) => Promise<void>
   onReorder: (orderedIds: number[]) => Promise<void>
+  onPreview: () => void
 }
 
 export function QuestionList({
@@ -23,6 +24,7 @@ export function QuestionList({
   onQuestionCreate,
   onQuestionDelete,
   onReorder,
+  onPreview,
 }: QuestionListProps) {
   const [newQuestionText, setNewQuestionText] = useState('')
   const [showInput, setShowInput] = useState(false)
@@ -192,6 +194,15 @@ export function QuestionList({
           Добавить вопрос
         </button>
       )}
+
+      <button
+        type="button"
+        onClick={onPreview}
+        disabled={questions.length === 0}
+        className="mt-2 w-full text-sm font-medium text-gray-700 hover:text-gray-900 py-2.5 rounded-lg border border-gray-200 hover:border-gray-300 transition disabled:opacity-40 disabled:cursor-default cursor-pointer"
+      >
+        Предпросмотр
+      </button>
     </div>
   )
 }

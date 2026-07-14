@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { templateApi } from '../api'
+import { Modal } from './Modal'
 import { QuestionEditor } from './QuestionEditor'
+import { QuestionPreviewInput } from './QuestionPreview'
 import { mapQuestionType, mapQuestionTypeToApi } from '../mappers'
 import type { ApiQuestionTemplate, Question } from '../types'
 
@@ -19,6 +21,7 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
   const [savingQuestion, setSavingQuestion] = useState(false)
   const [creatingQuestion, setCreatingQuestion] = useState(false)
   const [deletingQuestion, setDeletingQuestion] = useState(false)
+  const [previewOpen, setPreviewOpen] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -203,6 +206,16 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
               >
                 {creatingQuestion ? 'Добавление…' : '+ Добавить вопрос'}
               </button>
+
+              <div className="pt-1">
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(true)}
+                  className="w-full text-sm font-medium text-gray-700 hover:text-gray-900 py-2.5 rounded-lg border border-gray-200 hover:border-gray-300 transition cursor-pointer"
+                >
+                  Предпросмотр
+                </button>
+              </div>
             </div>
           </div>
           <div className="lg:col-span-2">
@@ -213,6 +226,43 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
             />
           </div>
         </div>
+
+        {previewOpen && (
+          <Modal title="Предпросмотр опросника" onClose={() => setPreviewOpen(false)}>
+            <div className="space-y-4">
+              <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                <h2 className="text-lg font-semibold text-gray-900">{name || 'Опрос'}</h2>
+                {description && <p className="text-sm text-gray-500 mt-2">{description}</p>}
+              </div>
+
+              <div className="space-y-4">
+                {questions.length === 0 ? (
+                  <p className="text-sm text-gray-500">В этом опроснике пока нет вопросов.</p>
+                ) : (
+                  questions.map((q, idx) => (
+                    <div key={q.id} className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
+                      <label className="block text-sm font-medium text-gray-900 mb-3">
+                        <span className="text-gray-400 mr-1.5">{idx + 1}.</span>
+                        {q.text}
+                      </label>
+                      <QuestionPreviewInput question={q} />
+                    </div>
+                  ))
+                )}
+              </div>
+
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(false)}
+                  className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition shadow-sm cursor-pointer"
+                >
+                  Выйти из предпросмотра
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
       </div>
     </div>
   )
@@ -233,3 +283,4 @@ function templateQuestionToQuestion(q: ApiQuestionTemplate): Question {
           : undefined,
   }
 }
+
