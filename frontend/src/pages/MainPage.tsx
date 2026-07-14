@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { questionApi, surveyApi, userApi } from '../api'
 import { MatrixTable, matrixToEntries } from '../components/MatrixTable'
 import { ConfirmModal } from '../components/ConfirmModal'
@@ -19,7 +19,55 @@ import {
   mapSurveyStatusToApi,
   usersToParticipants,
 } from '../mappers'
-import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink } from '../types'
+import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink, SendInvitesResult } from '../types'
+
+function buildInviteResultModal(result: SendInvitesResult): {
+  title: string
+  variant: 'default' | 'warning' | 'danger'
+  message: ReactNode
+} {
+  const failedItems = result.items.filter((i) => i.status === 'failed')
+  const variant =
+    result.failed > 0 && result.sent === 0
+      ? 'danger'
+      : result.failed > 0 || result.skipped > 0
+        ? 'warning'
+        : 'default'
+
+  const title =
+    result.failed > 0 && result.sent === 0
+      ? 'Не удалось отправить'
+      : result.failed > 0
+        ? 'Отправлено частично'
+        : 'Приглашения отправлены'
+
+  return {
+    title,
+    variant,
+    message: (
+      <div className="space-y-2">
+        <p>
+          Отправлено: {result.sent}
+          {result.skipped > 0 ? ` · пропущено: ${result.skipped}` : ''}
+          {result.failed > 0 ? ` · ошибок: ${result.failed}` : ''}
+        </p>
+        {failedItems.length > 0 && (
+          <ul className="space-y-1 text-xs text-gray-500">
+            {failedItems.map((item) => (
+              <li key={item.reviewerId}>
+                <span className="font-medium text-gray-700">{item.reviewerEmail || item.reviewerId}</span>
+                {item.error ? ` — ${item.error}` : ''}
+              </li>
+            ))}
+          </ul>
+        )}
+        {result.sent > 0 && result.failed === 0 && (
+          <p className="text-xs text-gray-500">Проверьте письма в Mailtrap → Sandboxes → Emails.</p>
+        )}
+      </div>
+    ),
+  }
+}
 
 interface MainPageProps {
   surveyId: number | null
@@ -48,6 +96,12 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [exportingReport, setExportingReport] = useState(false)
   const [exportConfirmOpen, setExportConfirmOpen] = useState(false)
+  const [sendingInvites, setSendingInvites] = useState(false)
+  const [inviteResult, setInviteResult] = useState<{
+    title: string
+    variant: 'default' | 'warning' | 'danger'
+    message: ReactNode
+  } | null>(null)
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
   const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
@@ -421,6 +475,24 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }
 
+  const handleSendInvites = async (reviewerId?: number) => {
+    if (surveyId === null) return
+    setSendingInvites(true)
+    try {
+      const result = await surveyApi.sendInvites(surveyId, reviewerId)
+      setInviteResult(buildInviteResultModal(result))
+    } catch (err) {
+      console.error(err)
+      setInviteResult({
+        title: 'Не удалось отправить',
+        variant: 'danger',
+        message: err instanceof Error ? err.message : 'Не удалось отправить приглашения',
+      })
+    } finally {
+      setSendingInvites(false)
+    }
+  }
+
   if (editingTemplateId !== null) {
     return (
       <TemplateEditor
@@ -546,11 +618,13 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               saving={savingMatrix}
               adding={addingMatrixParticipant}
               exporting={exportingReport}
+              sendingInvites={sendingInvites}
               readOnly={!surveyEditable}
               surveyActive={surveyStatus === 'active'}
               surveyName={survey?.name ?? ''}
               respondentLinks={respondentLinks}
               onExportReport={handleExportReport}
+              onSendInvites={handleSendInvites}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
               onSave={handleSaveMatrix}
@@ -586,6 +660,18 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
           onConfirm={handleConfirmExportReport}
           onCancel={() => !exportingReport && setExportConfirmOpen(false)}
           message="Ещё не все опрашиваемые дали свои ответы. Отчёт будет сформирован на основе имеющихся данных."
+        />
+      )}
+
+      {inviteResult && (
+        <ConfirmModal
+          title={inviteResult.title}
+          variant={inviteResult.variant}
+          message={inviteResult.message}
+          confirmLabel="Понятно"
+          hideCancel
+          onConfirm={() => setInviteResult(null)}
+          onCancel={() => setInviteResult(null)}
         />
       )}
 

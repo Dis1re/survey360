@@ -5,6 +5,9 @@ export interface Survey {
   description: string
   status: 'active' | 'draft' | 'closed'
   date: string
+  createdByUserId?: number | null
+  myAssignedCount?: number | null
+  myCompletedCount?: number | null
 }
 
 export interface SurveyInput {
@@ -51,8 +54,20 @@ export interface ApiUser {
   id: number
   name: string
   email: string
+  isAdmin?: boolean
   createdAt: string
   updatedAt: string
+}
+
+export interface AuthUser {
+  id: number
+  name: string
+  email: string
+  isAdmin: boolean
+}
+
+export interface LoginRequest {
+  email: string
 }
 
 export interface CreateUserRequest {
@@ -99,6 +114,9 @@ export interface ApiSurvey {
   createdAt: string
   startedAt: string
   closedAt: string
+  createdByUserId?: number | null
+  myAssignedCount?: number | null
+  myCompletedCount?: number | null
 }
 
 export interface ApiQuestion {
@@ -206,4 +224,18 @@ export interface RespondentLink {
 export interface InviteInfo {
   surveyId: number
   reviewerId: number
+}
+
+export interface SendInviteItemResult {
+  reviewerId: number
+  reviewerEmail: string
+  status: 'sent' | 'skipped' | 'failed' | string
+  error: string | null
+}
+
+export interface SendInvitesResult {
+  sent: number
+  skipped: number
+  failed: number
+  items: SendInviteItemResult[]
 }

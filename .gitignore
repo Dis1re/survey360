@@ -224,3 +224,6 @@ project.lock.json
 WebApp/survey.db
 WebApp/survey.db-shm
 WebApp/survey.db-wal
+
+# ASP.NET Data Protection keys (local dev)
+WebApp/keys/

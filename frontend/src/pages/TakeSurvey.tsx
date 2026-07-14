@@ -9,6 +9,8 @@ interface TakeSurveyProps {
   surveyId: number
   onBack?: () => void
   standalone?: boolean
+  authUserId?: number | null
+  hideUserSwitch?: boolean
   lockedReviewerId?: number
 }
 
@@ -111,13 +113,15 @@ function TargetPicker({
   userId,
   onSelect,
   onBack,
-  reviewerLocked = false,
+  backLabel = 'Сменить пользователя',
+  hideBackButton = false,
 }: {
   surveyId: number
   userId: number
   onSelect: (id: number, completed: boolean) => void
   onBack: () => void
-  reviewerLocked?: boolean
+  backLabel?: string
+  hideBackButton?: boolean
 }) {
   const [targets, setTargets] = useState<TargetEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -195,13 +199,13 @@ function TargetPicker({
         )}
       </div>
       <div className="mt-6 flex gap-3">
-        {!reviewerLocked && (
+        {!hideBackButton && (
           <button
             type="button"
             onClick={onBack}
             className="px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
           >
-            Сменить пользователя
+            {backLabel}
           </button>
         )}
         <button
@@ -212,7 +216,7 @@ function TargetPicker({
             onSelect(selectedId, entry?.completed ?? false)
           }}
           disabled={selectedId === null}
-          className={`${reviewerLocked ? 'w-full' : 'flex-1'} bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm cursor-pointer`}
+          className={`${hideBackButton ? 'w-full' : 'flex-1'} bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm cursor-pointer`}
         >
           {targets.find((t) => t.user.id === selectedId)?.completed ? 'Просмотреть ответы' : 'Перейти к опросу'}
         </button>
@@ -235,14 +239,22 @@ function DogThumbsAnimation() {
   )
 }
 
-export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewerId }: TakeSurveyProps) {
+export function TakeSurvey({
+  surveyId,
+  onBack,
+  standalone = false,
+  authUserId = null,
+  hideUserSwitch = false,
+  lockedReviewerId,
+}: TakeSurveyProps) {
   const initialParams = parseSurveyResponseParams()
-  const initialReviewerId = lockedReviewerId ?? initialParams.reviewerId
+  const initialReviewerId = authUserId ?? lockedReviewerId ?? initialParams.reviewerId
   const [survey, setSurvey] = useState<ApiSurvey | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
   const [users, setUsers] = useState<ApiUser[]>([])
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [loading, setLoading] = useState(true)
+  const [autoResolvingTarget, setAutoResolvingTarget] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -258,9 +270,59 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
 
   const [surveyClosed, setSurveyClosed] = useState(false)
 
+  const lockedUserId = authUserId ?? lockedReviewerId ?? userId
   const reviewerLocked = lockedReviewerId !== undefined
-  const showUserModal = !reviewerLocked && (userModalOpen || userId === null)
-  const showTargetModal = !showUserModal && (targetModalOpen || targetId === null)
+  const userPickerLocked = hideUserSwitch || reviewerLocked
+  const autoPickTarget = hideUserSwitch && !reviewerLocked
+  const showUserModal = !userPickerLocked && (userModalOpen || userId === null)
+  const showTargetModal =
+    !showUserModal &&
+    lockedUserId !== null &&
+    (targetModalOpen || (!autoPickTarget && targetId === null))
+
+  useEffect(() => {
+    if (authUserId !== null) {
+      setUserId(authUserId)
+    }
+  }, [authUserId])
+
+  useEffect(() => {
+    if (!autoPickTarget || lockedUserId === null || targetId !== null || targetModalOpen) return
+
+    if (initialParams.targetId !== null) {
+      setTargetId(initialParams.targetId)
+      return
+    }
+
+    let cancelled = false
+    setAutoResolvingTarget(true)
+    Promise.all([surveyApi.get(surveyId), userApi.list()])
+      .then(([details, userList]) => {
+        if (cancelled) return
+        const entries = details.assignments
+          .filter((a) => a.isAssigned && a.reviewerId === lockedUserId)
+          .map((a) => {
+            const user = userList.find((u) => u.id === a.targetId)
+            return user ? { user, completed: a.isCompleted } : null
+          })
+          .filter((e): e is TargetEntry => e !== null)
+
+        const pick = entries.find((t) => !t.completed) ?? entries[0]
+        if (pick) {
+          setTargetId(pick.user.id)
+          setReadOnly(pick.completed)
+          if (!pick.completed) setAnswers({})
+        }
+      })
+      .catch(console.error)
+      .finally(() => {
+        if (!cancelled) setAutoResolvingTarget(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [autoPickTarget, lockedUserId, targetId, targetModalOpen, surveyId, initialParams.targetId])
 
   useEffect(() => {
     setLoading(true)
@@ -278,7 +340,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
   }, [surveyId])
 
   useEffect(() => {
-    if (userId === null || targetId === null) {
+    if (lockedUserId === null || targetId === null) {
       setReadOnly(false)
       setAssignmentChecked(true)
       return
@@ -291,7 +353,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
       .then((details) => {
         if (cancelled) return
         const assignment = details.assignments.find(
-          (a) => a.reviewerId === userId && a.targetId === targetId && a.isAssigned,
+          (a) => a.reviewerId === lockedUserId && a.targetId === targetId && a.isAssigned,
         )
         if (!assignment) {
           setError('Назначение не найдено в матрице опроса')
@@ -303,7 +365,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
           setReadOnly(true)
           const saved: Record<number, string> = {}
           for (const answer of details.answers) {
-            if (answer.userId === userId && answer.targetId === targetId) {
+            if (answer.userId === lockedUserId && answer.targetId === targetId) {
               saved[answer.questionId] = answer.text
             }
           }
@@ -321,14 +383,14 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
     return () => {
       cancelled = true
     }
-  }, [surveyId, userId, targetId])
+  }, [surveyId, lockedUserId, targetId])
 
   const storageKey =
     assignmentChecked &&
     !readOnly &&
-    userId !== null &&
+    lockedUserId !== null &&
     targetId !== null
-      ? `take-survey:${surveyId}:${userId}:${targetId}`
+      ? `take-survey:${surveyId}:${lockedUserId}:${targetId}`
       : null
 
   useEffect(() => {
@@ -353,7 +415,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
     }
   }, [answers, storageKey])
 
-  const respondent = userId !== null ? users.find((u) => u.id === userId) ?? null : null
+  const respondent = lockedUserId !== null ? users.find((u) => u.id === lockedUserId) ?? null : null
   const target = targetId !== null ? users.find((u) => u.id === targetId) ?? null : null
 
   const setAnswer = (questionId: number, value: string) => {
@@ -362,6 +424,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
   }
 
   const handleSelectUser = (id: number) => {
+    if (hideUserSwitch) return
     setUserId(id)
     setTargetId(null)
     setUserModalOpen(false)
@@ -376,6 +439,11 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
   }
 
   const handleBackToUsers = () => {
+    if (hideUserSwitch && !reviewerLocked) {
+      setTargetModalOpen(false)
+      return
+    }
+    if (hideUserSwitch) return
     setSubmitted(false)
     setTargetModalOpen(false)
     if (reviewerLocked) {
@@ -388,7 +456,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (readOnly || userId === null || targetId === null) return
+    if (readOnly || lockedUserId === null || targetId === null) return
     const answered = questions.filter((q) => (answers[q.id] ?? '').trim() !== '')
     if (answered.length === 0) {
       setError('Заполните хотя бы один вопрос')
@@ -409,13 +477,13 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
       for (const question of answered) {
         await answerApi.create({
           questionId: question.id,
-          userId,
+          userId: lockedUserId,
           targetId,
           text: answers[question.id].trim(),
           type: mapQuestionTypeToApi(question.type),
         })
       }
-      await surveyApi.completeAssignment(surveyId, { reviewerId: userId, targetId })
+      await surveyApi.completeAssignment(surveyId, { reviewerId: lockedUserId, targetId })
       setSubmitted(true)
       if (storageKey) {
         try {
@@ -432,7 +500,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
     }
   }
 
-  if (loading) {
+  if (loading || autoResolvingTarget) {
     return (
       <div className="flex items-center justify-center h-full min-h-[50vh] p-6">
         <p className="text-sm text-gray-500">Загрузка опроса…</p>
@@ -440,16 +508,38 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
     )
   }
 
-  if (surveyClosed && !readOnly) {
+  if (hideUserSwitch && lockedUserId !== null && targetId === null && !targetModalOpen) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[50vh] p-6">
+        <div className="text-center max-w-md">
+          <p className="text-sm text-gray-500">Для вас нет назначенных целей в этом опросе</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (surveyClosed && !readOnly && targetId !== null && assignmentChecked) {
     return (
       <div className="max-w-2xl mx-auto p-6 text-center">
         <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
           <h2 className="text-xl font-semibold text-gray-900">{survey?.name ?? 'Опрос'}</h2>
           <p className="text-sm text-gray-500 mt-3">
             {mapSurveyStatus(survey?.status ?? '') === 'closed'
-              ? 'Этот опрос завершён и больше недоступен для заполнения.'
+              ? 'Этот опрос завершён. Новые ответы отправить нельзя — выберите цель с уже отправленными ответами для просмотра.'
               : 'Опрос ещё не опубликован. Дождитесь, пока организатор запустит его.'}
           </p>
+          {hideUserSwitch && (
+            <button
+              type="button"
+              onClick={() => {
+                setTargetId(null)
+                setTargetModalOpen(true)
+              }}
+              className="mt-6 px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl cursor-pointer"
+            >
+              Выбрать цель для просмотра
+            </button>
+          )}
         </div>
       </div>
     )
@@ -469,10 +559,14 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
           <div className="mt-6 flex justify-center gap-3">
             <button
               type="button"
-              onClick={handleBackToUsers}
+              onClick={() => {
+                setSubmitted(false)
+                setTargetId(null)
+                if (!hideUserSwitch) setTargetModalOpen(true)
+              }}
               className="px-4 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
             >
-              {reviewerLocked ? 'Оценить ещё' : standalone ? 'Оценить ещё' : 'Другой пользователь'}
+              {standalone || userPickerLocked ? 'Оценить ещё' : 'Другой пользователь'}
             </button>
             {!standalone && onBack && (
               <button
@@ -494,6 +588,18 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
 
   return (
     <div className="max-w-2xl mx-auto p-6">
+      {hideUserSwitch && !standalone && lockedUserId !== null && targetId !== null && (
+        <div className="flex justify-end mb-4">
+          <button
+            type="button"
+            onClick={() => setTargetModalOpen(true)}
+            className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+          >
+            Сменить цель
+          </button>
+        </div>
+      )}
+
       {!standalone && onBack && (
         <div className="flex items-start justify-between gap-3 mb-4">
           <button
@@ -507,7 +613,7 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
             Назад
           </button>
           <div className="flex gap-2">
-            {!reviewerLocked && (
+            {!userPickerLocked && (
               <button
                 type="button"
                 onClick={() => setUserModalOpen(true)}
@@ -527,9 +633,9 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
         </div>
       )}
 
-      {standalone && userId !== null && targetId !== null && (
+      {standalone && lockedUserId !== null && targetId !== null && (
         <div className="flex justify-end gap-2 mb-4">
-          {!reviewerLocked && (
+          {!userPickerLocked && (
             <button
               type="button"
               onClick={() => setUserModalOpen(true)}
@@ -555,7 +661,9 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
             <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
-            Режим просмотра — ответы нельзя изменить
+            {surveyClosed
+              ? 'Опрос завершён — просмотр ваших отправленных ответов'
+              : 'Режим просмотра — ответы нельзя изменить'}
           </div>
         )}
         {survey?.description && (
@@ -628,14 +736,15 @@ export function TakeSurvey({ surveyId, onBack, standalone = false, lockedReviewe
         </Modal>
       )}
 
-      {showTargetModal && userId !== null && (
+      {showTargetModal && lockedUserId !== null && (
         <Modal title="Выбор цели опроса">
           <TargetPicker
             surveyId={surveyId}
-            userId={userId}
+            userId={lockedUserId}
             onSelect={handleSelectTarget}
-            onBack={handleBackToUsers}
-            reviewerLocked={reviewerLocked}
+            onBack={hideUserSwitch && !reviewerLocked ? () => setTargetModalOpen(false) : handleBackToUsers}
+            backLabel={hideUserSwitch ? 'Отмена' : 'Сменить пользователя'}
+            hideBackButton={userPickerLocked}
           />
         </Modal>
       )}
