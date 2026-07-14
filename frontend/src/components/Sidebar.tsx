@@ -442,39 +442,48 @@ export function Sidebar({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {loading ? (
-          <p className={`py-2 text-sm text-gray-400 ${collapsed ? 'text-center' : 'px-3'}`}>
-            {collapsed ? '…' : 'Загрузка…'}
-          </p>
-        ) : filteredSurveys.length === 0 ? (
-          !collapsed && <p className="px-3 py-2 text-sm text-gray-400">{emptyMessage}</p>
-        ) : collapsed ? (
-          filteredSurveys.map((survey) => (
-            <SurveyMiniCard
-              key={survey.id}
-              survey={survey}
-              isSelected={survey.id === activeSurveyId}
-              onSelect={() => onSurveySelect(survey.id, scope)}
-              showProgress={showProgress}
-            />
-          ))
-        ) : (
-          filteredSurveys.map((survey) => (
-            <SurveyCard
-              key={survey.id}
-              survey={survey}
-              isSelected={survey.id === activeSurveyId}
-              onSelect={() => onSurveySelect(survey.id, scope)}
-              showProgress={showProgress}
-              highlightPending={
-                showProgress &&
-                participationFilter === 'pending' &&
-                isParticipationPending(survey)
-              }
-            />
-          ))
-        )}
+      <div className="flex-1 overflow-y-auto p-2">
+        <div
+          key={
+            hasUserScope && scope === 'participation'
+              ? `participation-${participationFilter}-${collapsed}`
+              : `mine-${statusFilter}-${collapsed}`
+          }
+          className="space-y-1 view-fade"
+        >
+          {loading ? (
+            <p className={`py-2 text-sm text-gray-400 ${collapsed ? 'text-center' : 'px-3'}`}>
+              {collapsed ? '…' : 'Загрузка…'}
+            </p>
+          ) : filteredSurveys.length === 0 ? (
+            !collapsed && <p className="px-3 py-2 text-sm text-gray-400">{emptyMessage}</p>
+          ) : collapsed ? (
+            filteredSurveys.map((survey) => (
+              <SurveyMiniCard
+                key={survey.id}
+                survey={survey}
+                isSelected={survey.id === activeSurveyId}
+                onSelect={() => onSurveySelect(survey.id, scope)}
+                showProgress={showProgress}
+              />
+            ))
+          ) : (
+            filteredSurveys.map((survey) => (
+              <SurveyCard
+                key={survey.id}
+                survey={survey}
+                isSelected={survey.id === activeSurveyId}
+                onSelect={() => onSurveySelect(survey.id, scope)}
+                showProgress={showProgress}
+                highlightPending={
+                  showProgress &&
+                  participationFilter === 'pending' &&
+                  isParticipationPending(survey)
+                }
+              />
+            ))
+          )}
+        </div>
       </div>
 
       {showCreateButton && !collapsed && (

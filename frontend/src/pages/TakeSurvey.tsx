@@ -242,7 +242,11 @@ export function TakeSurvey({
   const [users, setUsers] = useState<ApiUser[]>([])
   const [answers, setAnswers] = useState<Record<number, string>>({})
   const [loading, setLoading] = useState(true)
-  const [autoResolvingTarget, setAutoResolvingTarget] = useState(false)
+  const [autoResolvingTarget, setAutoResolvingTarget] = useState(() => {
+    const params = parseSurveyResponseParams()
+    const initialUser = authUserId ?? lockedReviewerId ?? params.reviewerId
+    return Boolean(hideUserSwitch && lockedReviewerId === undefined && initialUser != null && params.targetId === null)
+  })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
   const [error, setError] = useState<string | null>(null)

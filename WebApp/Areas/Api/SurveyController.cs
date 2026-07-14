@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
+using WebApp.Hubs;
 using WebApp.Models;
 using WebApp.Services;
 
@@ -62,8 +64,15 @@ public class SurveyController(
     ApplicationDbContext context,
     SurveyDocxReportService reportService,
     SurveyRespondentLinkService linkService,
-    SurveyInviteEmailService inviteEmailService) : Controller
+    SurveyInviteEmailService inviteEmailService,
+    IHubContext<SurveyHub> surveyHub) : Controller
 {
+    private Task NotifySurveyUpdatedAsync(int surveyId, string? status, CancellationToken ct) =>
+        surveyHub.Clients.All.SendAsync(
+            SurveyLiveEvents.SurveyUpdated,
+            new SurveyUpdatedPayload(surveyId, status ?? ""),
+            ct);
+
     private static bool IsSurveyDraft(string status)
     {
         var normalized = status.Trim().ToLowerInvariant();
@@ -258,6 +267,7 @@ public class SurveyController(
             await linkService.SyncRespondentLinksAsync(id, ct);
 
         await context.SaveChangesAsync(ct);
+        await NotifySurveyUpdatedAsync(id, resolvedSurvey.Status, ct);
         return resolvedSurvey;
     }
 
@@ -646,6 +656,7 @@ public class SurveyController(
             await context.SaveChangesAsync(ct);
         }
 
+        await NotifySurveyUpdatedAsync(id, survey.Status, ct);
         return NoContent();
     }
 

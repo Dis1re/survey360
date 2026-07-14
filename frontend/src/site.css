@@ -11,9 +11,13 @@
 /* ——— Shared motion utilities ——— */
 
 /* Contained fade only — no translate, so content doesn't jump on remount */
-.anim-fade,
+.anim-fade {
+  animation: anim-fade-in 80ms var(--ease-soft) both;
+}
+
+/* Survey / filter switches — slightly longer so the swap feels intentional */
 .view-fade {
-  animation: anim-fade-in 140ms var(--ease-soft) both;
+  animation: anim-fade-in var(--dur) var(--ease-soft) both;
 }
 
 /* Intentionally no movement: used on one-shot screens (login), not on navigation */
