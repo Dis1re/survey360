@@ -67,6 +67,12 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .HasIndex(sp => new { sp.SurveyId, sp.UserId })
             .IsUnique();
 
+        modelBuilder.Entity<Survey>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(s => s.CreatedByUserId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         modelBuilder.Entity<QuestionTemplate>()
             .HasOne<SurveyTemplate>()
             .WithMany()

@@ -2,13 +2,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { surveyApi } from './api'
 import { Sidebar } from './components/Sidebar'
 import { apiSurveyToSurvey } from './mappers'
-import { EntitiesPage } from './pages/DevPage'
+import { openDevPage } from './routing'
 import { MainPage } from './pages/MainPage'
 import { EntityPage } from './pages/SurveyDetails'
 import { TakeSurvey } from './pages/TakeSurvey'
 import type { Survey } from './types'
 
-type View = 'main' | 'dev' | 'details' | 'take'
+type View = 'main' | 'details' | 'take'
 
 export default function App() {
   const [surveys, setSurveys] = useState<Survey[]>([])
@@ -40,13 +40,9 @@ export default function App() {
       )
     : surveys
 
-  const handleOpenDev = () => setView('dev')
+  const handleOpenDev = () => openDevPage()
 
   const handleOpenDetails = () => setView('details')
-
-  const handleOpenTake = () => {
-    setView('take')
-  }
 
   const handleBack = () => {
     setView('main')
@@ -73,17 +69,14 @@ export default function App() {
         activeSurveyId={selectedSurveyId}
         loading={loading}
         creating={creating}
-        onSurveySelect={setSelectedSurveyId}
+        onSurveySelect={(id) => setSelectedSurveyId(id)}
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
         onOpenDev={handleOpenDev}
         onOpenDetails={handleOpenDetails}
-        onOpenTake={handleOpenTake}
       />
       <main className="flex-1 overflow-y-auto bg-gray-100">
-        {view === 'dev' ? (
-          <EntitiesPage onBack={handleBack} onOpenSurvey={setSelectedSurveyId} />
-        ) : view === 'details' ? (
+        {view === 'details' ? (
           <EntityPage id={selectedSurveyId ?? 0} onBack={handleBack} />
         ) : view === 'take' ? (
           selectedSurveyId === null ? (

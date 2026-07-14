@@ -79,6 +79,7 @@ export interface ConfirmModalProps {
   confirmLabel?: string
   loadingLabel?: string
   cancelLabel?: string
+  hideCancel?: boolean
   loading?: boolean
   onConfirm: () => void | Promise<void>
   onCancel: () => void
@@ -91,6 +92,7 @@ export function ConfirmModal({
   confirmLabel,
   loadingLabel,
   cancelLabel = 'Отмена',
+  hideCancel = false,
   loading = false,
   onConfirm,
   onCancel,
@@ -106,19 +108,21 @@ export function ConfirmModal({
       scrollable={false}
       footer={
         <div className="flex gap-3">
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={loading}
-            className="flex-1 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl transition cursor-pointer"
-          >
-            {cancelLabel}
-          </button>
+          {!hideCancel && (
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={loading}
+              className="flex-1 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl transition cursor-pointer"
+            >
+              {cancelLabel}
+            </button>
+          )}
           <button
             type="button"
             onClick={onConfirm}
             disabled={loading}
-            className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition cursor-pointer ${cfg.confirmClass}`}
+            className={`${hideCancel ? 'w-full' : 'flex-1'} py-2.5 text-sm font-semibold rounded-xl transition cursor-pointer ${cfg.confirmClass}`}
           >
             {loading ? (loadingLabel ?? 'Подождите…') : (confirmLabel ?? cfg.defaultConfirmLabel)}
           </button>
