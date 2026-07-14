@@ -129,39 +129,13 @@ export function MatrixTable({
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-3">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-              Кросс-таблица респондентов
+              Матрица оценки
             </span>
-            <div className="flex flex-wrap gap-2">
-              {!readOnly && (
-                <>
-                  <button
-                    type="button"
-                    onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
-                    disabled={adding || allUsers.length === 0}
-                    className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer"
-                  >
-                    + Объект (столбец)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
-                    disabled={adding || allUsers.length === 0}
-                    className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer"
-                  >
-                    + Респондент (строка)
-                  </button>
-                </>
-              )}
-            </div>
           </div>
 
           {allUsers.length === 0 ? (
             <div className="p-8 text-center text-sm text-gray-500">
               Сначала добавьте пользователей через кнопку «Добавить пользователя» в шапке опроса
-            </div>
-          ) : targets.length === 0 && respondents.length === 0 ? (
-            <div className="p-8 text-center text-sm text-gray-500">
-              Добавьте объекты (столбцы) и респондентов (строки), затем отметьте галочками связи
             </div>
           ) : (
             <div className="overflow-x-auto">
@@ -169,30 +143,43 @@ export function MatrixTable({
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
                     <th className="p-4 text-xs font-bold text-gray-400 w-64 border-r border-gray-100">
-                      Респондент \ Объект
+                      <span>Респондент \ Объект</span>
                     </th>
-                     {targets.map((target) => (
-                       <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px]">
-                         <div className="flex flex-col items-center gap-1">
-                           <div className="relative inline-flex">
+                    {targets.map((target) => (
+                      <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px]">
+                        <div className="flex flex-col items-center gap-1">
+                          <div className="relative inline-flex">
                             <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
-                                {target.initial}
-                              </div>
-                              {!readOnly && (
-                                <button
-                                  type="button"
-                                  onClick={() => onRemoveParticipant(target.id, 'target')}
-                                  className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
-                                  title="Удалить объект"
-                                >
-                                  ✕
-                                </button>
-                              )}
-                           </div>
-                           <span>{target.name}</span>
-                         </div>
-                       </th>
-                     ))}
+                              {target.initial}
+                            </div>
+                            {!readOnly && (
+                              <button
+                                type="button"
+                                onClick={() => onRemoveParticipant(target.id, 'target')}
+                                className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                                title="Удалить объект"
+                              >
+                                ✕
+                              </button>
+                            )}
+                          </div>
+                          <span>{target.name}</span>
+                        </div>
+                      </th>
+                    ))}
+                    {!readOnly && (
+                      <th className="p-4 text-center min-w-[120px] align-middle">
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
+                          disabled={adding || allUsers.length === 0}
+                          className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
+                          title="Добавить объект (столбец сверху)"
+                        >
+                          + Объект
+                        </button>
+                      </th>
+                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
@@ -201,10 +188,10 @@ export function MatrixTable({
                     const inviteLink = invite ? buildRespondentInviteLink(invite.token) : null
 
                     return (
-                    <tr key={respondent.id} className="hover:bg-blue-50/30 transition">
-                      <td className="p-4 font-medium text-gray-900 border-r border-gray-100">
-                        <div className="flex items-center gap-2">
-                          <div className="relative inline-flex">
+                      <tr key={respondent.id} className="hover:bg-blue-50/30 transition">
+                        <td className="p-4 font-medium text-gray-900 border-r border-gray-100">
+                          <div className="flex items-center gap-2">
+                            <div className="relative inline-flex">
                               <div className={`w-6 h-6 rounded-full ${respondent.color} flex items-center justify-center text-xs font-bold shrink-0`}>
                                 {respondent.initial}
                               </div>
@@ -218,80 +205,108 @@ export function MatrixTable({
                                   ✕
                                 </button>
                               )}
-                          </div>
-                          <div className="min-w-0">
-                            <div>{respondent.name}</div>
-                            {surveyActive && inviteLink && (
-                              <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() => handleCopyInviteLink(respondent.id, invite.token)}
-                                  className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] cursor-pointer"
-                                  title="Скопировать персональную ссылку"
-                                >
-                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                                  </svg>
-                                  {copiedReviewerId === respondent.id ? 'Скопировано' : 'Ссылка'}
-                                </button>
-                                {invite.reviewerEmail && (
-                                  <a
-                                    href={buildInviteMailto(invite.reviewerEmail, surveyName, inviteLink)}
-                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-gray-700"
-                                    title="Отправить приглашение по email"
+                            </div>
+                            <div className="min-w-0">
+                              <div>{respondent.name}</div>
+                              {surveyActive && inviteLink && (
+                                <div className="flex flex-wrap items-center gap-2 mt-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyInviteLink(respondent.id, invite.token)}
+                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] cursor-pointer"
+                                    title="Скопировать персональную ссылку"
                                   >
                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                                     </svg>
-                                    Email
+                                    {copiedReviewerId === respondent.id ? 'Скопировано' : 'Ссылка'}
+                                  </button>
+                                  {invite.reviewerEmail && (
+                                    <a
+                                      href={buildInviteMailto(invite.reviewerEmail, surveyName, inviteLink)}
+                                      className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-gray-700"
+                                      title="Отправить приглашение по email"
+                                    >
+                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                                      </svg>
+                                      Email
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        {targets.map((target) => {
+                          const reviewerKey = String(respondent.id)
+                          const targetKey = String(target.id)
+                          const assigned = isChecked(reviewerKey, targetKey)
+                          const completed = assigned && isCompleted(reviewerKey, targetKey)
+                          const responseLink = completed
+                            ? buildSurveyResponseLink(surveyId, respondent.id, target.id)
+                            : null
+
+                          return (
+                            <td key={target.id} className="p-4 text-center">
+                              <div className="flex flex-col items-center gap-1.5">
+                                <input
+                                  type="checkbox"
+                                  checked={assigned}
+                                  onChange={() => toggle(reviewerKey, targetKey)}
+                                  disabled={readOnly || respondent.id === target.id}
+                                  className="w-4 h-4 border-gray-300 rounded focus:ring-[#FF8600] cursor-pointer disabled:opacity-30 disabled:cursor-default"
+                                />
+                                {responseLink && (
+                                  <a
+                                    href={responseLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] hover:underline"
+                                    title="Просмотреть ответы"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                    Ответы
                                   </a>
                                 )}
                               </div>
-                            )}
-                          </div>
-                        </div>
-                      </td>
-                      {targets.map((target) => {
-                        const reviewerKey = String(respondent.id)
-                        const targetKey = String(target.id)
-                        const assigned = isChecked(reviewerKey, targetKey)
-                        const completed = assigned && isCompleted(reviewerKey, targetKey)
-                        const responseLink = completed
-                          ? buildSurveyResponseLink(surveyId, respondent.id, target.id)
-                          : null
-
-                        return (
-                          <td key={target.id} className="p-4 text-center">
-                            <div className="flex flex-col items-center gap-1.5">
-                              <input
-                                type="checkbox"
-                                checked={assigned}
-                                onChange={() => toggle(reviewerKey, targetKey)}
-                                disabled={readOnly || respondent.id === target.id}
-                                className="w-4 h-4 border-gray-300 rounded focus:ring-[#FF8600] cursor-pointer disabled:opacity-30 disabled:cursor-default"
-                              />
-                              {responseLink && (
-                                <a
-                                  href={responseLink}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] hover:underline"
-                                  title="Просмотреть ответы"
-                                >
-                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                  </svg>
-                                  Ответы
-                                </a>
-                              )}
-                            </div>
-                          </td>
-                        )
-                      })}
-                    </tr>
+                            </td>
+                          )
+                        })}
+                        {!readOnly && <td className="p-4" />}
+                      </tr>
                     )
                   })}
+
+                  {!readOnly && (
+                    <tr className="hover:bg-blue-50/30 transition">
+                      <td className="p-4 border-r border-gray-100">
+                        <button
+                          type="button"
+                          onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
+                          disabled={adding || allUsers.length === 0}
+                          className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-[#FF8600] border-2 border-dashed border-orange-200 hover:border-[#FF8600] hover:bg-orange-50 rounded-xl transition cursor-pointer disabled:opacity-50"
+                        >
+                          + Добавить респондента
+                        </button>
+                      </td>
+                      {targets.map((target) => (
+                        <td key={target.id} className="p-4" />
+                      ))}
+                      {!readOnly && <td className="p-4" />}
+                    </tr>
+                  )}
+
+                  {readOnly && respondents.length === 0 && (
+                    <tr>
+                      <td colSpan={targets.length + 1} className="p-8 text-center text-sm text-gray-400">
+                        Нет добавленных респондентов и объектов
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
