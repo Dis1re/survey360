@@ -74,7 +74,7 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
   const { survey, questions, answers, assignments } = details
 
   return (
-    <>
+    <div className="">
       <header className="bg-white border-b border-gray-200 p-6 flex-shrink-0">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
@@ -85,7 +85,7 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
             <button
               type="button"
               onClick={onBack}
-              className="px-4 py-2 text-sm font-medium text-gray-600 border-2 border-orange-300 rounded-xl hover:bg-orange-50 cursor-pointer"
+              className="soft-press px-4 py-2 text-sm font-medium text-gray-600 border-2 border-orange-300 rounded-xl hover:bg-orange-50 cursor-pointer"
             >
               К списку опросов
             </button>
@@ -255,6 +255,6 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
           </section>
         </div>
       </div>
-    </>
+    </div>
   )
 }

@@ -75,7 +75,7 @@ function SaveTemplate({
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-base font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-base font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl soft-press cursor-pointer"
             >
               Закрыть
             </button>
@@ -112,14 +112,14 @@ function SaveTemplate({
               type="button"
               onClick={onClose}
               disabled={saving}
-              className="px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-700 rounded-xl soft-press cursor-pointer"
             >
               Отмена
             </button>
             <button
               type="submit"
               disabled={saving || !name.trim()}
-              className="px-5 py-2 text-base font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
+              className="px-5 py-2 text-base font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl soft-press shadow-sm cursor-pointer"
             >
               {saving ? 'Сохранение…' : 'Сохранить'}
             </button>
@@ -214,7 +214,7 @@ function LoadTemplate({
           <div className="flex justify-end">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl soft-press cursor-pointer"
             >
               Закрыть
             </button>
@@ -321,7 +321,7 @@ function LoadTemplate({
               type="button"
               onClick={onClose}
               disabled={applying}
-              className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-xl soft-press cursor-pointer"
             >
               Отмена
             </button>
@@ -329,7 +329,7 @@ function LoadTemplate({
               type="button"
               onClick={handleApply}
               disabled={selectedId === null || applying || !preview || preview.length === 0}
-              className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
+              className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl soft-press shadow-sm cursor-pointer"
             >
               {applying ? 'Добавление…' : `Добавить ${preview?.length ?? 0} вопрос(ов)`}
             </button>
@@ -347,14 +347,14 @@ function LoadTemplate({
               <button
                 type="button"
                 onClick={() => setDeletingId(null)}
-                className="px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
+                className="px-4 py-2 text-base font-medium text-gray-500 hover:text-gray-700 rounded-xl soft-press cursor-pointer"
               >
                 Отмена
               </button>
               <button
                 type="button"
                 onClick={() => handleDelete(deletingId)}
-                className="px-5 py-2 text-base font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl transition cursor-pointer"
+                className="px-5 py-2 text-base font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl soft-press cursor-pointer"
               >
                 Удалить
               </button>
