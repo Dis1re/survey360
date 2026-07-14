@@ -474,6 +474,31 @@ public class SurveyController(
         return NoContent();
     }
 
+    [HttpDelete("{id:int}/questions")]
+    public async Task<IActionResult> DeleteAllQuestions(int id, CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        var questionIds = await context.Questions
+            .Where(q => q.SurveyId == id)
+            .Select(q => q.Id)
+            .ToListAsync(ct);
+
+        if (questionIds.Count > 0)
+        {
+            await context.Answers
+                .Where(a => questionIds.Contains(a.QuestionId))
+                .ExecuteDeleteAsync(ct);
+
+            await context.Questions
+                .Where(q => q.SurveyId == id)
+                .ExecuteDeleteAsync(ct);
+        }
+
+        return NoContent();
+    }
+
     [HttpPost("{id:int}/assignments/complete")]
     public async Task<IActionResult> CompleteAssignment(
         int id,

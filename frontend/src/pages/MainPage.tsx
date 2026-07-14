@@ -102,6 +102,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     variant: 'default' | 'warning' | 'danger'
     message: ReactNode
   } | null>(null)
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
+  const [deletingAll, setDeletingAll] = useState(false)
   const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
@@ -410,6 +412,21 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }
 
+  const handleConfirmDeleteAll = async () => {
+    if (surveyId === null) return
+    setDeletingAll(true)
+    try {
+      await surveyApi.deleteAllQuestions(surveyId)
+      setQuestions([])
+      setActiveQuestionId(null)
+      setConfirmDeleteAll(false)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setDeletingAll(false)
+    }
+  }
+
   const handleDeleteSurvey = async () => {
     if (surveyId === null) return
     await surveyApi.delete(surveyId)
@@ -567,9 +584,10 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
                   readOnly={!surveyEditable}
                   onQuestionSelect={setActiveQuestionId}
                   onQuestionCreate={handleCreateQuestion}
-                  onQuestionDelete={handleDeleteQuestion}
-                  onReorder={handleReorderQuestions}
-                  deleting={deletingQuestion}
+                onQuestionDelete={handleDeleteQuestion}
+                onReorder={handleReorderQuestions}
+                onDeleteAll={() => setConfirmDeleteAll(true)}
+                deleting={deletingQuestion}
                 />
               </div>
               <div className="lg:col-span-2">
@@ -654,6 +672,19 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
           hideCancel
           onConfirm={() => setInviteResult(null)}
           onCancel={() => setInviteResult(null)}
+        />
+      )}
+
+      {confirmDeleteAll && (
+        <ConfirmModal
+          title="Удалить все вопросы?"
+          variant="danger"
+          confirmLabel="Удалить всё"
+          loadingLabel="Удаление…"
+          loading={deletingAll}
+          onConfirm={handleConfirmDeleteAll}
+          onCancel={() => !deletingAll && setConfirmDeleteAll(false)}
+          message="Все вопросы анкеты и связанные с ними ответы будут безвозвратно удалены. Действие нельзя отменить."
         />
       )}
     </>

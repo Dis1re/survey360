@@ -127,6 +127,9 @@ export const surveyApi = {
       body: JSON.stringify({ orderedIds }),
     }),
 
+  deleteAllQuestions: (id: number) =>
+    sendRequest<void>(`${API}/survey/${id}/questions`, { method: 'DELETE' }),
+
   getReportInfo: (id: number) =>
     sendRequest<SurveyReportInfo>(`${API}/survey/${id}/report/info`),
 
