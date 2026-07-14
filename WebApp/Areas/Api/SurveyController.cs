@@ -58,7 +58,7 @@ public class SurveyController(
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<int>> Create(CancellationToken ct) =>
-        await surveyService.CreateSurveyAsync(ct);
+        await surveyService.CreateSurveyAsync(User.GetUserId(), ct);
 
     [Authorize]
     [HttpGet]
@@ -297,12 +297,14 @@ public class SurveyController(
         return File(bytes, "text/csv; charset=utf-8", result.Value.FileName);
     }
 
+    [Authorize]
     [HttpGet("{id:int}/responses/{reviewerId:int}/{targetId:int}")]
     public async Task<ActionResult<List<ResponseItemDto>>> GetResponses(
         int id, int reviewerId, int targetId, CancellationToken ct)
     {
-        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
-            return NotFound();
+        var survey = await surveyService.GetSurveyAsync(id, ct);
+        var accessError = await RequireViewSurveyAsync(survey, ct);
+        if (accessError is not null) return accessError;
 
         return await surveyService.GetResponsesAsync(id, reviewerId, targetId, ct);
     }
