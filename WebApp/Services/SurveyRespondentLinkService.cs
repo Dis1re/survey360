@@ -59,8 +59,6 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
 
     public async Task<List<RespondentLinkDto>> GetLinksAsync(int surveyId, CancellationToken ct)
     {
-        await SyncRespondentLinksAsync(surveyId, ct);
-
         var assignedReviewerIds = await GetAssignedReviewerIdsAsync(surveyId, ct);
         if (assignedReviewerIds.Count == 0)
             return [];

@@ -5,6 +5,7 @@ import type { ApiSurvey, ApiUser, Question, SurveyReportInfo } from '../types'
 
 export interface UseSurveyDataReturn {
   survey: ApiSurvey | null
+  setSurvey: React.Dispatch<React.SetStateAction<ApiSurvey | null>>
   questions: Question[]
   allUsers: ApiUser[]
   activeQuestionId: number | null
@@ -43,6 +44,7 @@ export function useSurveyData(
   onSurveyDeleted?: () => void | Promise<void>,
   loadMatrix?: (id: number) => Promise<void>,
   loadRespondentLinks?: (id: number) => Promise<void>,
+  clearMatrix?: () => void,
 ): UseSurveyDataReturn {
   const [survey, setSurvey] = useState<ApiSurvey | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -85,12 +87,17 @@ export function useSurveyData(
         await loadMatrix(id)
       } catch (err) {
         console.error(err)
+        clearMatrix?.()
       }
     }
     if (mapSurveyStatus(details.survey.status) === 'active' && loadRespondentLinks) {
-      await loadRespondentLinks(id)
+      try {
+        await loadRespondentLinks(id)
+      } catch (err) {
+        console.error(err)
+      }
     }
-  }, [loadMatrix, loadRespondentLinks])
+  }, [loadMatrix, loadRespondentLinks, clearMatrix])
 
   useEffect(() => {
     if (surveyId === null) {
@@ -98,6 +105,8 @@ export function useSurveyData(
       setQuestions([])
       setAllUsers([])
       setActiveQuestionId(null)
+      setReportInfo(null)
+      clearMatrix?.()
       return
     }
 
@@ -107,6 +116,7 @@ export function useSurveyData(
     setSurvey(null)
     setQuestions([])
     setActiveQuestionId(null)
+    clearMatrix?.()
 
     Promise.all([loadSurveyInner(surveyId), loadUsers()])
       .catch((err) => {
@@ -121,7 +131,7 @@ export function useSurveyData(
       })
 
     return () => { cancelled = true }
-  }, [surveyId, loadSurveyInner, loadUsers])
+  }, [surveyId, loadSurveyInner, loadUsers, clearMatrix])
 
   const surveyStatus = survey ? mapSurveyStatus(survey.status) : 'draft'
   const surveyEditable = surveyStatus === 'draft'
@@ -278,14 +288,20 @@ export function useSurveyData(
 
   const handleDeleteSurvey = useCallback(async () => {
     if (surveyId === null) return
-    await surveyApi.delete(surveyId)
-    setSurvey(null)
-    setQuestions([])
-    await onSurveyDeleted?.()
+    try {
+      await surveyApi.delete(surveyId)
+      setSurvey(null)
+      setQuestions([])
+      await onSurveyDeleted?.()
+    } catch (err) {
+      console.error(err)
+      throw err
+    }
   }, [surveyId, onSurveyDeleted])
 
   return {
     survey,
+    setSurvey,
     questions,
     allUsers,
     activeQuestionId,

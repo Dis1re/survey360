@@ -33,7 +33,7 @@ public class SurveyDocxReportService(ApplicationDbContext context)
 
         var assignedCount = assigned.Count;
         var completedCount = assigned.Count(a => a.IsCompleted);
-        var allAssignedCompleted = assignedCount == 0 || assigned.All(a => a.IsCompleted);
+        var allAssignedCompleted = assignedCount > 0 && assigned.All(a => a.IsCompleted);
 
         return new SurveyReportInfo(answerCount, assignedCount, completedCount, allAssignedCompleted);
     }
@@ -78,6 +78,10 @@ public class SurveyDocxReportService(ApplicationDbContext context)
             : await context.Users.AsNoTracking().Where(u => userIds.Contains(u.Id)).ToListAsync(ct);
 
         var usersById = users.ToDictionary(u => u.Id);
+
+        var answersByQuestionReviewerTarget = answers
+            .GroupBy(a => (a.QuestionId, a.UserId, a.TargetId))
+            .ToDictionary(g => g.Key, g => g.First());
 
         var assignedPairs = assignments
             .Select(a => (a.ReviewerId, a.TargetId))
@@ -125,10 +129,8 @@ public class SurveyDocxReportService(ApplicationDbContext context)
                     var questionIndex = 1;
                     foreach (var question in questions)
                     {
-                        var answer = answers.FirstOrDefault(
-                            a => a.QuestionId == question.Id &&
-                                 a.UserId == reviewerId &&
-                                 a.TargetId == targetId);
+                        answersByQuestionReviewerTarget.TryGetValue(
+                            (question.Id, reviewerId, targetId), out var answer);
 
                         if (answer is null)
                             continue;
@@ -155,8 +157,8 @@ public class SurveyDocxReportService(ApplicationDbContext context)
 
     private static string FormatSurveyPeriod(Survey survey)
     {
-        var hasStart = survey.StartedAt.Year > 1;
-        var hasEnd = survey.ClosedAt.Year > 1;
+        var hasStart = survey.StartedAt != default;
+        var hasEnd = survey.ClosedAt != default;
 
         if (hasStart && hasEnd)
             return $"{survey.StartedAt:dd.MM.yyyy} — {survey.ClosedAt:dd.MM.yyyy}";
@@ -164,7 +166,7 @@ public class SurveyDocxReportService(ApplicationDbContext context)
         if (hasStart)
             return $"с {survey.StartedAt:dd.MM.yyyy}";
 
-        return survey.CreatedAt.Year > 1
+        return survey.CreatedAt != default
             ? survey.CreatedAt.ToString("dd.MM.yyyy")
             : "—";
     }

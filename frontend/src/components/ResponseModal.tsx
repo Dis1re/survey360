@@ -28,6 +28,7 @@ export function ResponseModal({
 
   useEffect(() => {
     setLoading(true)
+    setItems([])
     surveyApi
       .getResponses(surveyId, reviewerId, targetId)
       .then(setItems)

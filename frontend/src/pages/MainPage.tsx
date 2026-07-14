@@ -31,6 +31,19 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null)
 
   const {
+    respondentLinks,
+    sendingInvites,
+    inviteResult,
+    setInviteResult,
+    exportingReport,
+    exportingCsv,
+    loadRespondentLinks,
+    handleSendInvites,
+    handleExportReport,
+    handleExportCsv,
+  } = useInviteManager(surveyId)
+
+  const {
     targets,
     respondents,
     assignments,
@@ -43,25 +56,12 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     handleAddMatrixParticipant,
     handleRemoveMatrixParticipant,
     handleSaveMatrix,
-    setTargets,
-    setRespondents,
-  } = useMatrix(surveyId, false)
-
-  const {
-    respondentLinks,
-    sendingInvites,
-    inviteResult,
-    setInviteResult,
-    exportingReport,
-    exportingCsv,
-    loadRespondentLinks,
-    handleSendInvites,
-    handleExportReport,
-    handleExportCsv,
-  } = useInviteManager(surveyId, false)
+    clearMatrix,
+  } = useMatrix(surveyId)
 
   const {
     survey,
+    setSurvey,
     questions,
     allUsers,
     activeQuestionId,
@@ -92,15 +92,9 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     handleConfirmDeleteAll,
     handleDeleteSurvey,
     activeQuestion,
-  } = useSurveyData(surveyId, onSurveyUpdated, onSurveyDeleted, loadMatrix, loadRespondentLinks)
+  } = useSurveyData(surveyId, onSurveyUpdated, onSurveyDeleted, loadMatrix, loadRespondentLinks, clearMatrix)
 
   const canExport = surveyStatus === 'closed' || (reportInfo?.answerCount ?? 0) > 0
-
-  useEffect(() => {
-    if (surveyId !== null && surveyEditable) {
-      void loadMatrix(surveyId)
-    }
-  }, [surveyId, surveyEditable, loadMatrix])
 
   const handleStartSurveyWithAssignments = async (data: StartSurveyPayload) => {
     if (surveyId === null) return
@@ -115,6 +109,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
 
   useSurveyLive((event) => {
     if (surveyId === null || event.surveyId !== surveyId) return
+    setSurvey((prev) => (prev ? { ...prev, status: event.status } : prev))
     void loadMatrix(surveyId).catch(console.error)
   })
 
@@ -277,9 +272,9 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               onExportCsv={handleExportCsv}
               onSendInvites={handleSendInvites}
               onViewResponse={(info) => setResponseView(info)}
-              onAddParticipant={handleAddMatrixParticipant}
-              onRemoveParticipant={handleRemoveMatrixParticipant}
-              onSave={handleSaveMatrix}
+              onAddParticipant={(userIds, role) => handleAddMatrixParticipant(userIds, role, surveyEditable)}
+              onRemoveParticipant={(userId, role) => handleRemoveMatrixParticipant(userId, role, surveyEditable)}
+              onSave={(next) => handleSaveMatrix(next, surveyEditable)}
               onExpand={() => setMatrixExpanded(true)}
             />
 
@@ -294,7 +289,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               >
                 <MatrixTable
                   key={`expanded-${surveyId}`}
-                  surveyId={surveyId}
                   targets={targets}
                   respondents={respondents}
                   allUsers={allUsers}
@@ -310,9 +304,10 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                   respondentLinks={respondentLinks}
                   onExportReport={handleExportReport}
                   onSendInvites={handleSendInvites}
-                  onAddParticipant={handleAddMatrixParticipant}
-                  onRemoveParticipant={handleRemoveMatrixParticipant}
-                  onSave={handleSaveMatrix}
+                  onAddParticipant={(userIds, role) => handleAddMatrixParticipant(userIds, role, surveyEditable)}
+                  onRemoveParticipant={(userId, role) => handleRemoveMatrixParticipant(userId, role, surveyEditable)}
+                  onSave={(next) => handleSaveMatrix(next, surveyEditable)}
+                  onViewResponse={(info) => setResponseView(info)}
                   expanded
                 />
               </Modal>

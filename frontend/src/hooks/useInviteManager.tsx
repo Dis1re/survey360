@@ -1,4 +1,4 @@
-import { useCallback, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { surveyApi } from '../api'
 import type { RespondentLink, SendInvitesResult } from '../types'
 
@@ -62,12 +62,13 @@ export interface UseInviteManagerReturn {
   exportingReport: boolean
   exportingCsv: boolean
   loadRespondentLinks: (id: number) => Promise<void>
+  clearRespondentLinks: () => void
   handleSendInvites: (reviewerId?: number) => Promise<void>
   handleExportReport: () => Promise<void>
   handleExportCsv: () => Promise<void>
 }
 
-export function useInviteManager(surveyId: number | null, canExport: boolean): UseInviteManagerReturn {
+export function useInviteManager(surveyId: number | null): UseInviteManagerReturn {
   const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
   const [sendingInvites, setSendingInvites] = useState(false)
   const [inviteResult, setInviteResult] = useState<{
@@ -78,6 +79,14 @@ export function useInviteManager(surveyId: number | null, canExport: boolean): U
   const [exportingReport, setExportingReport] = useState(false)
   const [exportingCsv, setExportingCsv] = useState(false)
 
+  useEffect(() => {
+    setRespondentLinks([])
+    setInviteResult(null)
+    setSendingInvites(false)
+    setExportingReport(false)
+    setExportingCsv(false)
+  }, [surveyId])
+
   const loadRespondentLinks = useCallback(async (id: number) => {
     try {
       const links = await surveyApi.getRespondentLinks(id)
@@ -86,6 +95,10 @@ export function useInviteManager(surveyId: number | null, canExport: boolean): U
       console.error(err)
       setRespondentLinks([])
     }
+  }, [])
+
+  const clearRespondentLinks = useCallback(() => {
+    setRespondentLinks([])
   }, [])
 
   const handleSendInvites = useCallback(async (reviewerId?: number) => {
@@ -145,6 +158,7 @@ export function useInviteManager(surveyId: number | null, canExport: boolean): U
     exportingReport,
     exportingCsv,
     loadRespondentLinks,
+    clearRespondentLinks,
     handleSendInvites,
     handleExportReport,
     handleExportCsv,

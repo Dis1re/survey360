@@ -101,18 +101,24 @@ export function useSurveyTaking({
   }, [autoPickTarget, lockedUserId, targetId, targetModalOpen, surveyId, initialParams.targetId])
 
   useEffect(() => {
+    let cancelled = false
     setLoading(true)
     surveyApi
       .get(surveyId)
       .then(async (details) => {
+        if (cancelled) return
         setSurvey(details.survey)
         setQuestions(details.questions.map(apiQuestionToQuestion))
-        setUsers(await userApi.list())
+        const users = await userApi.list()
+        if (cancelled) return
+        setUsers(users)
         const status = mapSurveyStatus(details.survey.status)
         setSurveyClosed(status !== 'active')
       })
       .catch(console.error)
-      .finally(() => setLoading(false))
+      .finally(() => { if (!cancelled) setLoading(false) })
+
+    return () => { cancelled = true }
   }, [surveyId])
 
   useEffect(() => {
@@ -279,6 +285,7 @@ export function useSurveyTaking({
     targetModalOpen,
     setTargetModalOpen,
     surveyClosed,
+    assignmentChecked,
     lockedUserId,
     reviewerLocked,
     userPickerLocked,
