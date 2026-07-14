@@ -9,6 +9,7 @@ import type {
   ApiSurveyTemplateDetails,
   ApiUser,
   AssignmentEntry,
+  AuthUser,
   CreateAnswerRequest,
   CreateQuestionRequest,
   CreateUserRequest,
@@ -18,12 +19,15 @@ import type {
   SurveyReportInfo,
   RespondentLink,
   InviteInfo,
+  SendInvitesResult,
   UpdateQuestionRequest,
   UpdateSurveyRequest,
 } from './types'
 
 async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
+  // credentials: 'include' sends auth cookies on all requests, including public invite/survey routes.
   const response = await fetch(url, {
+    credentials: 'include',
     ...options,
     headers: {
       'Content-Type': 'application/json',
@@ -43,7 +47,13 @@ async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T
     } catch {
       if (errorText) message = errorText
     }
-    throw new Error(message)
+    const err = new Error(message) as Error & { status?: number }
+    err.status = response.status
+    throw err
+  }
+
+  if (response.status === 204) {
+    return null as T
   }
 
   const text = await response.text()
@@ -51,6 +61,24 @@ async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T
 }
 
 const API = '/api'
+
+export const authApi = {
+  login: (email: string) =>
+    sendRequest<AuthUser>(`${API}/auth/login`, {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  adminLogin: (email: string) =>
+    sendRequest<AuthUser>(`${API}/auth/admin-login`, {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    }),
+
+  me: () => sendRequest<AuthUser>(`${API}/auth/me`),
+
+  logout: () => sendRequest<void>(`${API}/auth/logout`, { method: 'POST' }),
+}
 
 export const surveyApi = {
   create: () =>
@@ -108,6 +136,12 @@ export const surveyApi = {
 
   getRespondentLinks: (id: number) =>
     sendRequest<RespondentLink[]>(`${API}/survey/${id}/links`),
+
+  sendInvites: (id: number, reviewerId?: number) =>
+    sendRequest<SendInvitesResult>(`${API}/survey/${id}/send-invites`, {
+      method: 'POST',
+      body: JSON.stringify({ reviewerId: reviewerId ?? null }),
+    }),
 
   resolveInvite: (token: string) =>
     sendRequest<InviteInfo>(`${API}/survey/invite/${token}`),

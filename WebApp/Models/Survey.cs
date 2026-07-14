@@ -9,4 +9,5 @@ public class Survey
     public DateTime CreatedAt { get; set; }
     public DateTime StartedAt { get; set; }
     public DateTime ClosedAt { get; set; }
+    public int? CreatedByUserId { get; set; }
 }

@@ -15,12 +15,14 @@ interface MatrixTableProps {
   exporting?: boolean
   exportingCsv?: boolean
   canExport?: boolean
+  sendingInvites?: boolean
   readOnly?: boolean
   surveyActive?: boolean
   surveyName?: string
   respondentLinks?: RespondentLink[]
   onExportReport?: () => void | Promise<void>
   onExportCsv?: () => void | Promise<void>
+  onSendInvites?: (reviewerId?: number) => void | Promise<void>
   onAddParticipant: (userIds: number[], role: 'target' | 'respondent') => Promise<void>
   onRemoveParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
   onSave: (assignments: Record<string, Record<string, boolean>>) => Promise<void>
@@ -54,11 +56,13 @@ export function MatrixTable({
   saving = false,
   adding = false,
   exporting = false,
+  sendingInvites = false,
   readOnly = false,
   surveyActive = false,
-  surveyName = '',
+  surveyName: _surveyName = '',
   respondentLinks = [],
   onExportReport,
+  onSendInvites,
   onAddParticipant,
   onRemoveParticipant,
   onSave,
@@ -72,6 +76,7 @@ export function MatrixTable({
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
   const [search, setSearch] = useState('')
   const [copiedReviewerId, setCopiedReviewerId] = useState<number | null>(null)
+  const [sendingReviewerId, setSendingReviewerId] = useState<number | null>(null)
 
   const dirtyRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -86,6 +91,8 @@ export function MatrixTable({
     respondentLinks.map((l) => [l.reviewerId, l]),
   ) as Record<number, RespondentLink>
 
+  const hasInviteEmails = respondentLinks.some((l) => l.reviewerEmail?.trim())
+
   const handleCopyInviteLink = async (reviewerId: number, token: string) => {
     try {
       await navigator.clipboard.writeText(buildRespondentInviteLink(token))
@@ -93,6 +100,16 @@ export function MatrixTable({
       window.setTimeout(() => setCopiedReviewerId(null), 2000)
     } catch (err) {
       console.error(err)
+    }
+  }
+
+  const handleSendInvite = async (reviewerId?: number) => {
+    if (!onSendInvites) return
+    setSendingReviewerId(reviewerId ?? -1)
+    try {
+      await onSendInvites(reviewerId)
+    } finally {
+      setSendingReviewerId(null)
     }
   }
 
@@ -175,6 +192,17 @@ export function MatrixTable({
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
               Матрица оценки
             </span>
+            {surveyActive && onSendInvites && respondentLinks.length > 0 && (
+              <button
+                type="button"
+                onClick={() => handleSendInvite()}
+                disabled={sendingInvites || !hasInviteEmails}
+                className="px-3 py-1.5 text-xs font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-lg transition cursor-pointer"
+                title={!hasInviteEmails ? 'У респондентов нет email' : 'Отправить приглашения всем респондентам'}
+              >
+                {sendingInvites && sendingReviewerId === -1 ? 'Отправка…' : 'Разослать всем'}
+              </button>
+            )}
           </div>
 
           {allUsers.length === 0 ? (
@@ -265,17 +293,19 @@ export function MatrixTable({
                                     </svg>
                                     {copiedReviewerId === respondent.id ? 'Скопировано' : 'Ссылка'}
                                   </button>
-                                  {invite.reviewerEmail && (
-                                    <a
-                                      href={buildInviteMailto(invite.reviewerEmail, surveyName, inviteLink)}
-                                      className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-gray-700"
+                                  {invite.reviewerEmail && onSendInvites && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSendInvite(respondent.id)}
+                                      disabled={sendingInvites}
+                                      className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50 cursor-pointer"
                                       title="Отправить приглашение по email"
                                     >
                                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                         <path strokeLinecap="round" strokeLinejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                       </svg>
-                                      Email
-                                    </a>
+                                      {sendingReviewerId === respondent.id ? 'Отправка…' : 'Email'}
+                                    </button>
                                   )}
                                 </div>
                               )}
