@@ -20,9 +20,19 @@ public class SurveyService(
 
     public static bool IsSurveyActive(string status)
     {
-        var normalized = status.Trim();
-        return normalized.Contains("актив", StringComparison.OrdinalIgnoreCase)
-            || normalized.Equals("active", StringComparison.OrdinalIgnoreCase);
+        var normalized = status.Trim().ToLowerInvariant();
+        return normalized == "активен" || normalized == "активный"
+            || normalized == "active";
+    }
+
+    public static string NormalizeStatus(string status)
+    {
+        if (IsSurveyActive(status)) return "Активен";
+        if (IsSurveyDraft(status)) return "Черновик";
+        var normalized = status.Trim().ToLowerInvariant();
+        if (normalized.Contains("заверш") || normalized.Contains("закрыт") || normalized == "closed")
+            return "Завершен";
+        return status;
     }
 
     public async Task<Survey?> GetSurveyAsync(int id, CancellationToken ct) =>
@@ -128,7 +138,7 @@ public class SurveyService(
 
         survey.Name = request.Name;
         survey.Description = request.Description;
-        survey.Status = request.Status;
+        survey.Status = NormalizeStatus(request.Status);
         survey.StartedAt = IsSurveyActive(request.Status) ? DateTime.UtcNow : request.StartedAt ?? default;
         survey.ClosedAt = request.ClosedAt ?? default;
 
@@ -147,8 +157,13 @@ public class SurveyService(
         if (IsSurveyActive(survey.Status))
             return false;
 
-        context.Surveys.Remove(survey);
-        await context.SaveChangesAsync(ct);
+        await context.SurveyRespondentLinks.Where(l => l.SurveyId == id).ExecuteDeleteAsync(ct);
+        await context.SurveyAssignments.Where(a => a.SurveyId == id).ExecuteDeleteAsync(ct);
+        await context.Answers.Where(a => context.Questions.Any(q => q.Id == a.QuestionId && q.SurveyId == id)).ExecuteDeleteAsync(ct);
+        await context.Questions.Where(q => q.SurveyId == id).ExecuteDeleteAsync(ct);
+        await context.Set<SurveyParticipant>().Where(p => p.SurveyId == id).ExecuteDeleteAsync(ct);
+        await context.Surveys.Where(s => s.Id == id).ExecuteDeleteAsync(ct);
+
         return true;
     }
 
@@ -318,6 +333,10 @@ public class SurveyService(
                 .Where(q => q.SurveyId == surveyId)
                 .ExecuteDeleteAsync(ct);
         }
+
+        await context.SurveyRespondentLinks
+            .Where(l => l.SurveyId == surveyId)
+            .ExecuteDeleteAsync(ct);
     }
 
     public async Task<int?> CompleteAssignmentAsync(

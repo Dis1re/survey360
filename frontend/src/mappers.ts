@@ -44,12 +44,18 @@ function isEmptyDate(value: string) {
 
 export function apiDateToInput(value: string) {
   if (isEmptyDate(value)) return ''
-  return new Date(value).toISOString().slice(0, 10)
+  const date = new Date(value)
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const day = String(date.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
 export function inputDateToApi(value: string): string | null {
   if (!value) return null
-  return new Date(`${value}T00:00:00.000Z`).toISOString()
+  const [year, month, day] = value.split('-').map(Number)
+  const date = new Date(year, month - 1, day, 0, 0, 0, 0)
+  return date.toISOString()
 }
 
 export function formatShortDate(value: string) {

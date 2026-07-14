@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using WebApp.Data;
@@ -52,21 +53,15 @@ public class SurveyInviteEmailService(
         var sent = 0;
         var skipped = 0;
         var failed = 0;
-        var delayMs = Math.Max(0, _settings.DelayBetweenEmailsMs);
-        var isFirstSend = true;
 
-        foreach (var link in links)
+        var tasks = links.Select(async link =>
         {
             if (string.IsNullOrWhiteSpace(link.ReviewerEmail))
             {
-                skipped++;
-                items.Add(new SendInviteItemResult(link.ReviewerId, "", "skipped", "Нет email"));
-                continue;
+                Interlocked.Increment(ref skipped);
+                lock (items) items.Add(new SendInviteItemResult(link.ReviewerId, "", "skipped", "Нет email"));
+                return;
             }
-
-            if (!isFirstSend && delayMs > 0)
-                await Task.Delay(delayMs, ct);
-            isFirstSend = false;
 
             var targets = targetsByReviewer.GetValueOrDefault(link.ReviewerId) ?? [];
             var inviteUrl = $"{baseUrl}/survey/invite/{link.Token}";
@@ -76,20 +71,22 @@ public class SurveyInviteEmailService(
             try
             {
                 await emailService.SendAsync(link.ReviewerEmail, link.ReviewerName, subject, body, ct);
-                sent++;
-                items.Add(new SendInviteItemResult(link.ReviewerId, link.ReviewerEmail, "sent", null));
+                Interlocked.Increment(ref sent);
+                lock (items) items.Add(new SendInviteItemResult(link.ReviewerId, link.ReviewerEmail, "sent", null));
             }
             catch (Exception ex)
             {
-                failed++;
+                Interlocked.Increment(ref failed);
                 logger.LogError(ex, "Failed to send invite to {Email}", link.ReviewerEmail);
-                items.Add(new SendInviteItemResult(
+                lock (items) items.Add(new SendInviteItemResult(
                     link.ReviewerId,
                     link.ReviewerEmail,
                     "failed",
                     FlattenException(ex)));
             }
-        }
+        });
+
+        await Task.WhenAll(tasks);
 
         return new SendInvitesResult(sent, skipped, failed, items);
     }

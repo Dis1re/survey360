@@ -43,6 +43,9 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .HasOne(sa => sa.Target).WithMany(u => u.TargetAssignments)
             .HasForeignKey(sa => sa.TargetId);
 
+        modelBuilder.Entity<SurveyAssignment>()
+            .HasIndex(sa => new { sa.SurveyId, sa.ReviewerId, sa.TargetId }).IsUnique();
+
         modelBuilder.Entity<SurveyParticipant>()
             .HasOne(sp => sp.Survey).WithMany(s => s.Participants)
             .HasForeignKey(sp => sp.SurveyId);

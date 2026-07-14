@@ -15,8 +15,11 @@ public class DatabaseController(ApplicationDbContext context, IWebHostEnvironmen
         if (!env.IsDevelopment())
             return NotFound();
 
-        await context.Answers.ExecuteDeleteAsync(ct);
+        await context.SurveyRespondentLinks.ExecuteDeleteAsync(ct);
         await context.SurveyAssignments.ExecuteDeleteAsync(ct);
+        await context.Answers.ExecuteDeleteAsync(ct);
+        await context.QuestionTemplates.ExecuteDeleteAsync(ct);
+        await context.SurveyTemplates.ExecuteDeleteAsync(ct);
         await context.Set<WebApp.Models.SurveyParticipant>().ExecuteDeleteAsync(ct);
         await context.Questions.ExecuteDeleteAsync(ct);
         await context.Surveys.ExecuteDeleteAsync(ct);
