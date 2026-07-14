@@ -301,7 +301,7 @@ export function Sidebar({
   const showProgress = hasUserScope && scope === 'participation'
 
   return (
-    <aside className={`flex flex-col flex-shrink-0 h-screen ${collapsed ? 'w-20' : 'w-80'}`}>
+    <aside className={`flex flex-col flex-shrink-0 h-screen bg-white ${collapsed ? 'w-20' : 'w-80'}`}>
       <div className="p-4 flex items-center justify-between gap-3 bg-white border-b border-gray-100">
         <button
           type="button"

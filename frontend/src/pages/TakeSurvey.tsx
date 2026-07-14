@@ -245,6 +245,7 @@ export function TakeSurvey({
   const [autoResolvingTarget, setAutoResolvingTarget] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [thanksPopupOpen, setThanksPopupOpen] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const [userId, setUserId] = useState<number | null>(initialReviewerId)
@@ -475,6 +476,7 @@ export function TakeSurvey({
       }
       await surveyApi.completeAssignment(surveyId, { reviewerId: lockedUserId, targetId })
       setSubmitted(true)
+      setThanksPopupOpen(true)
       if (storageKey) {
         try {
           localStorage.removeItem(storageKey)
@@ -537,37 +539,55 @@ export function TakeSurvey({
 
   if (submitted) {
     return (
-      <div className="max-w-2xl mx-auto p-6 text-center">
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-          <div className="mx-auto w-20 h-20 rounded-full bg-green-100 flex items-center justify-center overflow-hidden">
-            <img src="/cat_icon.webp" alt="Успешное завершение" className="w-full h-full object-cover" />
-          </div>
-          <h2 className="text-xl font-semibold text-gray-900 mt-4">Спасибо!</h2>
-          <p className="text-sm text-gray-500 mt-1">Ваши ответы успешно сохранены в базе данных.</p>
-          <div className="mt-6 flex justify-center gap-3">
+      <>
+        {thanksPopupOpen && (
+          <div className="fixed top-4 right-4 z-50 w-72 bg-white border border-gray-200 rounded-2xl shadow-lg p-4 flex items-start gap-3">
+            <img src="/sobaka.webp" alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+            <p className="flex-1 min-w-0 text-sm font-medium text-gray-900">
+              Спасибо за помощь в улучшении работы! Ты крут!
+            </p>
             <button
               type="button"
-              onClick={() => {
-                setSubmitted(false)
-                setTargetId(null)
-                if (!hideUserSwitch) setTargetModalOpen(true)
-              }}
-              className="px-4 py-2 text-sm font-medium text-gray-600 border-2 border-orange-300 rounded-xl hover:bg-orange-50 cursor-pointer"
+              onClick={() => setThanksPopupOpen(false)}
+              className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition cursor-pointer"
+              aria-label="Закрыть"
             >
-              {standalone || userPickerLocked ? 'Оценить ещё' : 'Другой пользователь'}
+              ✕
             </button>
-            {!standalone && onBack && (
+          </div>
+        )}
+        <div className="max-w-2xl mx-auto p-6 text-center">
+          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
+            <div className="mx-auto w-20 h-20 rounded-full bg-green-100 flex items-center justify-center overflow-hidden">
+              <img src="/cat_icon.webp" alt="Успешное завершение" className="w-full h-full object-cover" />
+            </div>
+            <h2 className="text-xl font-semibold text-gray-900 mt-4">Спасибо!</h2>
+            <p className="text-sm text-gray-500 mt-1">Ваши ответы успешно сохранены в базе данных.</p>
+            <div className="mt-6 flex justify-center gap-3">
               <button
                 type="button"
-                onClick={onBack}
-                className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl cursor-pointer"
+                onClick={() => {
+                  setSubmitted(false)
+                  setTargetId(null)
+                  if (!hideUserSwitch) setTargetModalOpen(true)
+                }}
+                className="px-4 py-2 text-sm font-medium text-gray-600 border-2 border-orange-300 rounded-xl hover:bg-orange-50 cursor-pointer"
               >
-                Вернуться к опросам
+                {standalone || userPickerLocked ? 'Оценить ещё' : 'Другой пользователь'}
               </button>
-            )}
+              {!standalone && onBack && (
+                <button
+                  type="button"
+                  onClick={onBack}
+                  className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl cursor-pointer"
+                >
+                  Вернуться к опросам
+                </button>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      </>
     )
   }
 
