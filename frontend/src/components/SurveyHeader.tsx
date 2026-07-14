@@ -384,22 +384,15 @@ export function SurveyHeader({
                 + Добавить пользователя
               </button>
             )}
-            {onDelete && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setConfirmDialog('delete')}
-                  disabled={deleting || status === 'active'}
-                  className="w-full px-3 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl transition cursor-pointer border border-red-700"
-                >
-                  {deleting ? 'Удаление…' : 'Удалить опрос'}
-                </button>
-                {status === 'active' && (
-                  <p className="text-[11px] text-white/80 text-center leading-snug">
-                    Сначала завершите опрос
-                  </p>
-                )}
-              </>
+            {onDelete && status !== 'active' && (
+              <button
+                type="button"
+                onClick={() => setConfirmDialog('delete')}
+                disabled={deleting}
+                className="w-full px-3 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl transition cursor-pointer border border-red-700"
+              >
+                {deleting ? 'Удаление…' : 'Удалить опрос'}
+              </button>
             )}
             {status === 'closed' && (startDateLabel || endDateLabel) && (
               <div
