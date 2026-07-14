@@ -64,6 +64,8 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
       await templateApi.updateQuestion(templateId, updated.id, {
         text: updated.text,
         type: mapQuestionTypeToApi(updated.type),
+        isRequired: updated.isRequired ?? false,
+        props: updated.props,
       })
       setQuestions((prev) => prev.map((q) => (q.id === updated.id ? { ...q, ...updated } : q)))
     } catch (err) {
@@ -270,17 +272,20 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
 
 function templateQuestionToQuestion(q: ApiQuestionTemplate): Question {
   const type = mapQuestionType(q.type)
+  const parsed = q.props ? JSON.parse(q.props) as Record<string, string | number> : undefined
   return {
     id: q.id,
     surveyId: q.surveyTemplateId,
     text: q.text,
     type,
+    isRequired: q.isRequired ?? false,
+    props: parsed,
     options:
-      type === 'scale'
-        ? [{ value: 1, label: '' }, { value: 5, label: '' }]
-        : type === 'radio'
-          ? []
-          : undefined,
+      type === 'radio'
+        ? Object.entries(parsed ?? {})
+            .map(([k, v]) => ({ value: Number(k), label: String(v) }))
+            .sort((a, b) => a.value - b.value)
+        : undefined,
   }
 }
 
