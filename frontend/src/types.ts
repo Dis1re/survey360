@@ -239,3 +239,10 @@ export interface SendInvitesResult {
   failed: number
   items: SendInviteItemResult[]
 }
+
+export interface ResponseView {
+  reviewerId: number
+  targetId: number
+  reviewerName: string
+  targetName: string
+}
