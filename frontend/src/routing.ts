@@ -36,6 +36,10 @@ export function parseSurveyResponseParams(): { reviewerId: number | null; target
   }
 }
 
+export function isPreviewMode(): boolean {
+  return new URLSearchParams(window.location.search).get('preview') === '1'
+}
+
 export function buildSurveyResponseLink(surveyId: number, reviewerId: number, targetId: number): string {
   const url = new URL(`${window.location.origin}/survey/${surveyId}`)
   url.searchParams.set('reviewer', String(reviewerId))

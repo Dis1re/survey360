@@ -407,9 +407,9 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
             <button
               type="button"
               onClick={onBack}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-gray-600 border-2 border-orange-300 rounded-xl hover:bg-orange-50 cursor-pointer"
             >
-              ← К редактору
+               К редактору
             </button>
             <button
               type="button"
