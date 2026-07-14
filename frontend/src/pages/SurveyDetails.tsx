@@ -51,13 +51,15 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
     return (
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-4">
-          <button
-            type="button"
-            onClick={onBack}
-            className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer"
-          >
-            ← К списку опросов
-          </button>
+          <div className="flex justify-end">
+            <button
+              type="button"
+              onClick={onBack}
+              className="px-4 py-2 text-sm font-medium text-gray-600 border-2 border-orange-300 rounded-xl hover:bg-orange-50 cursor-pointer"
+            >
+              К списку опросов
+            </button>
+          </div>
           <h1 className="text-xl font-bold text-gray-900">Опрос не найден</h1>
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
@@ -76,18 +78,21 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
       <header className="bg-white border-b border-gray-200 p-6 flex-shrink-0">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <button
-              type="button"
-              onClick={onBack}
-              className="text-sm text-blue-600 hover:text-blue-800 hover:underline cursor-pointer mb-2"
-            >
-              ← К списку опросов
-            </button>
             <h1 className="text-xl font-bold text-gray-900">Опрос: {survey.name}</h1>
             <p className="text-xs text-gray-400 mt-1 font-mono">GET /api/survey/{id}</p>
           </div>
+          <div className="flex items-center justify-end sm:self-start">
+            <button
+              type="button"
+              onClick={onBack}
+              className="px-4 py-2 text-sm font-medium text-gray-600 border-2 border-orange-300 rounded-xl hover:bg-orange-50 cursor-pointer"
+            >
+              К списку опросов
+            </button>
+          </div>
         </div>
       </header>
+
 
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-6">
