@@ -97,7 +97,7 @@ function SurveyCard({
           onSelect()
         }
       }}
-      className={`p-3 rounded-xl cursor-pointer transition border ${
+      className={`sidebar-card p-3 rounded-xl cursor-pointer border ${
         isSelected
           ? 'bg-white border-l-4 border-l-[#FF8600] border-gray-200 shadow-sm'
           : highlightPending
@@ -157,7 +157,7 @@ function SurveyMiniCard({
       title={`${survey.title} · ${cfg.label}${progressLabel}`}
       aria-label={`${survey.title}, ${cfg.label}${progressLabel}`}
       aria-current={isSelected ? 'true' : undefined}
-      className={`relative w-full aspect-square rounded-xl flex items-center justify-center transition cursor-pointer ${
+      className={`sidebar-card relative w-full aspect-square rounded-xl flex items-center justify-center cursor-pointer ${
         isSelected
           ? 'bg-white border-2 border-[#FF8600] text-orange-700 shadow-sm'
           : 'hover:bg-gray-50 border border-gray-200 text-gray-600'
@@ -186,7 +186,7 @@ function FilterButton({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition cursor-pointer ${
+      className={`soft-press flex-1 py-1.5 text-xs font-medium rounded-lg cursor-pointer ${
         active
           ? 'bg-[#FF8600] text-white shadow-sm'
           : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -301,8 +301,12 @@ export function Sidebar({
   const showProgress = hasUserScope && scope === 'participation'
 
   return (
-    <aside className={`flex flex-col flex-shrink-0 h-screen bg-white ${collapsed ? 'w-20' : 'w-80'}`}>
-      <div className="p-4 flex items-center justify-between gap-3 bg-white border-b border-gray-100">
+    <aside className={`flex flex-col flex-shrink-0 h-screen transition-[width] duration-300 ease-out ${collapsed ? 'w-20' : 'w-80'}`}>
+      <div
+        className={`flex bg-white border-b border-gray-100 ${
+          collapsed ? 'flex-col items-center gap-2 p-3' : 'items-center justify-between gap-3 p-4'
+        }`}
+      >
         <button
           type="button"
           onClick={() => setCollapsed((v) => !v)}
@@ -360,8 +364,8 @@ export function Sidebar({
             </div>
           </>
         ) : (
-          <div className="flex items-center gap-1 ml-auto">
-            <UserBar compact />
+          <>
+            <UserBar stacked />
             {onOpenDev && (
               <button
                 type="button"
@@ -375,7 +379,7 @@ export function Sidebar({
                 </svg>
               </button>
             )}
-          </div>
+          </>
         )}
       </div>
 
@@ -468,39 +472,48 @@ export function Sidebar({
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto p-2 space-y-1">
-        {loading ? (
-          <p className={`py-2 text-sm text-gray-400 ${collapsed ? 'text-center' : 'px-3'}`}>
-            {collapsed ? '…' : 'Загрузка…'}
-          </p>
-        ) : filteredSurveys.length === 0 ? (
-          !collapsed && <p className="px-3 py-2 text-sm text-gray-400">{emptyMessage}</p>
-        ) : collapsed ? (
-          filteredSurveys.map((survey) => (
-            <SurveyMiniCard
-              key={survey.id}
-              survey={survey}
-              isSelected={survey.id === activeSurveyId}
-              onSelect={() => onSurveySelect(survey.id, scope)}
-              showProgress={showProgress}
-            />
-          ))
-        ) : (
-          filteredSurveys.map((survey) => (
-            <SurveyCard
-              key={survey.id}
-              survey={survey}
-              isSelected={survey.id === activeSurveyId}
-              onSelect={() => onSurveySelect(survey.id, scope)}
-              showProgress={showProgress}
-              highlightPending={
-                showProgress &&
-                participationFilter === 'pending' &&
-                isParticipationPending(survey)
-              }
-            />
-          ))
-        )}
+      <div className="flex-1 overflow-y-auto p-2">
+        <div
+          key={
+            hasUserScope && scope === 'participation'
+              ? `participation-${participationFilter}-${collapsed}`
+              : `mine-${statusFilter}-${collapsed}`
+          }
+          className="space-y-1 view-fade"
+        >
+          {loading ? (
+            <p className={`py-2 text-sm text-gray-400 ${collapsed ? 'text-center' : 'px-3'}`}>
+              {collapsed ? '…' : 'Загрузка…'}
+            </p>
+          ) : filteredSurveys.length === 0 ? (
+            !collapsed && <p className="px-3 py-2 text-sm text-gray-400">{emptyMessage}</p>
+          ) : collapsed ? (
+            filteredSurveys.map((survey) => (
+              <SurveyMiniCard
+                key={survey.id}
+                survey={survey}
+                isSelected={survey.id === activeSurveyId}
+                onSelect={() => onSurveySelect(survey.id, scope)}
+                showProgress={showProgress}
+              />
+            ))
+          ) : (
+            filteredSurveys.map((survey) => (
+              <SurveyCard
+                key={survey.id}
+                survey={survey}
+                isSelected={survey.id === activeSurveyId}
+                onSelect={() => onSurveySelect(survey.id, scope)}
+                showProgress={showProgress}
+                highlightPending={
+                  showProgress &&
+                  participationFilter === 'pending' &&
+                  isParticipationPending(survey)
+                }
+              />
+            ))
+          )}
+        </div>
       </div>
 
       {showCreateButton && !collapsed && (
@@ -508,7 +521,7 @@ export function Sidebar({
           <button
             onClick={onCreateClick}
             disabled={creating}
-            className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-sm cursor-pointer"
+            className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl soft-press flex items-center justify-center gap-2 text-sm shadow-sm cursor-pointer"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -519,11 +532,11 @@ export function Sidebar({
       )}
 
       {showCreateButton && collapsed && (
-        <div className="p-4 border-t border-gray-100">
+        <div className="p-3 border-t border-gray-100">
           <button
             onClick={onCreateClick}
             disabled={creating}
-            className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2 px-3 rounded-xl transition flex items-center justify-center gap-2 text-sm shadow-sm cursor-pointer"
+            className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2 px-3 rounded-xl soft-press flex items-center justify-center gap-2 text-sm shadow-sm cursor-pointer"
             aria-label="Создать опрос"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -73,7 +73,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-gray-100 flex flex-col items-center justify-center p-6">
-      <div className="text-center mb-8">
+      <div className="text-center mb-8 anim-fade">
         <img src="/Survey360Logo.webp" alt="" className="w-20 h-20 object-contain mx-auto mb-4" />
         <h1 className="text-3xl font-bold text-gray-900">Опросы 360</h1>
         <p className="text-sm text-gray-500 mt-2 max-w-sm">
@@ -85,21 +85,21 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
         <button
           type="button"
           onClick={() => openPopup('user')}
-          className="bg-[#FF8600] hover:bg-[#FF6B00] text-white font-medium py-3 px-8 rounded-xl transition shadow-sm cursor-pointer"
+          className="soft-press bg-[#FF8600] hover:bg-[#FF6B00] text-white font-medium py-3 px-8 rounded-xl shadow-sm cursor-pointer"
         >
           Войти
         </button>
         <button
           type="button"
           onClick={() => openPopup('admin')}
-          className="bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-8 rounded-xl border border-gray-200 transition shadow-sm cursor-pointer"
+          className="soft-press bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-8 rounded-xl border border-gray-200 shadow-sm cursor-pointer"
         >
           Вход для администратора
         </button>
         <button
           type="button"
           onClick={openDevPage}
-          className="bg-white hover:bg-gray-50 text-gray-600 font-medium py-3 px-8 rounded-xl border border-dashed border-gray-300 transition shadow-sm cursor-pointer"
+          className="soft-press bg-white hover:bg-gray-50 text-gray-600 font-medium py-3 px-8 rounded-xl border border-dashed border-gray-300 shadow-sm cursor-pointer"
         >
           База данных
         </button>
@@ -133,7 +133,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
                         type="button"
                         disabled={submitting}
                         onClick={() => handleLogin(user.email, false)}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-orange-50 disabled:opacity-50 transition cursor-pointer"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-orange-50 disabled:opacity-50 soft-press cursor-pointer"
                       >
                         <div className="w-9 h-9 rounded-full bg-[#FF8600] text-white text-xs font-semibold flex items-center justify-center shrink-0">
                           {getInitials(user.name, user.email)}
@@ -186,7 +186,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl transition shadow-sm cursor-pointer"
+              className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl soft-press shadow-sm cursor-pointer"
             >
               {submitting ? 'Вход…' : mode === 'admin' ? 'Войти' : 'Продолжить'}
             </button>

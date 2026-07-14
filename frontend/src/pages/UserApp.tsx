@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { surveyApi } from '../api'
 import { Sidebar } from '../components/Sidebar'
 import { useAuth } from '../context/AuthContext'
+import { useSurveyLive } from '../hooks/useSurveyLive'
 import { apiSurveyToSurvey, isMySurvey } from '../mappers'
 import { openDevPage } from '../routing'
 import { MainPage } from './MainPage'
@@ -33,6 +34,11 @@ export function UserApp() {
     loadSurveys().catch(console.error).finally(() => setLoading(false))
   }, [loadSurveys])
 
+  // One place: live event → refresh survey list (sidebar status/progress).
+  useSurveyLive(() => {
+    void loadSurveys().catch(console.error)
+  })
+
   const filteredSurveys = searchQuery.trim()
     ? surveys.filter(
         (s) =>
@@ -62,6 +68,9 @@ export function UserApp() {
       setCreating(false)
     }
   }
+
+  // Remount open page when list status changes (e.g. Активен → Завершен).
+  const openPageKey = `${selectedSurveyId ?? 'none'}-${selectedSurvey?.status ?? ''}`
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -96,12 +105,14 @@ export function UserApp() {
           </div>
         ) : showEditor ? (
           <MainPage
+            key={openPageKey}
             surveyId={selectedSurveyId}
             onSurveyUpdated={loadSurveys}
             onSurveyDeleted={loadSurveys}
           />
         ) : (
           <TakeSurvey
+            key={openPageKey}
             surveyId={selectedSurveyId}
             authUserId={user?.id ?? null}
             hideUserSwitch

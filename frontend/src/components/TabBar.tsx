@@ -20,11 +20,8 @@ export function TabBar({ activeTab, onTabChange }: TabBarProps) {
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className="py-3 text-sm font-semibold flex items-center gap-2 transition focus:outline-none cursor-pointer"
-              style={{
-                color: isActive ? '#FF8600' : 'rgba(17,24,39,0.55)',
-                borderBottom: isActive ? '3px solid #FF8600' : '3px solid transparent',
-              }}
+              data-active={isActive}
+              className="tab-btn py-3 text-sm font-semibold flex items-center gap-2 focus:outline-none cursor-pointer"
             >
               {tab.id === 'editor' ? (
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
