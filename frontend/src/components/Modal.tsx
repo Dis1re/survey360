@@ -1,12 +1,13 @@
 import { useEffect, useId } from 'react'
 
-type ModalSize = 'sm' | 'md' | 'lg' | 'xl'
+type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full'
 
 const sizeClass: Record<ModalSize, string> = {
   sm: 'max-w-sm',
   md: 'max-w-md',
   lg: 'max-w-lg',
   xl: 'max-w-2xl',
+  full: 'w-full max-w-[95vw]',
 }
 
 export interface ModalProps {
@@ -58,7 +59,7 @@ export function Modal({
     >
       <div
         className={`w-full ${sizeClass[size]} bg-white rounded-2xl shadow-xl overflow-hidden ${
-          scrollable ? 'max-h-[90vh] flex flex-col' : ''
+          scrollable ? (size === 'full' ? 'h-[92vh] flex flex-col' : 'max-h-[90vh] flex flex-col') : ''
         }`}
         role="dialog"
         aria-modal="true"
