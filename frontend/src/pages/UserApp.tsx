@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { surveyApi } from '../api'
 import { Sidebar } from '../components/Sidebar'
 import { useAuth } from '../context/AuthContext'
+import { useSurveyLive } from '../hooks/useSurveyLive'
 import { apiSurveyToSurvey, isMySurvey } from '../mappers'
 import { openDevPage } from '../routing'
 import { MainPage } from './MainPage'
@@ -18,6 +19,7 @@ export function UserApp() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -32,6 +34,11 @@ export function UserApp() {
   useEffect(() => {
     loadSurveys().catch(console.error).finally(() => setLoading(false))
   }, [loadSurveys])
+
+  // One place: live event → refresh survey list (sidebar status/progress).
+  useSurveyLive(() => {
+    void loadSurveys().catch(console.error)
+  })
 
   const filteredSurveys = searchQuery.trim()
     ? surveys.filter(
@@ -63,6 +70,9 @@ export function UserApp() {
     }
   }
 
+  // Remount open page when list status changes (e.g. Активен → Завершен).
+  const openPageKey = `${selectedSurveyId ?? 'none'}-${selectedSurvey?.status ?? ''}`
+
   return (
     <div className="flex h-screen overflow-hidden">
       <Sidebar
@@ -80,6 +90,8 @@ export function UserApp() {
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
         onOpenDev={user?.isAdmin ? openDevPage : undefined}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
       />
       <main className="flex-1 overflow-y-auto">
         {selectedSurveyId === null ? (
@@ -96,12 +108,15 @@ export function UserApp() {
           </div>
         ) : showEditor ? (
           <MainPage
+            key={openPageKey}
             surveyId={selectedSurveyId}
             onSurveyUpdated={loadSurveys}
             onSurveyDeleted={loadSurveys}
+            sidebarCollapsed={sidebarCollapsed}
           />
         ) : (
           <TakeSurvey
+            key={openPageKey}
             surveyId={selectedSurveyId}
             authUserId={user?.id ?? null}
             hideUserSwitch

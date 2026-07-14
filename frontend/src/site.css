@@ -1,5 +1,75 @@
 @import "tailwindcss";
 
+:root {
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out: cubic-bezier(0.2, 0.9, 0.2, 1);
+  --dur-fast: 160ms;
+  --dur: 240ms;
+  --dur-slow: 360ms;
+}
+
+/* ——— Shared motion utilities ——— */
+
+/* Contained fade only — no translate, so content doesn't jump on remount */
+.anim-fade {
+  animation: anim-fade-in 80ms var(--ease-soft) both;
+}
+
+/* Survey / filter switches — slightly longer so the swap feels intentional */
+.view-fade {
+  animation: anim-fade-in var(--dur) var(--ease-soft) both;
+}
+
+/* Intentionally no movement: used on one-shot screens (login), not on navigation */
+.anim-rise,
+.anim-rise-soft,
+.anim-panel,
+.anim-slide-left,
+.anim-scale-in {
+  animation: anim-fade-in 140ms var(--ease-soft) both;
+}
+
+.anim-stagger > * {
+  animation: none;
+}
+
+.soft-press {
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    opacity var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease,
+    filter var(--dur-fast) ease;
+}
+.soft-press:hover:not(:disabled):not([aria-disabled='true']) {
+  filter: brightness(0.98);
+}
+.soft-press:active:not(:disabled):not([aria-disabled='true']) {
+  filter: brightness(0.96);
+}
+
+.soft-lift {
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+
+.sidebar-card {
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+
+@keyframes anim-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ——— App shell ——— */
+
 .survey-header-wave::before,
 .survey-header-wave::after {
   content: '';
@@ -51,8 +121,117 @@
 }
 
 .dog-toast { pointer-events: none; }
-.dog-card { animation: pop .45s cubic-bezier(.2,.9,.2,1); }
+.dog-card { animation: pop .45s var(--ease-out); }
 @keyframes pop { from { transform: translateY(12px) scale(.98); opacity: 0 } to { transform: translateY(0) scale(1); opacity: 1 } }
 .dog-emoji { font-size: 28px; line-height: 1; }
 .paw { display: inline-block; transform-origin: 50% 60%; animation: paw-wave 0.9s ease-in-out 0.15s 3 both; }
 @keyframes paw-wave { 0% { transform: rotate(0deg) } 40% { transform: rotate(-25deg) } 70% { transform: rotate(8deg) } 100% { transform: rotate(0deg) } }
+
+/* ——— Modals ——— */
+
+.modal-backdrop-enter {
+  animation: modal-backdrop-in var(--dur-fast) ease-out both;
+}
+.modal-panel-enter {
+  animation: modal-panel-in 180ms var(--ease-soft) both;
+}
+@keyframes modal-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes modal-panel-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ——— Survey header description ——— */
+
+.desc-chip {
+  transition:
+    background-color var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+.desc-chip:hover:not(:disabled) {
+  background-color: rgba(255, 255, 255, 0.22);
+}
+
+.desc-popover {
+  animation: anim-fade-in 140ms var(--ease-soft) both;
+}
+
+.header-actions-enter {
+  animation: anim-fade-in 140ms var(--ease-soft) both;
+}
+
+/* ——— Tabs ——— */
+
+.tab-btn {
+  position: relative;
+  transition: color var(--dur-fast) ease;
+}
+.tab-btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: #FF8600;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform var(--dur) var(--ease-out);
+}
+.tab-btn[data-active='true'] {
+  color: #FF8600;
+}
+.tab-btn[data-active='true']::after {
+  transform: scaleX(1);
+}
+.tab-btn[data-active='false'] {
+  color: rgba(17, 24, 39, 0.55);
+}
+.tab-btn:hover[data-active='false'] {
+  color: rgba(17, 24, 39, 0.8);
+}
+
+/* ——— Form focus polish ——— */
+
+input:not([type='checkbox']):not([type='radio']):not([type='range']),
+textarea,
+select {
+  transition:
+    border-color var(--dur-fast) ease,
+    background-color var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease;
+}
+
+/* ——— Reduced motion ——— */
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade,
+  .anim-rise,
+  .anim-rise-soft,
+  .anim-scale-in,
+  .anim-slide-left,
+  .anim-panel,
+  .view-fade,
+  .modal-backdrop-enter,
+  .modal-panel-enter,
+  .desc-popover,
+  .header-actions-enter,
+  .dog-card,
+  .paw {
+    animation: none !important;
+  }
+
+  .soft-press:hover:not(:disabled),
+  .soft-press:active:not(:disabled) {
+    filter: none !important;
+  }
+
+  .tab-btn::after {
+    transition: none !important;
+  }
+}

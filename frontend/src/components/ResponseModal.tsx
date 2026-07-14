@@ -12,6 +12,7 @@ interface ResponseModalProps {
   targetName?: string
   onClose: () => void
   fullscreen?: boolean
+  overlayLeft?: number
 }
 
 export function ResponseModal({
@@ -22,6 +23,7 @@ export function ResponseModal({
   targetName,
   onClose,
   fullscreen = false,
+  overlayLeft = 0,
 }: ResponseModalProps) {
   const [loading, setLoading] = useState(true)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -71,7 +73,10 @@ export function ResponseModal({
 
   if (fullscreen) {
     return (
-      <div className="absolute inset-0 z-50 bg-gray-100 flex flex-col shadow-2xl border-l border-gray-300">
+      <div
+        className="fixed top-0 right-0 bottom-0 z-40 bg-gray-100 flex flex-col border-l border-gray-200 transition-[left] duration-300 ease-out"
+        style={{ left: overlayLeft }}
+      >
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">Ответы</h2>

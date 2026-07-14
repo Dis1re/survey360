@@ -53,11 +53,11 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px]"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] modal-backdrop-enter"
       onClick={handleBackdropClick}
     >
       <div
-        className={`w-full ${sizeClass[size]} bg-white rounded-2xl shadow-xl overflow-hidden ${
+        className={`w-full ${sizeClass[size]} bg-white rounded-2xl shadow-xl overflow-hidden modal-panel-enter ${
           scrollable ? 'max-h-[90vh] flex flex-col' : ''
         }`}
         role="dialog"

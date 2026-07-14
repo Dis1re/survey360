@@ -2,10 +2,10 @@ import { useCallback, useEffect, useState } from 'react'
 import { surveyApi } from './api'
 import { Sidebar } from './components/Sidebar'
 import { apiSurveyToSurvey } from './mappers'
-import { openDevPage } from './routing'
 import { MainPage } from './pages/MainPage'
 import { EntityPage } from './pages/SurveyDetails'
 import { TakeSurvey } from './pages/TakeSurvey'
+import { openDevPage } from './routing'
 import type { Survey } from './types'
 
 type View = 'main' | 'details' | 'take'
@@ -17,6 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [view, setView] = useState<View>('main')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -39,8 +40,6 @@ export default function App() {
           s.description.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : surveys
-
-  const handleOpenDev = () => openDevPage()
 
   const handleOpenDetails = () => setView('details')
 
@@ -72,8 +71,10 @@ export default function App() {
         onSurveySelect={(id) => setSelectedSurveyId(id)}
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
-        onOpenDev={handleOpenDev}
         onOpenDetails={handleOpenDetails}
+        onOpenDev={openDevPage}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
       />
       <main className="flex-1 overflow-y-auto bg-gray-100">
         {view === 'details' ? (
@@ -87,7 +88,7 @@ export default function App() {
             <TakeSurvey surveyId={selectedSurveyId} onBack={handleBack} />
           )
         ) : (
-          <MainPage surveyId={selectedSurveyId} onSurveyUpdated={loadSurveys} onSurveyDeleted={loadSurveys} />
+          <MainPage surveyId={selectedSurveyId} onSurveyUpdated={loadSurveys} onSurveyDeleted={loadSurveys} sidebarCollapsed={sidebarCollapsed} />
         )}
       </main>
     </div>
