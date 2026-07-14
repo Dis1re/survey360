@@ -66,7 +66,7 @@ function SaveTemplate({
   }
 
   return (
-    <Modal title="Сохранить как шаблон" onClose={onClose} preventClose={saving}>
+    <Modal title="Сохранить как шаблон" preventClose={saving}>
       {done ? (
         <div className="space-y-4">
           <p className="text-base text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
