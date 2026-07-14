@@ -126,7 +126,7 @@ export function MatrixTable({
   return (
     <>
       <form onSubmit={handleSubmit}>
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-3">
             <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
               Матрица оценки
@@ -138,15 +138,15 @@ export function MatrixTable({
               Сначала добавьте пользователей через кнопку «Добавить пользователя» в шапке опроса
             </div>
           ) : (
-            <div className="overflow-x-auto">
+            <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="p-4 text-xs font-bold text-gray-400 w-64 border-r border-gray-100">
+                    <th className="p-4 text-xs font-bold text-gray-400 w-64 border-r border-b border-gray-200 sticky left-0 top-0 z-10 bg-gray-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                       <span>Респондент \ Объект</span>
                     </th>
                     {targets.map((target) => (
-                      <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px]">
+                      <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px] sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <div className="flex flex-col items-center gap-1">
                           <div className="relative inline-flex">
                             <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
@@ -168,7 +168,7 @@ export function MatrixTable({
                       </th>
                     ))}
                     {!readOnly && (
-                      <th className="p-4 text-center min-w-[120px] align-middle">
+                      <th className="p-4 text-center min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 border-b border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
@@ -189,7 +189,7 @@ export function MatrixTable({
 
                     return (
                       <tr key={respondent.id} className="hover:bg-blue-50/30 transition">
-                        <td className="p-4 font-medium text-gray-900 border-r border-gray-100">
+                        <td className="p-4 font-medium text-gray-900 border-r border-gray-200 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                           <div className="flex items-center gap-2">
                             <div className="relative inline-flex">
                               <div className={`w-6 h-6 rounded-full ${respondent.color} flex items-center justify-center text-xs font-bold shrink-0`}>
@@ -248,7 +248,7 @@ export function MatrixTable({
                             : null
 
                           return (
-                            <td key={target.id} className="p-4 text-center">
+                            <td key={target.id} className="p-4 text-center border-r border-gray-200 last:border-r-0">
                               <div className="flex flex-col items-center gap-1.5">
                                 <input
                                   type="checkbox"
@@ -283,7 +283,7 @@ export function MatrixTable({
 
                   {!readOnly && (
                     <tr className="hover:bg-blue-50/30 transition">
-                      <td className="p-4 border-r border-gray-100">
+                      <td className="p-4 border-r border-gray-200 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
