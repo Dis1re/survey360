@@ -20,7 +20,7 @@ import {
   mapSurveyStatusToApi,
   usersToParticipants,
 } from '../mappers'
-import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink, SendInvitesResult } from '../types'
+import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink, SendInvitesResult, SurveyReportInfo } from '../types'
 
 function buildInviteResultModal(result: SendInvitesResult): {
   title: string
@@ -96,7 +96,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [exportingReport, setExportingReport] = useState(false)
-  const [exportConfirmOpen, setExportConfirmOpen] = useState(false)
   const [sendingInvites, setSendingInvites] = useState(false)
   const [inviteResult, setInviteResult] = useState<{
     title: string
@@ -105,6 +104,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   } | null>(null)
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
+  const [reportInfo, setReportInfo] = useState<SurveyReportInfo | null>(null)
+  const [exportingCsv, setExportingCsv] = useState(false)
   const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
@@ -133,7 +134,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }, [])
 
-  const loadSurvey = useCallback(async (id: number) => {
+    const loadSurvey = useCallback(async (id: number) => {
     const details = await surveyApi.get(id)
     setSurvey(details.survey)
     const mappedQuestions = details.questions.map(apiQuestionToQuestion)
@@ -142,6 +143,12 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       if (prev !== null && mappedQuestions.some((q) => q.id === prev)) return prev
       return mappedQuestions[0]?.id ?? null
     })
+    try {
+      setReportInfo(await surveyApi.getReportInfo(id))
+    } catch (err) {
+      console.error(err)
+      setReportInfo(null)
+    }
     try {
       await loadMatrix(id)
     } catch (err) {
@@ -218,6 +225,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
 
   const surveyStatus = survey ? mapSurveyStatus(survey.status) : 'draft'
   const surveyEditable = surveyStatus === 'draft'
+  const canExport = surveyStatus === 'closed' || (reportInfo?.answerCount ?? 0) > 0
 
   const hasQuestions = questions.length > 0
   const matrixFilled =
@@ -459,10 +467,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
         alert('Нет ответов для формирования отчёта.')
         return
       }
-      if (!info.allAssignedCompleted) {
-        setExportConfirmOpen(true)
-        return
-      }
       await surveyApi.downloadReport(surveyId)
     } catch (err) {
       console.error(err)
@@ -472,17 +476,16 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }
 
-  const handleConfirmExportReport = async () => {
+  const handleExportCsv = async () => {
     if (surveyId === null) return
-    setExportingReport(true)
+    setExportingCsv(true)
     try {
-      await surveyApi.downloadReport(surveyId)
-      setExportConfirmOpen(false)
+      await surveyApi.downloadCsv(surveyId)
     } catch (err) {
       console.error(err)
-      alert('Не удалось сформировать отчёт')
+      alert('Не удалось сформировать CSV')
     } finally {
-      setExportingReport(false)
+      setExportingCsv(false)
     }
   }
 
@@ -632,12 +635,15 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               saving={savingMatrix}
               adding={addingMatrixParticipant}
               exporting={exportingReport}
+              exportingCsv={exportingCsv}
+              canExport={canExport}
               sendingInvites={sendingInvites}
               readOnly={!surveyEditable}
               surveyActive={surveyStatus === 'active'}
               surveyName={survey?.name ?? ''}
               respondentLinks={respondentLinks}
               onExportReport={handleExportReport}
+              onExportCsv={handleExportCsv}
               onSendInvites={handleSendInvites}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
@@ -661,19 +667,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
             setTemplateModal(null)
             setEditingTemplateId(id)
           }}
-        />
-      )}
-
-      {exportConfirmOpen && (
-        <ConfirmModal
-          title="Сформировать отчёт?"
-          variant="warning"
-          confirmLabel="Сформировать"
-          loadingLabel="Формирование…"
-          loading={exportingReport}
-          onConfirm={handleConfirmExportReport}
-          onCancel={() => !exportingReport && setExportConfirmOpen(false)}
-          message="Ещё не все опрашиваемые дали свои ответы. Отчёт будет сформирован на основе имеющихся данных."
         />
       )}
 

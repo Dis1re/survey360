@@ -63,6 +63,7 @@ public record SurveyReportInfoDto(int AnswerCount, int AssignedCount, int Comple
 public class SurveyController(
     ApplicationDbContext context,
     SurveyDocxReportService reportService,
+    SurveyCsvReportService csvReportService,
     SurveyRespondentLinkService linkService,
     SurveyInviteEmailService inviteEmailService,
     IHubContext<SurveyHub> surveyHub) : Controller
@@ -707,6 +708,28 @@ public class SurveyController(
 
         const string contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
         return File(result.Value.Stream, contentType, result.Value.FileName);
+    }
+
+    [HttpGet("{id:int}/report.csv")]
+    public async Task<IActionResult> DownloadCsvReport(int id, CancellationToken ct)
+    {
+        var result = await csvReportService.BuildCsvAsync(id, ct);
+        if (result is null)
+        {
+            var exists = await context.Surveys.AnyAsync(s => s.Id == id, ct);
+            if (!exists)
+                return NotFound();
+
+            return BadRequest("Нет ответов для формирования отчёта");
+        }
+
+        var preamble = System.Text.Encoding.UTF8.GetPreamble();
+        var body = System.Text.Encoding.UTF8.GetBytes(result.Value.Csv);
+        var bytes = new byte[preamble.Length + body.Length];
+        Array.Copy(preamble, 0, bytes, 0, preamble.Length);
+        Array.Copy(body, 0, bytes, preamble.Length, body.Length);
+
+        return File(bytes, "text/csv; charset=utf-8", result.Value.FileName);
     }
 
     [Authorize]
