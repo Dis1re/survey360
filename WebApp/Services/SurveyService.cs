@@ -31,7 +31,7 @@ public class SurveyService(
     public async Task<Survey?> GetSurveyForEditAsync(int id, CancellationToken ct) =>
         await context.Surveys.FirstOrDefaultAsync(s => s.Id == id, ct);
 
-    public async Task<int> CreateSurveyAsync(CancellationToken ct)
+    public async Task<int> CreateSurveyAsync(int? createdByUserId, CancellationToken ct)
     {
         var survey = new Survey
         {
@@ -41,6 +41,7 @@ public class SurveyService(
             CreatedAt = DateTime.UtcNow,
             StartedAt = default,
             ClosedAt = default,
+            CreatedByUserId = createdByUserId,
         };
         await context.Surveys.AddAsync(survey, ct);
         await context.SaveChangesAsync(ct);
@@ -128,7 +129,7 @@ public class SurveyService(
         survey.Name = request.Name;
         survey.Description = request.Description;
         survey.Status = request.Status;
-        survey.StartedAt = request.StartedAt ?? default;
+        survey.StartedAt = IsSurveyActive(request.Status) ? DateTime.UtcNow : request.StartedAt ?? default;
         survey.ClosedAt = request.ClosedAt ?? default;
 
         if (request.Status == "Активен")
@@ -140,17 +141,15 @@ public class SurveyService(
 
     public async Task<bool> DeleteSurveyAsync(int id, CancellationToken ct)
     {
-        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == id, ct);
         if (survey is null) return false;
 
         if (IsSurveyActive(survey.Status))
             return false;
 
-        var deleted = await context.Surveys
-            .Where(s => s.Id == id)
-            .ExecuteDeleteAsync(ct);
-
-        return deleted > 0;
+        context.Surveys.Remove(survey);
+        await context.SaveChangesAsync(ct);
+        return true;
     }
 
     public async Task<SurveyMatrixDto?> GetMatrixAsync(int id, CancellationToken ct)
@@ -253,9 +252,14 @@ public class SurveyService(
             .Where(a => a.SurveyId == surveyId)
             .ExecuteDeleteAsync(ct);
 
+        var seen = new HashSet<(int ReviewerId, int TargetId)>();
         foreach (var entry in entries.Where(e => e.IsAssigned))
         {
             if (!respondentIds.Contains(entry.ReviewerId) || !targetIds.Contains(entry.TargetId))
+                continue;
+
+            var key = (entry.ReviewerId, entry.TargetId);
+            if (!seen.Add(key))
                 continue;
 
             await context.SurveyAssignments.AddAsync(new SurveyAssignment
@@ -343,7 +347,7 @@ public class SurveyService(
                 .Where(a => a.UserId == reviewerId
                             && a.TargetId == targetId
                             && requiredIds.Contains(a.QuestionId)
-                            && a.Text != null && a.Text != "")
+                            && a.Text != null && a.Text.Trim() != "")
                 .Select(a => a.QuestionId)
                 .ToListAsync(ct);
 
@@ -357,18 +361,18 @@ public class SurveyService(
         }
 
         assignment.IsCompleted = true;
-        await context.SaveChangesAsync(ct);
 
-        var assignedPairs = await context.SurveyAssignments
+        var allAssignedCompleted = await context.SurveyAssignments
             .Where(a => a.SurveyId == surveyId && a.IsAssigned)
-            .ToListAsync(ct);
+            .AllAsync(a => a.IsAssigned == a.IsCompleted, ct);
 
-        if (assignedPairs.Count > 0 && assignedPairs.All(a => a.IsCompleted))
+        if (allAssignedCompleted)
         {
             survey.Status = "Завершен";
             survey.ClosedAt = DateTime.UtcNow;
-            await context.SaveChangesAsync(ct);
         }
+
+        await context.SaveChangesAsync(ct);
 
         return survey.Id;
     }
