@@ -11,11 +11,8 @@ interface QuestionListProps {
   onQuestionCreate: (text: string) => Promise<void>
   onQuestionDelete: (id: number) => Promise<void>
   onReorder: (orderedIds: number[]) => Promise<void>
-<<<<<<< HEAD
-  onPreview: () => void
-=======
   onDeleteAll?: () => void
->>>>>>> 26de77438d8aedc5dca8d58a136b748b83eae83c
+  onPreview?: () => void
 }
 
 export function QuestionList({
@@ -28,11 +25,8 @@ export function QuestionList({
   onQuestionCreate,
   onQuestionDelete,
   onReorder,
-<<<<<<< HEAD
-  onPreview,
-=======
   onDeleteAll,
->>>>>>> 26de77438d8aedc5dca8d58a136b748b83eae83c
+  onPreview,
 }: QuestionListProps) {
   const [newQuestionText, setNewQuestionText] = useState('')
   const [showInput, setShowInput] = useState(false)
