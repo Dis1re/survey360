@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Question, QuestionProps } from '../types'
 
 interface QuestionEditorProps {
@@ -29,19 +29,41 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
   const [max, setMax] = useState<number | ''>('')
   const [step, setStep] = useState<number | ''>('')
 
+  const dirtyRef = useRef(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const onSaveRef = useRef(onSave)
   useEffect(() => {
-    if (question) {
-      setText(question.text)
-      setType(question.type)
-      setIsRequired(question.isRequired ?? false)
-      if (question.type === 'scale') {
-        setMin(question.props?.min != null ? Number(question.props.min) : '')
-        setMax(question.props?.max != null ? Number(question.props.max) : '')
-        setStep(parseStep(question.props?.step))
+    onSaveRef.current = onSave
+  }, [onSave])
+
+  const fieldsRef = useRef({
+    text: '',
+    type: 'scale' as Question['type'],
+    isRequired: false,
+    options: [] as { value: number; label: string }[],
+    min: '' as number | '',
+    max: '' as number | '',
+    step: '' as number | '',
+  })
+  fieldsRef.current = { text, type, isRequired, options, min, max, step }
+
+  const markDirty = () => {
+    dirtyRef.current = true
+  }
+
+  const loadFromQuestion = (q: Question | null) => {
+    if (q) {
+      setText(q.text)
+      setType(q.type)
+      setIsRequired(q.isRequired ?? false)
+      if (q.type === 'scale') {
+        setMin(q.props?.min != null ? Number(q.props.min) : '')
+        setMax(q.props?.max != null ? Number(q.props.max) : '')
+        setStep(parseStep(q.props?.step))
         setOptions([])
-      } else if (question.type === 'radio') {
+      } else if (q.type === 'radio') {
         setOptions(
-          Object.entries(question.props ?? {})
+          Object.entries(q.props ?? {})
             .map(([k, v]) => ({ value: Number(k), label: String(v) }))
             .sort((a, b) => a.value - b.value),
         )
@@ -55,66 +77,71 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
         setOptions([])
       }
     }
+  }
+
+  useEffect(() => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+    loadFromQuestion(question)
+    dirtyRef.current = false
   }, [question])
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!question || !text.trim()) return
-    try {
-      let props: QuestionProps | undefined
-      if (type === 'scale') {
-        const scaleProps: QuestionProps = {}
-        if (min !== '') scaleProps['min'] = Number(min)
-        if (max !== '') scaleProps['max'] = Number(max)
-        if (step !== '') scaleProps['step'] = Number(step)
-        props = scaleProps
-      } else if (type === 'radio') {
-        const radioProps: QuestionProps = {}
-        options
-          .map((o) => o.label.trim())
-          .filter((label) => label !== '')
-          .forEach((label, i) => {
-            radioProps[String(i + 1)] = label
-          })
-        props = radioProps
-      }
-      await onSave({
-        ...question,
-        text,
-        type,
-        isRequired,
-        props,
+  const buildPayload = (q: Question): Question | null => {
+    const f = fieldsRef.current
+    if (!f.text.trim()) return null
+    let props: QuestionProps | undefined
+    if (f.type === 'scale') {
+      const scaleProps: QuestionProps = {}
+      if (f.min !== '') scaleProps['min'] = Number(f.min)
+      if (f.max !== '') scaleProps['max'] = Number(f.max)
+      if (f.step !== '') scaleProps['step'] = Number(f.step)
+      props = scaleProps
+    } else if (f.type === 'radio') {
+      const radioProps: QuestionProps = {}
+      f.options.forEach((o, i) => {
+        radioProps[String(i + 1)] = o.label.trim()
       })
-    } catch (err) {
-      console.error(err)
+      props = radioProps
     }
+    return { ...q, text: f.text, type: f.type, isRequired: f.isRequired, props }
   }
+
+  useEffect(() => {
+    if (!question || readOnly || !dirtyRef.current || !text.trim()) return
+    if (timerRef.current) clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => {
+      dirtyRef.current = false
+      const payload = buildPayload(question)
+      if (payload) {
+        onSaveRef.current(payload).catch(() => {
+          dirtyRef.current = true
+        })
+      }
+    }, 500)
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current)
+        timerRef.current = null
+      }
+    }
+  }, [text, type, isRequired, options, min, max, step, question, readOnly])
+
+  useEffect(() => {
+    return () => {
+      if (dirtyRef.current && question && !readOnly) {
+        dirtyRef.current = false
+        const payload = buildPayload(question)
+        if (payload) onSaveRef.current(payload).catch(() => { dirtyRef.current = true })
+      }
+    }
+  }, [question, readOnly])
 
   const handleReset = () => {
     if (!question) return
-    setText(question.text)
-    setType(question.type)
-    setIsRequired(question.isRequired ?? false)
-    if (question.type === 'scale') {
-      setMin(question.props?.min != null ? Number(question.props.min) : '')
-      setMax(question.props?.max != null ? Number(question.props.max) : '')
-      setStep(parseStep(question.props?.step))
-      setOptions([])
-    } else if (question.type === 'radio') {
-      setOptions(
-        Object.entries(question.props ?? {})
-          .map(([k, v]) => ({ value: Number(k), label: String(v) }))
-          .sort((a, b) => a.value - b.value),
-      )
-      setMin('')
-      setMax('')
-      setStep('')
-    } else {
-      setMin('')
-      setMax('')
-      setStep('')
-      setOptions([])
-    }
+    loadFromQuestion(question)
+    dirtyRef.current = false
   }
 
   if (!question) {
@@ -126,12 +153,22 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
   }
 
   return (
-    <form onSubmit={handleSubmit} className={`bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5 ${readOnly ? 'opacity-80' : ''}`}>
-      {readOnly && (
-        <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
-          Режим просмотра — изменить вопросы нельзя
-        </p>
-      )}
+    <form onSubmit={(e) => e.preventDefault()} className={`bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5 ${readOnly ? 'opacity-80' : ''}`}>
+      <div className="flex items-center justify-between">
+        {readOnly ? (
+          <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+            Режим просмотра — изменить вопросы нельзя
+          </p>
+        ) : (
+          <p className="text-xs text-gray-400">Изменения сохраняются автоматически</p>
+        )}
+        {!readOnly && saving && (
+          <span className="text-xs text-gray-400 flex items-center gap-1.5">
+            <span className="w-3 h-3 border-2 border-gray-300 border-t-[#FF8600] rounded-full animate-spin" />
+            Сохранение…
+          </span>
+        )}
+      </div>
       <div>
         <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
           Формулировка вопроса
@@ -140,7 +177,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
           type="text"
           className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 text-sm shadow-sm font-medium disabled:bg-gray-50 disabled:cursor-default"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => {
+            setText(e.target.value)
+            markDirty()
+          }}
           readOnly={readOnly}
           disabled={readOnly}
         />
@@ -153,7 +193,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
         <select
           className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-blue-500 text-sm shadow-sm disabled:bg-gray-50 disabled:cursor-default"
           value={type}
-          onChange={(e) => setType(e.target.value as Question['type'])}
+          onChange={(e) => {
+            setType(e.target.value as Question['type'])
+            markDirty()
+          }}
           disabled={readOnly}
         >
           {(Object.keys(typeLabels) as Question['type'][]).map((key) => (
@@ -172,7 +215,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
               type="number"
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-default"
               value={min}
-              onChange={(e) => setMin(e.target.value === '' ? '' : Number(e.target.value))}
+              onChange={(e) => {
+                setMin(e.target.value === '' ? '' : Number(e.target.value))
+                markDirty()
+              }}
               readOnly={readOnly}
               disabled={readOnly}
               placeholder="1"
@@ -186,7 +232,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
               type="number"
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-default"
               value={max}
-              onChange={(e) => setMax(e.target.value === '' ? '' : Number(e.target.value))}
+              onChange={(e) => {
+                setMax(e.target.value === '' ? '' : Number(e.target.value))
+                markDirty()
+              }}
               readOnly={readOnly}
               disabled={readOnly}
               placeholder="5"
@@ -201,7 +250,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
               step={1}
               className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-default"
               value={step}
-              onChange={(e) => setStep(e.target.value === '' ? '' : Math.max(1, Math.round(Number(e.target.value))))}
+              onChange={(e) => {
+                setStep(e.target.value === '' ? '' : Math.max(1, Math.round(Number(e.target.value))))
+                markDirty()
+              }}
               readOnly={readOnly}
               disabled={readOnly}
               placeholder="1"
@@ -229,6 +281,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
                     const next = [...options]
                     next[i] = { ...opt, label: e.target.value }
                     setOptions(next)
+                    markDirty()
                   }}
                   readOnly={readOnly}
                   disabled={readOnly}
@@ -237,7 +290,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
                 {!readOnly && (
                   <button
                     type="button"
-                    onClick={() => setOptions(options.filter((_, idx) => idx !== i))}
+                    onClick={() => {
+                      setOptions(options.filter((_, idx) => idx !== i))
+                      markDirty()
+                    }}
                     className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer shrink-0"
                     title="Удалить вариант"
                   >
@@ -252,7 +308,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
           {!readOnly && (
             <button
               type="button"
-              onClick={() => setOptions([...options, { value: options.length + 1, label: '' }])}
+              onClick={() => {
+                setOptions([...options, { value: options.length + 1, label: '' }])
+                markDirty()
+              }}
               className="mt-2 w-full py-2 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 text-sm font-medium rounded-xl transition flex items-center justify-center gap-1 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -269,7 +328,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
           <input
             type="checkbox"
             checked={isRequired}
-            onChange={(e) => setIsRequired(e.target.checked)}
+            onChange={(e) => {
+              setIsRequired(e.target.checked)
+              markDirty()
+            }}
             className="w-4 h-4 text-[#FF8600] rounded focus:ring-[#FF8600]"
           />
           <span className="text-sm text-gray-700">
@@ -280,7 +342,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
       )}
 
       {!readOnly && (
-        <div className="pt-4 border-t border-gray-100 flex justify-end gap-3">
+        <div className="pt-4 border-t border-gray-100 flex justify-end">
           <button
             type="button"
             onClick={handleReset}
@@ -288,13 +350,6 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
             className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
           >
             Сбросить
-          </button>
-          <button
-            type="submit"
-            disabled={saving || !text.trim()}
-            className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
-          >
-            {saving ? 'Сохранение…' : 'Сохранить изменения'}
           </button>
         </div>
       )}
