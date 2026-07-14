@@ -26,6 +26,8 @@ interface MatrixTableProps {
   onAddParticipant: (userIds: number[], role: 'target' | 'respondent') => Promise<void>
   onRemoveParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
   onSave: (assignments: Record<string, Record<string, boolean>>) => Promise<void>
+  onExpand?: () => void
+  expanded?: boolean
 }
 
 export function matrixToEntries(
@@ -66,9 +68,11 @@ export function MatrixTable({
   onAddParticipant,
   onRemoveParticipant,
   onSave,
+  onExpand,
   onExportCsv,
   exportingCsv = false,
   canExport = false,
+  expanded = false,
 }: MatrixTableProps) {
   const [assignments, setAssignments] =
     useState<Record<string, Record<string, boolean>>>(initialAssignments)
@@ -283,6 +287,18 @@ export function MatrixTable({
                   {allSelectedActive ? 'Снять всех' : 'Выбрать всех'}
                 </button>
               )}
+              {onExpand && (
+                <button
+                  type="button"
+                  onClick={onExpand}
+                  className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:border-[#FF8600] hover:text-[#FF8600] hover:bg-orange-50 rounded-lg transition cursor-pointer"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V5a1 1 0 011-1h4M20 9V5a1 1 0 00-1-1h-4M4 15v4a1 1 0 001 1h4M20 15v4a1 1 0 01-1 1h-4" />
+                  </svg>
+                  На весь экран
+                </button>
+              )}
             </div>
             {surveyActive && onSendInvites && respondentLinks.length > 0 && (
               <button
@@ -302,7 +318,7 @@ export function MatrixTable({
               Сначала добавьте пользователей через кнопку «Добавить пользователя» в шапке опроса
             </div>
           ) : (
-            <div className="overflow-x-auto overflow-y-auto max-h-[600px]">
+            <div className={`overflow-x-auto ${expanded ? 'overflow-y-visible' : 'overflow-y-auto max-h-[600px]'}`}>
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">

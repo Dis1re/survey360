@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { questionApi, surveyApi, userApi } from '../api'
 import { MatrixTable, matrixToEntries } from '../components/MatrixTable'
 import { ConfirmModal } from '../components/ConfirmModal'
+import { Modal } from '../components/Modal'
 import { QuestionEditor } from '../components/QuestionEditor'
 import { QuestionList } from '../components/QuestionList'
 import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '../components/SurveyHeader'
@@ -78,6 +79,7 @@ interface MainPageProps {
 
 export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('editor')
+  const [matrixExpanded, setMatrixExpanded] = useState(false)
   const [loading, setLoading] = useState(() => surveyId !== null)
   const [survey, setSurvey] = useState<ApiSurvey | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -648,7 +650,43 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
               onSave={handleSaveMatrix}
+              onExpand={() => setMatrixExpanded(true)}
             />
+
+            {matrixExpanded && (
+              <Modal
+                title="Матрица оценки"
+                description={survey?.name}
+                size="full"
+                scrollable
+                onClose={() => setMatrixExpanded(false)}
+                closeOnBackdrop={false}
+              >
+                <MatrixTable
+                  key={`expanded-${surveyId}`}
+                  surveyId={surveyId}
+                  targets={targets}
+                  respondents={respondents}
+                  allUsers={allUsers}
+                  initialAssignments={assignments}
+                  completedAssignments={completedAssignments}
+                  saving={savingMatrix}
+                  adding={addingMatrixParticipant}
+                  exporting={exportingReport}
+                  sendingInvites={sendingInvites}
+                  readOnly={!surveyEditable}
+                  surveyActive={surveyStatus === 'active'}
+                  surveyName={survey?.name ?? ''}
+                  respondentLinks={respondentLinks}
+                  onExportReport={handleExportReport}
+                  onSendInvites={handleSendInvites}
+                  onAddParticipant={handleAddMatrixParticipant}
+                  onRemoveParticipant={handleRemoveMatrixParticipant}
+                  onSave={handleSaveMatrix}
+                  expanded
+                />
+              </Modal>
+            )}
           </div>
         </div>
       )}
