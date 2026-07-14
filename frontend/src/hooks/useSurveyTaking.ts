@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { answerApi, surveyApi, userApi } from '../api'
-import { apiQuestionToQuestion, mapQuestionTypeToApi, mapSurveyStatus } from '../mappers'
+import { apiQuestionToQuestion, mapSurveyStatus } from '../mappers'
 import { parseSurveyResponseParams } from '../routing'
 import type { ApiSurvey, ApiUser, Question } from '../types'
 
@@ -250,7 +250,6 @@ export function useSurveyTaking({
           userId: lockedUserId,
           targetId,
           text: answers[question.id].trim(),
-          type: mapQuestionTypeToApi(question.type),
         })
       }
       await surveyApi.completeAssignment(surveyId, { reviewerId: lockedUserId, targetId })

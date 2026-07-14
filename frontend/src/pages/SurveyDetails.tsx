@@ -162,7 +162,6 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
                       <th className={thClass}>Респондент</th>
                       <th className={thClass}>Оцениваемый</th>
                       <th className={thClass}>Текст</th>
-                      <th className={thClass}>Тип</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
@@ -173,7 +172,6 @@ export function EntityPage({ id, onBack }: EntityPageProps) {
                         <td className={tdClass}>{answer.userId}</td>
                         <td className={tdClass}>{answer.targetId}</td>
                         <td className={tdClass}>{answer.text || '—'}</td>
-                        <td className={tdClass}>{answer.type || '—'}</td>
                       </tr>
                     ))}
                   </tbody>

@@ -15,5 +15,4 @@ public class User
     public List<SurveyAssignment> ReviewerAssignments { get; set; } = [];
     public List<SurveyAssignment> TargetAssignments { get; set; } = [];
     public List<SurveyParticipant> Participations { get; set; } = [];
-    public List<SurveyRespondentLink> RespondentLinks { get; set; } = [];
 }

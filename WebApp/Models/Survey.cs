@@ -15,5 +15,4 @@ public class Survey
     public List<Question> Questions { get; set; } = [];
     public List<SurveyAssignment> Assignments { get; set; } = [];
     public List<SurveyParticipant> Participants { get; set; } = [];
-    public List<SurveyRespondentLink> RespondentLinks { get; set; } = [];
 }

@@ -29,7 +29,11 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
 
         modelBuilder.Entity<Answer>()
             .HasOne(a => a.TargetUser).WithMany(u => u.TargetAnswers)
-            .HasForeignKey(a => a.TargetId);
+            .HasForeignKey(a => a.TargetId)
+            .OnDelete(DeleteBehavior.SetNull);
+
+        modelBuilder.Entity<Answer>()
+            .HasIndex(a => new { a.QuestionId, a.UserId, a.TargetId }).IsUnique();
 
         modelBuilder.Entity<SurveyAssignment>()
             .HasOne(sa => sa.Survey).WithMany(s => s.Assignments)
@@ -37,11 +41,13 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
 
         modelBuilder.Entity<SurveyAssignment>()
             .HasOne(sa => sa.Reviewer).WithMany(u => u.ReviewerAssignments)
-            .HasForeignKey(sa => sa.ReviewerId);
+            .HasForeignKey(sa => sa.ReviewerId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<SurveyAssignment>()
             .HasOne(sa => sa.Target).WithMany(u => u.TargetAssignments)
-            .HasForeignKey(sa => sa.TargetId);
+            .HasForeignKey(sa => sa.TargetId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         modelBuilder.Entity<SurveyAssignment>()
             .HasIndex(sa => new { sa.SurveyId, sa.ReviewerId, sa.TargetId }).IsUnique();
@@ -57,20 +63,8 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<SurveyParticipant>()
             .HasIndex(sp => new { sp.SurveyId, sp.UserId }).IsUnique();
 
-        modelBuilder.Entity<SurveyRespondentLink>()
-            .HasOne(l => l.Survey).WithMany(s => s.RespondentLinks)
-            .HasForeignKey(l => l.SurveyId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<SurveyRespondentLink>()
-            .HasOne(l => l.Reviewer).WithMany(u => u.RespondentLinks)
-            .HasForeignKey(l => l.ReviewerId);
-
-        modelBuilder.Entity<SurveyRespondentLink>()
-            .HasIndex(l => l.Token).IsUnique();
-
-        modelBuilder.Entity<SurveyRespondentLink>()
-            .HasIndex(l => new { l.SurveyId, l.ReviewerId }).IsUnique();
+        modelBuilder.Entity<SurveyParticipant>()
+            .HasIndex(sp => sp.Token).IsUnique();
 
         modelBuilder.Entity<QuestionTemplate>()
             .HasOne(qt => qt.SurveyTemplate).WithMany(t => t.QuestionTemplates)
@@ -86,5 +80,4 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<SurveyParticipant> SurveyParticipants => Set<SurveyParticipant>();
     public DbSet<SurveyTemplate> SurveyTemplates { get; set; }
     public DbSet<QuestionTemplate> QuestionTemplates { get; set; }
-    public DbSet<SurveyRespondentLink> SurveyRespondentLinks => Set<SurveyRespondentLink>();
 }

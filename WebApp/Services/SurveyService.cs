@@ -157,7 +157,6 @@ public class SurveyService(
         if (IsSurveyActive(survey.Status))
             return false;
 
-        await context.SurveyRespondentLinks.Where(l => l.SurveyId == id).ExecuteDeleteAsync(ct);
         await context.SurveyAssignments.Where(a => a.SurveyId == id).ExecuteDeleteAsync(ct);
         await context.Answers.Where(a => context.Questions.Any(q => q.Id == a.QuestionId && q.SurveyId == id)).ExecuteDeleteAsync(ct);
         await context.Questions.Where(q => q.SurveyId == id).ExecuteDeleteAsync(ct);
@@ -334,9 +333,12 @@ public class SurveyService(
                 .ExecuteDeleteAsync(ct);
         }
 
-        await context.SurveyRespondentLinks
-            .Where(l => l.SurveyId == surveyId)
-            .ExecuteDeleteAsync(ct);
+        await context.SurveyParticipants
+            .Where(p => p.SurveyId == surveyId && p.IsRespondent)
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.Token, (string?)null)
+                .SetProperty(p => p.CreatedAt, default(DateTime)),
+                ct);
     }
 
     public async Task<int?> CompleteAssignmentAsync(

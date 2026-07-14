@@ -15,7 +15,6 @@ public class DatabaseController(ApplicationDbContext context, IWebHostEnvironmen
         if (!env.IsDevelopment())
             return NotFound();
 
-        await context.SurveyRespondentLinks.ExecuteDeleteAsync(ct);
         await context.SurveyAssignments.ExecuteDeleteAsync(ct);
         await context.Answers.ExecuteDeleteAsync(ct);
         await context.QuestionTemplates.ExecuteDeleteAsync(ct);
