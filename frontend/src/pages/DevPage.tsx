@@ -509,13 +509,15 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                         </td>
                         <td className="px-4 py-3 text-gray-500">{formatDate(survey.createdAt)}</td>
                         <td className="px-4 py-3 text-right">
-                          <button
-                            type="button"
-                            className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-lg transition cursor-pointer"
-                            onClick={() => handleDeleteSurvey(survey.id, survey.name)}
-                          >
-                            Удалить
-                          </button>
+                          {survey.status !== 'active' && (
+                            <button
+                              type="button"
+                              className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-lg transition cursor-pointer"
+                              onClick={() => handleDeleteSurvey(survey.id, survey.name)}
+                            >
+                              Удалить
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}

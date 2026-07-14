@@ -384,7 +384,7 @@ export function SurveyHeader({
                 + Добавить пользователя
               </button>
             )}
-            {onDelete && (
+            {onDelete && status !== 'active' && (
               <button
                 type="button"
                 onClick={() => setConfirmDialog('delete')}
