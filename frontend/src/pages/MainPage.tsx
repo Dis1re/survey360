@@ -19,7 +19,7 @@ import {
   mapSurveyStatusToApi,
   usersToParticipants,
 } from '../mappers'
-import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink } from '../types'
+import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink, SurveyReportInfo } from '../types'
 
 interface MainPageProps {
   surveyId: number | null
@@ -50,6 +50,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [exportConfirmOpen, setExportConfirmOpen] = useState(false)
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
+  const [reportInfo, setReportInfo] = useState<SurveyReportInfo | null>(null)
+  const [exportingCsv, setExportingCsv] = useState(false)
   const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
@@ -78,7 +80,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }, [])
 
-  const loadSurvey = useCallback(async (id: number) => {
+    const loadSurvey = useCallback(async (id: number) => {
     const details = await surveyApi.get(id)
     setSurvey(details.survey)
     const mappedQuestions = details.questions.map(apiQuestionToQuestion)
@@ -87,6 +89,12 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
       if (prev !== null && mappedQuestions.some((q) => q.id === prev)) return prev
       return mappedQuestions[0]?.id ?? null
     })
+    try {
+      setReportInfo(await surveyApi.getReportInfo(id))
+    } catch (err) {
+      console.error(err)
+      setReportInfo(null)
+    }
     try {
       await loadMatrix(id)
     } catch (err) {
@@ -153,6 +161,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
 
   const surveyStatus = survey ? mapSurveyStatus(survey.status) : 'draft'
   const surveyEditable = surveyStatus === 'draft'
+  const canExport = surveyStatus === 'closed' || (reportInfo?.answerCount ?? 0) > 0
 
   const hasQuestions = questions.length > 0
   const matrixFilled =
@@ -421,6 +430,19 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
     }
   }
 
+  const handleExportCsv = async () => {
+    if (surveyId === null) return
+    setExportingCsv(true)
+    try {
+      await surveyApi.downloadCsv(surveyId)
+    } catch (err) {
+      console.error(err)
+      alert('Не удалось сформировать CSV')
+    } finally {
+      setExportingCsv(false)
+    }
+  }
+
   if (editingTemplateId !== null) {
     return (
       <TemplateEditor
@@ -546,11 +568,14 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               saving={savingMatrix}
               adding={addingMatrixParticipant}
               exporting={exportingReport}
+              exportingCsv={exportingCsv}
+              canExport={canExport}
               readOnly={!surveyEditable}
               surveyActive={surveyStatus === 'active'}
               surveyName={survey?.name ?? ''}
               respondentLinks={respondentLinks}
               onExportReport={handleExportReport}
+              onExportCsv={handleExportCsv}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
               onSave={handleSaveMatrix}

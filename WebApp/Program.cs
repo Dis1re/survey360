@@ -19,6 +19,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<SurveyDocxReportService>();
+builder.Services.AddScoped<SurveyCsvReportService>();
 builder.Services.AddScoped<SurveyRespondentLinkService>();
 
 builder.Services.AddCors(options =>

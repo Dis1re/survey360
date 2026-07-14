@@ -13,11 +13,14 @@ interface MatrixTableProps {
   saving?: boolean
   adding?: boolean
   exporting?: boolean
+  exportingCsv?: boolean
+  canExport?: boolean
   readOnly?: boolean
   surveyActive?: boolean
   surveyName?: string
   respondentLinks?: RespondentLink[]
   onExportReport?: () => void | Promise<void>
+  onExportCsv?: () => void | Promise<void>
   onAddParticipant: (userIds: number[], role: 'target' | 'respondent') => Promise<void>
   onRemoveParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
   onSave: (assignments: Record<string, Record<string, boolean>>) => Promise<void>
@@ -59,6 +62,9 @@ export function MatrixTable({
   onAddParticipant,
   onRemoveParticipant,
   onSave,
+  onExportCsv,
+  exportingCsv = false,
+  canExport = false,
 }: MatrixTableProps) {
   const [assignments, setAssignments] =
     useState<Record<string, Record<string, boolean>>>(initialAssignments)
@@ -361,7 +367,7 @@ export function MatrixTable({
           {!readOnly && (
             <span className="text-xs text-gray-400">Изменения сохраняются автоматически</span>
           )}
-          {onExportReport && (
+          {onExportReport && canExport && (
             <button
               type="button"
               onClick={() => onExportReport()}
@@ -369,6 +375,16 @@ export function MatrixTable({
               className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl transition cursor-pointer"
             >
               {exporting ? 'Формирование…' : 'Сформировать результаты (.docx)'}
+            </button>
+          )}
+          {onExportCsv && canExport && (
+            <button
+              type="button"
+              onClick={() => onExportCsv()}
+              disabled={exportingCsv}
+              className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl transition cursor-pointer"
+            >
+              {exportingCsv ? 'Формирование…' : 'Сформировать результаты (.csv)'}
             </button>
           )}
         </div>

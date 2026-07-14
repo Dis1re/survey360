@@ -135,6 +135,30 @@ export const surveyApi = {
     link.click()
     URL.revokeObjectURL(url)
   },
+
+  downloadCsv: async (id: number) => {
+    const response = await fetch(`${API}/survey/${id}/report.csv`)
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`API /survey/${id}/report.csv [${response.status}]:`, errorText || response.statusText)
+      throw new Error(errorText || `Ошибка API [${response.status}]`)
+    }
+
+    const blob = await response.blob()
+    const disposition = response.headers.get('Content-Disposition') ?? ''
+    const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+    const plainMatch = disposition.match(/filename="?([^";]+)"?/i)
+    const fileName = utfMatch
+      ? decodeURIComponent(utfMatch[1])
+      : plainMatch?.[1] ?? `survey-${id}-результаты.csv`
+
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = fileName
+    link.click()
+    URL.revokeObjectURL(url)
+  },
   saveAsTemplate: (id: number, data: SaveAsTemplateRequest) =>
     sendRequest<number>(`${API}/survey/${id}/save-as-template`, {
       method: 'POST',
