@@ -449,21 +449,45 @@ export function MatrixTable({
                             ? buildSurveyResponseLink(surveyId, respondent.id, target.id)
                             : null
 
+                          const cellDisabled = readOnly || respondent.id === target.id
                           return (
-                            <td key={target.id} className="p-4 text-center border-r border-gray-200 last:border-r-0">
+                            <td
+                              key={target.id}
+                              onClick={(e) => {
+                                if (cellDisabled) return
+                                if ((e.target as HTMLElement).closest('a')) return
+                                toggle(reviewerKey, targetKey)
+                              }}
+                              className={`p-4 text-center border-r border-gray-200 last:border-r-0 ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40'}`}
+                            >
                               <div className="flex flex-col items-center gap-1.5">
-                                <input
-                                  type="checkbox"
-                                  checked={assigned}
-                                  onChange={() => toggle(reviewerKey, targetKey)}
-                                  disabled={readOnly || respondent.id === target.id}
-                                  className="w-4 h-4 border-gray-300 rounded focus:ring-[#FF8600] cursor-pointer disabled:opacity-30 disabled:cursor-default"
-                                />
+                                <span
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center transition ${
+                                    assigned
+                                      ? completed
+                                        ? 'bg-green-500'
+                                        : 'bg-[#FF8600]'
+                                      : 'border-2 border-gray-300 bg-transparent'
+                                  }`}
+                                >
+                                  {assigned && completed && (
+                                    <svg
+                                      className="w-3 h-3 text-white"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth={3}
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </span>
                                 {responseLink && (
                                   <a
                                     href={responseLink}
                                     target="_blank"
                                     rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
                                     className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] hover:underline"
                                     title="Просмотреть ответы"
                                   >
