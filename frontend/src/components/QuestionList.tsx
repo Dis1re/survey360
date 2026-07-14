@@ -11,7 +11,11 @@ interface QuestionListProps {
   onQuestionCreate: (text: string) => Promise<void>
   onQuestionDelete: (id: number) => Promise<void>
   onReorder: (orderedIds: number[]) => Promise<void>
+<<<<<<< HEAD
   onPreview: () => void
+=======
+  onDeleteAll?: () => void
+>>>>>>> 26de77438d8aedc5dca8d58a136b748b83eae83c
 }
 
 export function QuestionList({
@@ -24,7 +28,11 @@ export function QuestionList({
   onQuestionCreate,
   onQuestionDelete,
   onReorder,
+<<<<<<< HEAD
   onPreview,
+=======
+  onDeleteAll,
+>>>>>>> 26de77438d8aedc5dca8d58a136b748b83eae83c
 }: QuestionListProps) {
   const [newQuestionText, setNewQuestionText] = useState('')
   const [showInput, setShowInput] = useState(false)
@@ -78,12 +86,21 @@ export function QuestionList({
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col">
-      <span className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">
-        Вопросы анкеты ({questions.length})
-        {!readOnly && questions.length > 1 && (
-          <span className="ml-1 font-normal normal-case text-gray-300">· перетащите для сортировки</span>
+      <div className="flex items-center justify-between gap-2 mb-3">
+        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+          Вопросы анкеты ({questions.length})
+        </span>
+        {!readOnly && questions.length > 0 && (
+          <button
+            type="button"
+            onClick={onDeleteAll}
+            className="shrink-0 text-xs font-medium text-red-500 hover:text-red-600 border border-red-200 hover:bg-red-50 rounded-lg px-2.5 py-1 transition cursor-pointer"
+            title="Удалить все вопросы анкеты"
+          >
+            Удалить всё
+          </button>
         )}
-      </span>
+      </div>
 
       <div className="space-y-2 flex-1 overflow-y-auto pr-1">
         {questions.length === 0 ? (
