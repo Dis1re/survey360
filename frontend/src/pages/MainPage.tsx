@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { questionApi, surveyApi, userApi } from '../api'
 import { MatrixTable, matrixToEntries } from '../components/MatrixTable'
+import { SIDEBAR_WIDTH_COLLAPSED, SIDEBAR_WIDTH_EXPANDED } from '../components/Sidebar'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { Modal } from '../components/Modal'
 import { QuestionEditor } from '../components/QuestionEditor'
@@ -741,15 +742,15 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
         />
       )}
 
-      {responseView && (
+      {responseView && surveyId !== null && (
         <ResponseModal
-          surveyId={surveyId ?? 0}
+          surveyId={surveyId}
           reviewerId={responseView.reviewerId}
           targetId={responseView.targetId}
           reviewerName={responseView.reviewerName}
           targetName={responseView.targetName}
           fullscreen
-          overlayLeft={sidebarCollapsed ? 80 : 320}
+          sidebarWidth={sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED}
           onClose={() => setResponseView(null)}
         />
       )}

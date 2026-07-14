@@ -23,6 +23,9 @@ const participationFilters: { id: ParticipationFilter; label: string }[] = [
   { id: 'done', label: 'Пройденные' },
 ]
 
+export const SIDEBAR_WIDTH_COLLAPSED = 80
+export const SIDEBAR_WIDTH_EXPANDED = 320
+
 interface SidebarProps {
   surveys: Survey[]
   activeSurveyId: number | null

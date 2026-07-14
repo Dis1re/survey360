@@ -732,6 +732,33 @@ public class SurveyController(
         return File(bytes, "text/csv; charset=utf-8", result.Value.FileName);
     }
 
+    public record ResponseItemDto(string QuestionText, string AnswerText);
+
+    [HttpGet("{id:int}/responses/{reviewerId:int}/{targetId:int}")]
+    public async Task<ActionResult<List<ResponseItemDto>>> GetResponses(
+        int id, int reviewerId, int targetId, CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        var items = await context.Answers
+            .AsNoTracking()
+            .Where(a => a.Question.SurveyId == id
+                && a.UserId == reviewerId
+                && a.TargetId == targetId)
+            .Join(
+                context.Questions.AsNoTracking(),
+                a => a.QuestionId,
+                q => q.Id,
+                (a, q) => new { q.Order, QuestionText = q.Text, AnswerText = a.Text })
+            .OrderBy(x => x.Order)
+            .ThenBy(x => x.QuestionText)
+            .Select(x => new ResponseItemDto(x.QuestionText, x.AnswerText))
+            .ToListAsync(ct);
+
+        return items;
+    }
+
     [Authorize]
     [HttpGet("{id:int}/links")]
     public async Task<ActionResult<List<RespondentLinkDto>>> GetRespondentLinks(int id, CancellationToken ct)

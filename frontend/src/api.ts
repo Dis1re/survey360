@@ -88,6 +88,9 @@ export const surveyApi = {
 
   get: (id: number) => sendRequest<ApiSurveyDetails>(`${API}/survey/${id}`),
 
+  getResponses: (id: number, reviewerId: number, targetId: number) =>
+    sendRequest<Array<{ questionText: string; answerText: string }>>(`${API}/survey/${id}/responses/${reviewerId}/${targetId}`),
+
   getMatrix: (id: number) => sendRequest<ApiSurveyMatrix>(`${API}/survey/${id}/matrix`),
 
   addParticipant: (id: number, data: AddSurveyParticipantRequest) =>

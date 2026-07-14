@@ -1,8 +1,6 @@
 import { useEffect, useState } from 'react'
 import { surveyApi } from '../api'
-import { apiQuestionToQuestion } from '../mappers'
 import { Modal } from './Modal'
-import type { ApiSurveyDetails, Question } from '../types'
 
 interface ResponseModalProps {
   surveyId: number
@@ -12,7 +10,7 @@ interface ResponseModalProps {
   targetName?: string
   onClose: () => void
   fullscreen?: boolean
-  overlayLeft?: number
+  sidebarWidth?: number
 }
 
 export function ResponseModal({
@@ -23,45 +21,35 @@ export function ResponseModal({
   targetName,
   onClose,
   fullscreen = false,
-  overlayLeft = 0,
+  sidebarWidth = 320,
 }: ResponseModalProps) {
   const [loading, setLoading] = useState(true)
-  const [questions, setQuestions] = useState<Question[]>([])
-  const [answers, setAnswers] = useState<Record<number, string>>({})
+  const [items, setItems] = useState<{ questionText: string; answerText: string }[]>([])
 
   useEffect(() => {
     setLoading(true)
     surveyApi
-      .get(surveyId)
-      .then((details: ApiSurveyDetails) => {
-        setQuestions(details.questions.map(apiQuestionToQuestion))
-        const map: Record<number, string> = {}
-        for (const answer of details.answers) {
-          if (answer.userId === reviewerId && answer.targetId === targetId) {
-            map[answer.questionId] = answer.text
-          }
-        }
-        setAnswers(map)
-      })
+      .getResponses(surveyId, reviewerId, targetId)
+      .then(setItems)
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [surveyId, reviewerId, targetId])
 
   const content = loading ? (
     <p className="text-sm text-gray-400 py-4 text-center">Загрузка…</p>
-  ) : questions.length === 0 ? (
-    <p className="text-sm text-gray-400 py-4 text-center">Вопросов нет</p>
+  ) : items.length === 0 ? (
+    <p className="text-sm text-gray-400 py-4 text-center">Нет ответов</p>
   ) : (
     <div className="space-y-3">
-      {questions.map((q, index) => (
-        <div key={q.id} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
+      {items.map((item, index) => (
+        <div key={index} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
           <div className="text-sm font-medium text-gray-900 mb-2">
             <span className="text-gray-400 mr-1.5">{index + 1}.</span>
-            {q.text}
+            {item.questionText}
           </div>
           <div className="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
-            {answers[q.id]?.trim() ? (
-              answers[q.id]
+            {item.answerText?.trim() ? (
+              item.answerText
             ) : (
               <span className="text-gray-400">— нет ответа —</span>
             )}
@@ -75,7 +63,7 @@ export function ResponseModal({
     return (
       <div
         className="fixed top-0 right-0 bottom-0 z-40 bg-gray-100 flex flex-col border-l border-gray-200 transition-[left] duration-300 ease-out"
-        style={{ left: overlayLeft }}
+        style={{ left: sidebarWidth }}
       >
         <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
           <div>
