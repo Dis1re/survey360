@@ -631,7 +631,6 @@ export function TakeSurvey({
               Сменить пользователя
             </button>
           )}
->>>>>>> main
           <button
             type="button"
             onClick={() => setTargetModalOpen(true)}
