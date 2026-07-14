@@ -206,40 +206,46 @@ export function MatrixTable({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="p-4 text-xs font-bold text-gray-400 w-64 border-r border-gray-100">
-                      Респондент \ Объект
-                    </th>
-                     {targets.map((target) => (
-                       <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px]">
-                         <div className="flex flex-col items-center gap-1">
-                           <div className="relative inline-flex">
-                            <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
-                                {target.initial}
-                              </div>
-                              {!readOnly && (
-                                <button
-                                  type="button"
-                                  onClick={() => onRemoveParticipant(target.id, 'target')}
-                                  className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
-                                  title="Удалить объект"
-                                >
-                                  ✕
-                                </button>
-                              )}
-                           </div>
-                           <span>{target.name}</span>
-                         </div>
-                       </th>
-                     ))}
+                     <th className="p-4 text-xs font-bold text-gray-400 w-64 border-r border-gray-100">
+                       Респондент \ Объект
+                     </th>
+                      {targets.map((target, index) => (
+                        <th
+                          key={target.id}
+                          className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px]"
+                        >
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="relative inline-flex">
+                             <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
+                                 {target.initial}
+                               </div>
+                               {!readOnly && (
+                                 <button
+                                   type="button"
+                                   onClick={() => onRemoveParticipant(target.id, 'target')}
+                                   className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                                   title="Удалить объект"
+                                 >
+                                   ✕
+                                 </button>
+                               )}
+                            </div>
+                            <span>{target.name}</span>
+                          </div>
+                        </th>
+                      ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
-                  {respondents.map((respondent) => {
+                  {respondents.map((respondent, index) => {
                     const invite = linkByReviewerId[respondent.id]
                     const inviteLink = invite ? buildRespondentInviteLink(invite.token) : null
 
                     return (
-                    <tr key={respondent.id} className="hover:bg-blue-50/30 transition">
+                    <tr
+                      key={respondent.id}
+                      className="hover:bg-blue-50/30 transition"
+                    >
                       <td className="p-4 font-medium text-gray-900 border-r border-gray-100">
                         <div className="flex items-center gap-2">
                           <div className="relative inline-flex">
