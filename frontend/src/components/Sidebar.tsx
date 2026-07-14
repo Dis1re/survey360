@@ -1,17 +1,41 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import {
+  isMySurvey,
+  isParticipationDone,
+  isParticipationPending,
+  isParticipationSurvey,
+} from '../mappers'
 import type { Survey } from '../types'
+import { UserBar } from './UserBar'
+
+type SurveyStatusFilter = Survey['status']
+type SurveyScope = 'mine' | 'participation'
+type ParticipationFilter = 'pending' | 'done'
+
+const mineStatusFilters: { id: SurveyStatusFilter; label: string }[] = [
+  { id: 'draft', label: 'Черновик' },
+  { id: 'active', label: 'Активные' },
+  { id: 'closed', label: 'Завершенные' },
+]
+
+const participationFilters: { id: ParticipationFilter; label: string }[] = [
+  { id: 'pending', label: 'К прохождению' },
+  { id: 'done', label: 'Пройденные' },
+]
 
 interface SidebarProps {
   surveys: Survey[]
   activeSurveyId: number | null
+  currentUserId?: number | null
+  scope?: SurveyScope
+  onScopeChange?: (scope: SurveyScope) => void
   loading?: boolean
   creating?: boolean
-  onSurveySelect: (id: number) => void
-  onCreateClick: () => void
+  onSurveySelect: (id: number, scope?: SurveyScope) => void
+  onCreateClick?: () => void
   onSearch: (query: string) => void
-  onOpenDev: () => void
-  onOpenDetails: () => void
-  onOpenTake: () => void
+  onOpenDev?: () => void
+  onOpenDetails?: () => void
 }
 
 const statusConfig = {
@@ -49,12 +73,18 @@ function SurveyCard({
   survey,
   isSelected,
   onSelect,
+  showProgress = false,
+  highlightPending = false,
 }: {
   survey: Survey
   isSelected: boolean
   onSelect: () => void
+  showProgress?: boolean
+  highlightPending?: boolean
 }) {
   const cfg = statusConfig[survey.status]
+  const assigned = survey.myAssignedCount ?? 0
+  const completed = survey.myCompletedCount ?? 0
 
   return (
     <div
@@ -70,7 +100,9 @@ function SurveyCard({
       className={`p-3 rounded-xl cursor-pointer transition border ${
         isSelected
           ? 'bg-white border-l-4 border-l-[#FF8600] border-gray-200 shadow-sm'
-          : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+          : highlightPending
+            ? 'bg-white border-l-4 border-l-amber-400 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+            : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
       }`}
     >
       <div className="flex items-center justify-between mb-1">
@@ -89,7 +121,13 @@ function SurveyCard({
       >
         {survey.title}
       </h4>
-      <p className="text-xs text-gray-500 truncate mt-0.5">{survey.description}</p>
+      {showProgress && assigned > 0 ? (
+        <p className="text-xs text-gray-500 truncate mt-0.5">
+          {completed} из {assigned} оценок
+        </p>
+      ) : (
+        <p className="text-xs text-gray-500 truncate mt-0.5">{survey.description}</p>
+      )}
     </div>
   )
 }
@@ -98,20 +136,26 @@ function SurveyMiniCard({
   survey,
   isSelected,
   onSelect,
+  showProgress = false,
 }: {
   survey: Survey
   isSelected: boolean
   onSelect: () => void
+  showProgress?: boolean
 }) {
   const cfg = statusConfig[survey.status]
   const initial = getSurveyInitial(survey.title)
+  const assigned = survey.myAssignedCount ?? 0
+  const completed = survey.myCompletedCount ?? 0
+  const progressLabel =
+    showProgress && assigned > 0 ? ` · ${completed}/${assigned}` : ''
 
   return (
     <button
       type="button"
       onClick={onSelect}
-      title={`${survey.title} · ${cfg.label}`}
-      aria-label={`${survey.title}, ${cfg.label}`}
+      title={`${survey.title} · ${cfg.label}${progressLabel}`}
+      aria-label={`${survey.title}, ${cfg.label}${progressLabel}`}
       aria-current={isSelected ? 'true' : undefined}
       className={`relative w-full aspect-square rounded-xl flex items-center justify-center transition cursor-pointer ${
         isSelected
@@ -128,9 +172,37 @@ function SurveyMiniCard({
   )
 }
 
+function FilterButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition cursor-pointer ${
+        active
+          ? 'bg-[#FF8600] text-white shadow-sm'
+          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
 export function Sidebar({
   surveys,
   activeSurveyId,
+  currentUserId = null,
+  scope: scopeProp,
+  onScopeChange,
   loading = false,
   creating = false,
   onSurveySelect,
@@ -141,12 +213,92 @@ export function Sidebar({
 }: SidebarProps) {
   const [query, setQuery] = useState('')
   const [collapsed, setCollapsed] = useState(false)
+  const [internalScope, setInternalScope] = useState<SurveyScope>('mine')
+  const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>('active')
+  const [participationFilter, setParticipationFilter] = useState<ParticipationFilter>('pending')
+  const initialDefaultApplied = useRef(false)
 
+  const hasUserScope = currentUserId != null
+  const scope = scopeProp ?? internalScope
+
+  const setScope = (next: SurveyScope) => {
+    onScopeChange?.(next)
+    if (scopeProp === undefined) setInternalScope(next)
+  }
+
+  const pendingParticipationCount = useMemo(() => {
+    if (!hasUserScope) return 0
+    return surveys.filter((s) => isParticipationSurvey(s) && isParticipationPending(s)).length
+  }, [surveys, hasUserScope])
+
+  const scopedSurveys = useMemo(() => {
+    if (!hasUserScope) return surveys
+    if (scope === 'mine') {
+      return surveys.filter((s) => isMySurvey(s, currentUserId!))
+    }
+    return surveys.filter((s) => isParticipationSurvey(s))
+  }, [surveys, scope, currentUserId, hasUserScope])
+
+  const filteredSurveys = useMemo(() => {
+    if (!hasUserScope) {
+      return scopedSurveys.filter((s) => s.status === statusFilter)
+    }
+    if (scope === 'mine') {
+      return scopedSurveys.filter((s) => s.status === statusFilter)
+    }
+    return scopedSurveys.filter((s) =>
+      participationFilter === 'pending' ? isParticipationPending(s) : isParticipationDone(s),
+    )
+  }, [scopedSurveys, scope, statusFilter, participationFilter, hasUserScope])
+
+  useEffect(() => {
+    if (!hasUserScope || loading || initialDefaultApplied.current) return
+    if (surveys.length === 0) {
+      initialDefaultApplied.current = true
+      return
+    }
+
+    const pending = surveys.filter((s) => isParticipationSurvey(s) && isParticipationPending(s))
+
+    if (pending.length > 0) {
+      setScope('participation')
+      setParticipationFilter('pending')
+    } else {
+      setScope('mine')
+      setStatusFilter('active')
+    }
+
+    initialDefaultApplied.current = true
+  }, [loading, surveys, currentUserId, hasUserScope])
+
+  useEffect(() => {
+    if (!hasUserScope || activeSurveyId === null) return
+    const selected = surveys.find((s) => s.id === activeSurveyId)
+    if (!selected) return
+
+    if (scope === 'participation' && isParticipationSurvey(selected)) {
+      setParticipationFilter(isParticipationDone(selected) ? 'done' : 'pending')
+    } else if (scope === 'mine' && isMySurvey(selected, currentUserId!)) {
+      setStatusFilter(selected.status)
+    }
+  }, [activeSurveyId, surveys, currentUserId, hasUserScope, scope])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     onSearch(query)
   }
+
+  const emptyMessage = (() => {
+    if (surveys.length === 0) return 'Опросов пока нет'
+    if (!hasUserScope) return 'Нет опросов в этой категории'
+    if (scope === 'mine') return 'Нет опросов в этой категории'
+    return participationFilter === 'pending'
+      ? 'Нет опросов к прохождению'
+      : 'Нет пройденных опросов'
+  })()
+
+  const showCreateButton = onCreateClick && (!hasUserScope || scope === 'mine')
+  const showProgress = hasUserScope && scope === 'participation'
 
   return (
     <aside className={`flex flex-col flex-shrink-0 h-screen ${collapsed ? 'w-20' : 'w-80'}`}>
@@ -176,39 +328,119 @@ export function Sidebar({
               />
               <div className="text-base font-semibold text-gray-900 truncate">Опросы 360</div>
             </div>
-            
-            {/* TEMP: FOR DEBUGGING */}
+
             <div className="flex items-center gap-1 ml-auto">
-              <button
-                type="button"
-                onClick={onOpenDetails}
-                title="Детали опроса"
-                aria-label="Детали опроса"
-                className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
+              <UserBar compact />
+              {onOpenDetails && (
+                <button
+                  type="button"
+                  onClick={onOpenDetails}
+                  title="Детали опроса"
+                  aria-label="Детали опроса"
+                  className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+              )}
+              {onOpenDev && (
+                <button
+                  type="button"
+                  onClick={onOpenDev}
+                  title="База данных"
+                  aria-label="База данных"
+                  className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center gap-1 ml-auto">
+            <UserBar compact />
+            {onOpenDev && (
               <button
                 type="button"
                 onClick={onOpenDev}
-                title="Dev-страница"
-                aria-label="Dev-страница"
-                className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+                title="База данных"
+                aria-label="База данных"
+                className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-2 cursor-pointer"
               >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                 </svg>
               </button>
-            </div>
-          </>
-        ) : null}
+            )}
+          </div>
+        )}
       </div>
 
       {!collapsed && (
-        <div className="p-4 border-b border-gray-100">
-          <form onSubmit={handleSubmit} className="mt-3 relative">
+        <div className="p-4 border-b border-gray-100 space-y-3">
+          {hasUserScope && (
+            <div className="flex gap-1 p-0.5 bg-gray-100 rounded-lg">
+              <button
+                type="button"
+                onClick={() => setScope('mine')}
+                aria-pressed={scope === 'mine'}
+                className={`flex-1 py-2 text-xs font-semibold rounded-md transition cursor-pointer ${
+                  scope === 'mine'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Мои опросы
+              </button>
+              <button
+                type="button"
+                onClick={() => setScope('participation')}
+                aria-pressed={scope === 'participation'}
+                className={`flex-1 py-2 text-xs font-semibold rounded-md transition cursor-pointer ${
+                  scope === 'participation'
+                    ? 'bg-white text-gray-900 shadow-sm'
+                    : 'text-gray-600 hover:text-gray-900'
+                }`}
+              >
+                Участие
+                {pendingParticipationCount > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center min-w-[1.125rem] h-[1.125rem] px-1 rounded-full bg-[#FF8600] text-white text-[10px] leading-none">
+                    {pendingParticipationCount}
+                  </span>
+                )}
+              </button>
+            </div>
+          )}
+
+          <div className="flex gap-1">
+            {(!hasUserScope || scope === 'mine'
+              ? mineStatusFilters
+              : participationFilters
+            ).map(({ id, label }) => (
+              <FilterButton
+                key={id}
+                active={
+                  hasUserScope && scope === 'participation'
+                    ? participationFilter === id
+                    : statusFilter === id
+                }
+                onClick={() => {
+                  if (hasUserScope && scope === 'participation') {
+                    setParticipationFilter(id as ParticipationFilter)
+                  } else {
+                    setStatusFilter(id as SurveyStatusFilter)
+                  }
+                }}
+              >
+                {label}
+              </FilterButton>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit} className="relative">
             <input
               type="text"
               placeholder="Поиск опроса..."
@@ -241,31 +473,37 @@ export function Sidebar({
           <p className={`py-2 text-sm text-gray-400 ${collapsed ? 'text-center' : 'px-3'}`}>
             {collapsed ? '…' : 'Загрузка…'}
           </p>
-        ) : surveys.length === 0 ? (
-          !collapsed && <p className="px-3 py-2 text-sm text-gray-400">Опросов пока нет</p>
+        ) : filteredSurveys.length === 0 ? (
+          !collapsed && <p className="px-3 py-2 text-sm text-gray-400">{emptyMessage}</p>
         ) : collapsed ? (
-          surveys.map((survey) => (
+          filteredSurveys.map((survey) => (
             <SurveyMiniCard
               key={survey.id}
               survey={survey}
               isSelected={survey.id === activeSurveyId}
-              onSelect={() => onSurveySelect(survey.id)}
+              onSelect={() => onSurveySelect(survey.id, scope)}
+              showProgress={showProgress}
             />
           ))
         ) : (
-          surveys.map((survey) => (
+          filteredSurveys.map((survey) => (
             <SurveyCard
               key={survey.id}
               survey={survey}
               isSelected={survey.id === activeSurveyId}
-              onSelect={() => onSurveySelect(survey.id)}
+              onSelect={() => onSurveySelect(survey.id, scope)}
+              showProgress={showProgress}
+              highlightPending={
+                showProgress &&
+                participationFilter === 'pending' &&
+                isParticipationPending(survey)
+              }
             />
           ))
         )}
       </div>
 
-      {/* Create button pinned to bottom, orange + can hide with sidebar collapse */}
-      {!collapsed && (
+      {showCreateButton && !collapsed && (
         <div className="p-4 border-t border-gray-100">
           <button
             onClick={onCreateClick}
@@ -280,7 +518,7 @@ export function Sidebar({
         </div>
       )}
 
-      {collapsed && (
+      {showCreateButton && collapsed && (
         <div className="p-4 border-t border-gray-100">
           <button
             onClick={onCreateClick}
@@ -297,4 +535,3 @@ export function Sidebar({
     </aside>
   )
 }
-

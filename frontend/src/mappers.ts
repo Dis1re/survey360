@@ -70,7 +70,32 @@ export function apiSurveyToSurvey(api: ApiSurvey): Survey {
     description: api.description,
     status: mapSurveyStatus(api.status),
     date: formatSurveyDate(api),
+    createdByUserId: api.createdByUserId ?? null,
+    myAssignedCount: api.myAssignedCount ?? null,
+    myCompletedCount: api.myCompletedCount ?? null,
   }
+}
+
+export function isMySurvey(survey: Survey, userId: number): boolean {
+  return survey.createdByUserId === userId
+}
+
+export function isParticipationSurvey(survey: Survey): boolean {
+  return survey.status !== 'draft' && (survey.myAssignedCount ?? 0) > 0
+}
+
+export function isParticipationPending(survey: Survey): boolean {
+  if (survey.status === 'closed') return false
+  const assigned = survey.myAssignedCount ?? 0
+  const completed = survey.myCompletedCount ?? 0
+  return assigned > 0 && completed < assigned
+}
+
+export function isParticipationDone(survey: Survey): boolean {
+  if (survey.status === 'closed') return true
+  const assigned = survey.myAssignedCount ?? 0
+  const completed = survey.myCompletedCount ?? 0
+  return assigned > 0 && completed >= assigned
 }
 
 export function mapQuestionType(type: string): Question['type'] {

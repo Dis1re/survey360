@@ -10,6 +10,15 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:5175',
         changeOrigin: true,
+        configure: (proxy) => {
+          proxy.on('proxyRes', (proxyRes) => {
+            const setCookie = proxyRes.headers['set-cookie']
+            if (!Array.isArray(setCookie)) return
+            proxyRes.headers['set-cookie'] = setCookie.map((cookie) =>
+              cookie.replace(/;\s*Domain=[^;]+/gi, '').replace(/;\s*Secure/gi, ''),
+            )
+          })
+        },
       },
     },
   },
