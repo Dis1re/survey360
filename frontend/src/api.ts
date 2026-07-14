@@ -5,6 +5,8 @@ import type {
   ApiSurvey,
   ApiSurveyDetails,
   ApiSurveyMatrix,
+  ApiSurveyTemplate,
+  ApiSurveyTemplateDetails,
   ApiUser,
   AssignmentEntry,
   AuthUser,
@@ -12,7 +14,12 @@ import type {
   CreateQuestionRequest,
   CreateUserRequest,
   CompleteAssignmentRequest,
+  QuestionProps,
+  SaveAsTemplateRequest,
   SurveyReportInfo,
+  RespondentLink,
+  InviteInfo,
+  SendInvitesResult,
   UpdateQuestionRequest,
   UpdateSurveyRequest,
 } from './types'
@@ -31,7 +38,15 @@ async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T
   if (!response.ok) {
     const errorText = await response.text()
     console.error(`API ${url} [${response.status}]:`, errorText || response.statusText)
-    const err = new Error(errorText || `Ошибка API [${response.status}]`) as Error & { status?: number }
+    let message = `Ошибка API [${response.status}]`
+    try {
+      const parsed = JSON.parse(errorText)
+      if (parsed?.message) message = parsed.message
+      else if (parsed?.title) message = parsed.title
+    } catch {
+      if (errorText) message = errorText
+    }
+    const err = new Error(message) as Error & { status?: number }
     err.status = response.status
     throw err
   }
@@ -106,8 +121,26 @@ export const surveyApi = {
   delete: (id: number) =>
     sendRequest<void>(`${API}/survey/${id}`, { method: 'DELETE' }),
 
+  reorderQuestions: (id: number, orderedIds: number[]) =>
+    sendRequest<void>(`${API}/survey/${id}/questions/order`, {
+      method: 'PUT',
+      body: JSON.stringify({ orderedIds }),
+    }),
+
   getReportInfo: (id: number) =>
     sendRequest<SurveyReportInfo>(`${API}/survey/${id}/report/info`),
+
+  getRespondentLinks: (id: number) =>
+    sendRequest<RespondentLink[]>(`${API}/survey/${id}/links`),
+
+  sendInvites: (id: number, reviewerId?: number) =>
+    sendRequest<SendInvitesResult>(`${API}/survey/${id}/send-invites`, {
+      method: 'POST',
+      body: JSON.stringify({ reviewerId: reviewerId ?? null }),
+    }),
+
+  resolveInvite: (token: string) =>
+    sendRequest<InviteInfo>(`${API}/survey/invite/${token}`),
 
   downloadReport: async (id: number) => {
     const response = await fetch(`${API}/survey/${id}/report.docx`)
@@ -132,6 +165,46 @@ export const surveyApi = {
     link.click()
     URL.revokeObjectURL(url)
   },
+  saveAsTemplate: (id: number, data: SaveAsTemplateRequest) =>
+    sendRequest<number>(`${API}/survey/${id}/save-as-template`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+}
+
+export const templateApi = {
+  list: () => sendRequest<ApiSurveyTemplate[]>(`${API}/survey-template`),
+
+  get: (id: number) => sendRequest<ApiSurveyTemplateDetails>(`${API}/survey-template/${id}`),
+
+  update: (id: number, data: { name: string; description: string; props: string }) =>
+    sendRequest<void>(`${API}/survey-template/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: number) =>
+    sendRequest<void>(`${API}/survey-template/${id}`, { method: 'DELETE' }),
+
+  createQuestion: (templateId: number, data: { text: string; type: string; isRequired?: boolean; props?: QuestionProps }) =>
+    sendRequest<number>(`${API}/survey-template/${templateId}/questions`, {
+      method: 'POST',
+      body: JSON.stringify({ ...data, props: data.props != null ? JSON.stringify(data.props) : null }),
+    }),
+
+  updateQuestion: (templateId: number, questionId: number, data: { text: string; type: string; isRequired?: boolean; props?: QuestionProps }) =>
+    sendRequest<void>(`${API}/survey-template/${templateId}/questions/${questionId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...data, props: data.props != null ? JSON.stringify(data.props) : null }),
+    }),
+
+  deleteQuestion: (templateId: number, questionId: number) =>
+    sendRequest<void>(`${API}/survey-template/${templateId}/questions/${questionId}`, {
+      method: 'DELETE',
+    }),
+
+  createSurveyFromTemplate: (id: number) =>
+    sendRequest<number>(`${API}/survey-template/${id}/create-survey`, { method: 'POST' }),
 }
 
 export const userApi = {
@@ -150,7 +223,7 @@ export const questionApi = {
   create: (data: CreateQuestionRequest) =>
     sendRequest<number>(`${API}/question`, {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, props: data.props != null ? JSON.stringify(data.props) : null }),
     }),
 
   get: (id: number) => sendRequest<ApiQuestionDetails>(`${API}/question/${id}`),
@@ -158,7 +231,7 @@ export const questionApi = {
   update: (id: number, data: UpdateQuestionRequest) =>
     sendRequest<ApiQuestionDetails['question']>(`${API}/question/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(data),
+      body: JSON.stringify({ ...data, props: data.props != null ? JSON.stringify(data.props) : null }),
     }),
 
   delete: (id: number) =>

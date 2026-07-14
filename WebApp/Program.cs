@@ -15,6 +15,7 @@ builder.Services.AddDbContextPool<ApplicationDbContext>(options => options.UseSq
 
 var mySettingsSection = builder.Configuration.GetSection("MySettings");
 builder.Services.Configure<MySettings>(mySettingsSection);
+builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection(EmailSettings.SectionName));
 
 builder.Services.AddTransient<TransientTime>();
 builder.Services.AddScoped<ScopedTime>();
@@ -47,6 +48,9 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 builder.Services.AddScoped<SurveyDocxReportService>();
+builder.Services.AddScoped<SurveyRespondentLinkService>();
+builder.Services.AddHttpClient<EmailService>();
+builder.Services.AddScoped<SurveyInviteEmailService>();
 
 builder.Services.AddCors(options =>
 {

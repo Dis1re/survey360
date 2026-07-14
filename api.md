@@ -263,6 +263,25 @@ Swagger (интерактивная документация): http://localhost:
 
 ---
 
+### `DELETE /api/survey/{id}/participants`
+
+Удаляет пользователя из опроса с указанной ролью. Если у участника были обе роли (target и respondent) — снимается только указанная; если обе стали `false` — запись удаляется. Связанные назначения (assignments) удаляются каскадно.
+
+**Query parameters**
+
+| Параметр | Тип | Описание |
+|----------|-----|----------|
+| `userId` | int | id пользователя |
+| `role` | string | `"target"` или `"respondent"` |
+
+**Response** `204 No Content`
+
+**Response** `400` — неверный `role`.
+
+**Response** `404` — опрос или пользователь не найден.
+
+---
+
 ### `PUT /api/survey/{id}/assignments`
 
 Сохраняет матрицу назначений. **Полностью заменяет** все назначения опроса: старые удаляются, записываются только пары с `isAssigned: true`.
@@ -424,6 +443,7 @@ Swagger (интерактивная документация): http://localhost:
 {
   "questionId": 1,
   "userId": 1,
+  "targetId": 2,
   "text": "5",
   "type": "rating"
 }
@@ -446,12 +466,229 @@ Swagger (интерактивная документация): http://localhost:
   "id": 1,
   "questionId": 1,
   "userId": 1,
+  "targetId": 2,
   "text": "5",
   "type": "rating"
 }
 ```
 
 **Response** `404` — не найден.
+
+---
+
+## Assignments — завершение назначений
+
+### `POST /api/survey/{id}/assignments/complete`
+
+Отмечает назначение (reviewer → target) как выполненное. Если все назначения в опросе выполнены — опрос автоматически переводится в статус «Завершен» и фиксируется `closedAt`.
+
+**Request body**
+
+```json
+{
+  "reviewerId": 1,
+  "targetId": 2
+}
+```
+
+**Response** `204 No Content`
+
+**Response** `400` — назначение не найдено в матрице опроса.
+
+**Response** `404` — опрос не найден.
+
+---
+
+## Report — отчёты
+
+### `GET /api/survey/{id}/report/info`
+
+Возвращает метаинформацию для формирования отчёта: количество ответов, назначенных пар и завершённых.
+
+**Response** `200 OK`
+
+```json
+{
+  "answerCount": 12,
+  "assignedCount": 6,
+  "completedCount": 4,
+  "allAssignedCompleted": false
+}
+```
+
+**Response** `404` — опрос не найден.
+
+---
+
+### `GET /api/survey/{id}/report.docx`
+
+Скачивает отчёт по опросу в формате `.docx`. Если ответов нет — возвращает `400`.
+
+**Response** `200 OK` — файл `application/vnd.openxmlformats-officedocument.wordprocessingml.document`.
+
+**Response** `400` — нет ответов для формирования отчёта.
+
+**Response** `404` — опрос не найден.
+
+---
+
+## Survey Template — шаблоны анкет
+
+### `POST /api/survey-template`
+
+Создаёт шаблон анкеты.
+
+**Request body**
+
+```json
+{
+  "name": "Шаблон оценки 360",
+  "description": "Стандартный набор вопросов для квартальной оценки",
+  "props": ""
+}
+```
+
+`props` — произвольный текстовый параметр для хранения дополнительных настроек шаблона.
+
+**Response** `200 OK` — id шаблона (число).
+
+---
+
+### `GET /api/survey-template`
+
+Список всех шаблонов, сначала новые.
+
+**Response** `200 OK`
+
+```json
+[
+  {
+    "id": 1,
+    "name": "Шаблон оценки 360",
+    "description": "Стандартный набор вопросов",
+    "props": "",
+    "createdAt": "2026-07-10T10:00:00Z"
+  }
+]
+```
+
+---
+
+### `GET /api/survey-template/{id}`
+
+Шаблон со всеми вопросами.
+
+**Response** `200 OK`
+
+```json
+{
+  "template": {
+    "id": 1,
+    "name": "Шаблон оценки 360",
+    "description": "Стандартный набор вопросов",
+    "props": "",
+    "createdAt": "2026-07-10T10:00:00Z"
+  },
+  "questions": [
+    {
+      "id": 1,
+      "surveyTemplateId": 1,
+      "text": "Как вы оцениваете работу коллеги?",
+      "type": "rating"
+    }
+  ]
+}
+```
+
+**Response** `404` — шаблон не найден.
+
+---
+
+### `PUT /api/survey-template/{id}`
+
+Обновляет метаданные шаблона (название, описание, props).
+
+**Request body**
+
+```json
+{
+  "name": "Шаблон оценки 360 (обновлённый)",
+  "description": "Описание",
+  "props": "дополнительные настройки"
+}
+```
+
+**Response** `200 OK` — обновлённый шаблон.
+
+**Response** `404` — шаблон не найден.
+
+---
+
+### `DELETE /api/survey-template/{id}`
+
+Удаляет шаблон и все его вопросы (каскадно).
+
+**Response** `204 No Content`
+
+**Response** `404` — шаблон не найден.
+
+---
+
+### `POST /api/survey-template/{id}/questions`
+
+Добавляет вопрос в шаблон.
+
+**Request body**
+
+```json
+{
+  "text": "Как вы оцениваете работу коллеги?",
+  "type": "rating"
+}
+```
+
+**Response** `200 OK` — id вопроса (число).
+
+**Response** `404` — шаблон не найден.
+
+---
+
+### `PUT /api/survey-template/{id}/questions/{questionId}`
+
+Обновляет вопрос шаблона.
+
+**Request body**
+
+```json
+{
+  "text": "Оцените взаимодействие с коллегой",
+  "type": "scale"
+}
+```
+
+**Response** `200 OK` — обновлённый вопрос.
+
+**Response** `404` — шаблон или вопрос не найден.
+
+---
+
+### `DELETE /api/survey-template/{id}/questions/{questionId}`
+
+Удаляет вопрос из шаблона.
+
+**Response** `204 No Content`
+
+**Response** `404` — шаблон или вопрос не найден.
+
+---
+
+### `POST /api/survey-template/{id}/create-survey`
+
+Создаёт новый опрос на основе шаблона. Копирует название, описание и все вопросы. Новый опрос получает статус «Черновик».
+
+**Response** `200 OK` — id нового опроса (число).
+
+**Response** `404` — шаблон не найден.
 
 ---
 

@@ -57,6 +57,15 @@ namespace WebApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("Order")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Props")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("SurveyId")
                         .HasColumnType("INTEGER");
 
@@ -73,6 +82,36 @@ namespace WebApp.Migrations
                     b.HasIndex("SurveyId");
 
                     b.ToTable("Questions");
+                });
+
+            modelBuilder.Entity("WebApp.Models.QuestionTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsRequired")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Props")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("SurveyTemplateId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SurveyTemplateId");
+
+                    b.ToTable("QuestionTemplates");
                 });
 
             modelBuilder.Entity("WebApp.Models.Survey", b =>
@@ -172,6 +211,64 @@ namespace WebApp.Migrations
                     b.ToTable("SurveyParticipants");
                 });
 
+            modelBuilder.Entity("WebApp.Models.SurveyRespondentLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ReviewerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SurveyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewerId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("SurveyId", "ReviewerId")
+                        .IsUnique();
+
+                    b.ToTable("SurveyRespondentLinks");
+                });
+
+            modelBuilder.Entity("WebApp.Models.SurveyTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Props")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("SurveyTemplates");
+                });
+
             modelBuilder.Entity("WebApp.Models.User", b =>
                 {
                     b.Property<int>("Id")
@@ -210,13 +307,13 @@ namespace WebApp.Migrations
 
                     b.HasOne("WebApp.Models.User", null)
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("TargetId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("WebApp.Models.User", null)
                         .WithMany()
-                        .HasForeignKey("TargetId")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -234,6 +331,15 @@ namespace WebApp.Migrations
                     b.HasOne("WebApp.Models.Survey", null)
                         .WithMany()
                         .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WebApp.Models.QuestionTemplate", b =>
+                {
+                    b.HasOne("WebApp.Models.SurveyTemplate", null)
+                        .WithMany()
+                        .HasForeignKey("SurveyTemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -270,6 +376,21 @@ namespace WebApp.Migrations
                     b.HasOne("WebApp.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WebApp.Models.SurveyRespondentLink", b =>
+                {
+                    b.HasOne("WebApp.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebApp.Models.Survey", null)
+                        .WithMany()
+                        .HasForeignKey("SurveyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

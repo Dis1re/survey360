@@ -70,6 +70,7 @@ export function apiSurveyToSurvey(api: ApiSurvey): Survey {
     description: api.description,
     status: mapSurveyStatus(api.status),
     date: formatSurveyDate(api),
+    createdByUserId: api.createdByUserId ?? null,
   }
 }
 
@@ -82,20 +83,25 @@ export function mapQuestionType(type: string): Question['type'] {
 
 export function apiQuestionToQuestion(api: ApiQuestion): Question {
   const type = mapQuestionType(api.type)
+  const parsedProps: Record<string, string | number> | undefined =
+    api.props == null
+      ? undefined
+      : typeof api.props === 'string'
+        ? JSON.parse(api.props)
+        : api.props
   return {
     id: api.id,
     surveyId: api.surveyId,
     text: api.text,
     type,
+    isRequired: api.isRequired ?? false,
+    props: parsedProps,
     options:
-      type === 'scale'
-        ? [
-            { value: 1, label: '' },
-            { value: 5, label: '' },
-          ]
-        : type === 'radio'
-          ? []
-          : undefined,
+      type === 'radio'
+        ? Object.entries(parsedProps ?? {})
+            .map(([k, v]) => ({ value: Number(k), label: String(v) }))
+            .sort((a, b) => a.value - b.value)
+        : undefined,
   }
 }
 

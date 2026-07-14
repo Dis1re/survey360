@@ -80,7 +80,7 @@ export default function App() {
         onOpenDetails={handleOpenDetails}
         onOpenTake={handleOpenTake}
       />
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto bg-gray-100">
         {view === 'details' ? (
           <EntityPage id={selectedSurveyId ?? 0} onBack={handleBack} />
         ) : view === 'take' ? (

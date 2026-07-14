@@ -36,12 +36,20 @@ public record AssignmentEntry(int ReviewerId, int TargetId, bool IsAssigned);
 
 public record CompleteAssignmentRequest(int ReviewerId, int TargetId);
 
+public record SaveAsTemplateRequest(string Name, string Description);
+
+public record SendInvitesRequest(int? ReviewerId);
+
 public record SurveyReportInfoDto(int AnswerCount, int AssignedCount, int CompletedCount, bool AllAssignedCompleted);
 
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
-public class SurveyController(ApplicationDbContext context, SurveyDocxReportService reportService) : Controller
+public class SurveyController(
+    ApplicationDbContext context,
+    SurveyDocxReportService reportService,
+    SurveyRespondentLinkService linkService,
+    SurveyInviteEmailService inviteEmailService) : Controller
 {
     private static bool IsSurveyDraft(string status)
     {
@@ -89,7 +97,7 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
 
         return surveys
             .Where(s =>
-                (IsSurveyDraft(s.Status) && s.CreatedByUserId == userId.Value) ||
+                s.CreatedByUserId == userId.Value ||
                 (!IsSurveyDraft(s.Status) && respondentSurveyIdSet.Contains(s.Id)))
             .OrderByDescending(s => s.CreatedAt)
             .ToList();
@@ -107,7 +115,8 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         var questions = await context.Questions
             .AsNoTracking()
             .Where(q => q.SurveyId == id)
-            .OrderBy(q => q.Id)
+            .OrderBy(q => q.Order)
+            .ThenBy(q => q.Id)
             .ToListAsync(ct);
 
         var questionIds = questions.Select(q => q.Id).ToList();
@@ -134,11 +143,32 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         if (survey is null)
             return NotFound();
 
+        var targetStatus = (request.Status ?? "").Trim();
+        var isActive = targetStatus.Contains("актив", StringComparison.OrdinalIgnoreCase)
+            || targetStatus.Equals("active", StringComparison.OrdinalIgnoreCase);
+
+        if (isActive)
+        {
+            var hasQuestions = await context.Questions.AnyAsync(q => q.SurveyId == id, ct);
+            var hasAssignments = await context.SurveyAssignments
+                .AnyAsync(a => a.SurveyId == id && a.IsAssigned, ct);
+
+            if (!hasQuestions || !hasAssignments)
+            {
+                return BadRequest(
+                    "Нельзя запустить опрос: добавьте хотя бы один вопрос и заполните матрицу " +
+                    "назначений (хотя бы одну пару «оценивающий → оцениваемый»).");
+            }
+        }
+
         survey.Name = request.Name;
         survey.Description = request.Description;
         survey.Status = request.Status;
         survey.StartedAt = request.StartedAt ?? default;
         survey.ClosedAt = request.ClosedAt ?? default;
+
+        if (request.Status == "Активен")
+            await linkService.SyncRespondentLinksAsync(id, ct);
 
         await context.SaveChangesAsync(ct);
         return survey;
@@ -248,7 +278,10 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
         if (roleNormalized == "target")
             participant.IsTarget = false;
         else
+        {
             participant.IsRespondent = false;
+            await linkService.DeleteLinkAsync(id, userId, ct);
+        }
 
         if (!participant.IsTarget && !participant.IsRespondent)
         {
@@ -312,6 +345,53 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
     }
 
     [Authorize]
+    [HttpPost("{id:int}/save-as-template")]
+    public async Task<ActionResult<int>> SaveAsTemplate(
+        int id,
+        [FromBody] SaveAsTemplateRequest request,
+        CancellationToken ct)
+    {
+        var survey = await context.Surveys
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.Id == id, ct);
+        if (survey is null)
+            return NotFound();
+
+        var questions = await context.Questions
+            .AsNoTracking()
+            .Where(q => q.SurveyId == id)
+            .OrderBy(q => q.Id)
+            .ToListAsync(ct);
+
+        if (questions.Count == 0)
+            return BadRequest("Нельзя создать шаблон без вопросов");
+
+        var template = new SurveyTemplate
+        {
+            Name = request.Name,
+            Description = request.Description,
+            CreatedAt = DateTime.UtcNow,
+        };
+        await context.SurveyTemplates.AddAsync(template, ct);
+        await context.SaveChangesAsync(ct);
+
+        foreach (var q in questions)
+        {
+            context.QuestionTemplates.Add(new QuestionTemplate
+            {
+                SurveyTemplateId = template.Id,
+                Text = q.Text,
+                Type = q.Type,
+                IsRequired = q.IsRequired,
+                Props = q.Props,
+            });
+        }
+        await context.SaveChangesAsync(ct);
+
+        return template.Id;
+    }
+
+    [Authorize]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
@@ -320,6 +400,43 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
             .ExecuteDeleteAsync(ct);
 
         return deleted == 0 ? NotFound() : NoContent();
+    }
+
+    public record ReorderQuestionsRequest(List<int> OrderedIds);
+
+    [HttpPut("{id:int}/questions/order")]
+    public async Task<IActionResult> ReorderQuestions(
+        int id,
+        [FromBody] ReorderQuestionsRequest request,
+        CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        var ids = request.OrderedIds.Distinct().ToList();
+        if (ids.Count == 0)
+            return NoContent();
+
+        var questions = await context.Questions
+            .Where(q => q.SurveyId == id)
+            .ToListAsync(ct);
+
+        var byId = questions.ToDictionary(q => q.Id);
+        var order = 0;
+        foreach (var questionId in ids)
+        {
+            if (byId.TryGetValue(questionId, out var question))
+                question.Order = order++;
+        }
+
+        foreach (var question in questions)
+        {
+            if (!ids.Contains(question.Id))
+                question.Order = order++;
+        }
+
+        await context.SaveChangesAsync(ct);
+        return NoContent();
     }
 
     [HttpPost("{id:int}/assignments/complete")]
@@ -342,6 +459,38 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
 
         if (assignment is null || !assignment.IsAssigned)
             return BadRequest("Назначение не найдено в матрице опроса");
+
+        var requiredQuestions = await context.Questions
+            .AsNoTracking()
+            .Where(q => q.SurveyId == id && q.IsRequired)
+            .ToListAsync(ct);
+
+        if (requiredQuestions.Count > 0)
+        {
+            var requiredIds = requiredQuestions.Select(q => q.Id).ToHashSet();
+            var answeredRequiredIds = await context.Answers
+                .AsNoTracking()
+                .Where(a => a.UserId == request.ReviewerId
+                            && a.TargetId == request.TargetId
+                            && requiredIds.Contains(a.QuestionId)
+                            && a.Text != null && a.Text != "")
+                .Select(a => a.QuestionId)
+                .ToListAsync(ct);
+
+            var missing = requiredQuestions
+                .Where(q => !answeredRequiredIds.Contains(q.Id))
+                .Select(q => new { q.Id, q.Text })
+                .ToList();
+
+            if (missing.Count > 0)
+            {
+                return BadRequest(new
+                {
+                    message = "Не заполнены обязательные вопросы",
+                    missingQuestionIds = missing.Select(m => m.Id).ToList(),
+                });
+            }
+        }
 
         assignment.IsCompleted = true;
 
@@ -392,5 +541,42 @@ public class SurveyController(ApplicationDbContext context, SurveyDocxReportServ
 
         const string contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
         return File(result.Value.Stream, contentType, result.Value.FileName);
+    }
+
+    [HttpGet("{id:int}/links")]
+    public async Task<ActionResult<List<RespondentLinkDto>>> GetRespondentLinks(int id, CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        return await linkService.GetLinksAsync(id, ct);
+    }
+
+    [Authorize]
+    [HttpPost("{id:int}/send-invites")]
+    public async Task<ActionResult<SendInvitesResult>> SendInvites(
+        int id,
+        [FromBody] SendInvitesRequest? request,
+        CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        try
+        {
+            var result = await inviteEmailService.SendInvitesAsync(id, request?.ReviewerId, ct);
+            return result;
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { message = ex.Message });
+        }
+    }
+
+    [HttpGet("invite/{token}")]
+    public async Task<ActionResult<InviteInfoDto>> ResolveInvite(string token, CancellationToken ct)
+    {
+        var info = await linkService.ResolveTokenAsync(token, ct);
+        return info is null ? NotFound() : info;
     }
 }

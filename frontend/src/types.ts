@@ -5,6 +5,7 @@ export interface Survey {
   description: string
   status: 'active' | 'draft' | 'closed'
   date: string
+  createdByUserId?: number | null
 }
 
 export interface SurveyInput {
@@ -14,17 +15,23 @@ export interface SurveyInput {
   date: string
 }
 
+export type QuestionProps = Record<string, string | number>
+
 export interface Question {
   id: number
   surveyId: number
   text: string
   type: 'radio' | 'scale' | 'text'
+  isRequired?: boolean
+  props?: QuestionProps
   options?: { value: number; label: string }[]
 }
 
 export interface QuestionInput {
   text: string
   type: Question['type']
+  isRequired?: boolean
+  props?: QuestionProps
   options?: Question['options']
 }
 
@@ -78,11 +85,15 @@ export interface CreateQuestionRequest {
   surveyId: number
   text: string
   type: string
+  isRequired?: boolean
+  props?: QuestionProps
 }
 
 export interface UpdateQuestionRequest {
   text: string
   type: string
+  isRequired?: boolean
+  props?: QuestionProps
 }
 
 export interface CreateAnswerRequest {
@@ -101,6 +112,7 @@ export interface ApiSurvey {
   createdAt: string
   startedAt: string
   closedAt: string
+  createdByUserId?: number | null
 }
 
 export interface ApiQuestion {
@@ -108,6 +120,8 @@ export interface ApiQuestion {
   surveyId: number
   text: string
   type: string
+  isRequired?: boolean
+  props?: QuestionProps
 }
 
 export interface ApiQuestionDetails {
@@ -167,4 +181,57 @@ export interface SurveyReportInfo {
   assignedCount: number
   completedCount: number
   allAssignedCompleted: boolean
+}
+
+export interface SaveAsTemplateRequest {
+  name: string
+  description: string
+}
+
+export interface ApiSurveyTemplate {
+  id: number
+  name: string
+  description: string
+  props: string
+  createdAt: string
+}
+
+export interface ApiQuestionTemplate {
+  id: number
+  surveyTemplateId: number
+  text: string
+  type: string
+  isRequired: boolean
+  props: string | null
+}
+
+export interface ApiSurveyTemplateDetails {
+  template: ApiSurveyTemplate
+  questions: ApiQuestionTemplate[]
+}
+
+export interface RespondentLink {
+  reviewerId: number
+  reviewerName: string
+  reviewerEmail: string
+  token: string
+}
+
+export interface InviteInfo {
+  surveyId: number
+  reviewerId: number
+}
+
+export interface SendInviteItemResult {
+  reviewerId: number
+  reviewerEmail: string
+  status: 'sent' | 'skipped' | 'failed' | string
+  error: string | null
+}
+
+export interface SendInvitesResult {
+  sent: number
+  skipped: number
+  failed: number
+  items: SendInviteItemResult[]
 }

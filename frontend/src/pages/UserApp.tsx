@@ -41,6 +41,11 @@ export function UserApp() {
   const selectedSurvey =
     selectedSurveyId !== null ? surveys.find((s) => s.id === selectedSurveyId) ?? null : null
 
+  const isSurveyCreator =
+    selectedSurvey !== null &&
+    user !== null &&
+    selectedSurvey.createdByUserId === user.id
+
   const handleCreateClick = async () => {
     setCreating(true)
     try {
@@ -79,7 +84,7 @@ export function UserApp() {
               </p>
             </div>
           </div>
-        ) : selectedSurvey?.status === 'draft' ? (
+        ) : isSurveyCreator || selectedSurvey?.status === 'draft' ? (
           <MainPage
             surveyId={selectedSurveyId}
             onSurveyUpdated={loadSurveys}
