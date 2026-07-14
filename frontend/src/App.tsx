@@ -17,6 +17,7 @@ export default function App() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [view, setView] = useState<View>('main')
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -72,6 +73,8 @@ export default function App() {
         onSearch={setSearchQuery}
         onOpenDetails={handleOpenDetails}
         onOpenDev={openDevPage}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
       />
       <main className="flex-1 overflow-y-auto bg-gray-100">
         {view === 'details' ? (
@@ -85,7 +88,7 @@ export default function App() {
             <TakeSurvey surveyId={selectedSurveyId} onBack={handleBack} />
           )
         ) : (
-          <MainPage surveyId={selectedSurveyId} onSurveyUpdated={loadSurveys} onSurveyDeleted={loadSurveys} />
+          <MainPage surveyId={selectedSurveyId} onSurveyUpdated={loadSurveys} onSurveyDeleted={loadSurveys} sidebarCollapsed={sidebarCollapsed} />
         )}
       </main>
     </div>

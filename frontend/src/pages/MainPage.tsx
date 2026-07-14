@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { questionApi, surveyApi, userApi } from '../api'
 import { MatrixTable, matrixToEntries } from '../components/MatrixTable'
+import { SIDEBAR_WIDTH_COLLAPSED, SIDEBAR_WIDTH_EXPANDED } from '../components/Sidebar'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { Modal } from '../components/Modal'
 import { QuestionEditor } from '../components/QuestionEditor'
 import { QuestionList } from '../components/QuestionList'
+import { ResponseModal } from '../components/ResponseModal'
 import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '../components/SurveyHeader'
 import { TabBar, type Tab } from '../components/TabBar'
 import { TemplatesModal } from '../components/TemplatesModal'
@@ -75,9 +77,10 @@ interface MainPageProps {
   surveyId: number | null
   onSurveyUpdated?: () => void
   onSurveyDeleted?: () => void | Promise<void>
+  sidebarCollapsed?: boolean
 }
 
-export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPageProps) {
+export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCollapsed = false }: MainPageProps) {
   const [activeTab, setActiveTab] = useState<Tab>('editor')
   const [matrixExpanded, setMatrixExpanded] = useState(false)
   const [loading, setLoading] = useState(() => surveyId !== null)
@@ -99,6 +102,12 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [exportingReport, setExportingReport] = useState(false)
   const [sendingInvites, setSendingInvites] = useState(false)
+  const [responseView, setResponseView] = useState<{
+    reviewerId: number
+    targetId: number
+    reviewerName: string
+    targetName: string
+  } | null>(null)
   const [inviteResult, setInviteResult] = useState<{
     title: string
     variant: 'default' | 'warning' | 'danger'
@@ -548,7 +557,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   }
 
   return (
-    <>
+    <div className="relative min-h-full">
       <SurveyHeader
         surveyId={surveyId}
         initial={surveyHeaderInitial}
@@ -628,7 +637,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
             
             <MatrixTable
               key={surveyId}
-              surveyId={surveyId}
               targets={targets}
               respondents={respondents}
               allUsers={allUsers}
@@ -647,6 +655,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
               onExportReport={handleExportReport}
               onExportCsv={handleExportCsv}
               onSendInvites={handleSendInvites}
+              onViewResponse={(info) => setResponseView(info)}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
               onSave={handleSaveMatrix}
@@ -732,6 +741,19 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
           message="Все вопросы анкеты и связанные с ними ответы будут безвозвратно удалены. Действие нельзя отменить."
         />
       )}
-    </>
+
+      {responseView && surveyId !== null && (
+        <ResponseModal
+          surveyId={surveyId}
+          reviewerId={responseView.reviewerId}
+          targetId={responseView.targetId}
+          reviewerName={responseView.reviewerName}
+          targetName={responseView.targetName}
+          fullscreen
+          sidebarWidth={sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED}
+          onClose={() => setResponseView(null)}
+        />
+      )}
+    </div>
   )
 }

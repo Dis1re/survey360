@@ -12,7 +12,7 @@ const sizeClass: Record<ModalSize, string> = {
 
 export interface ModalProps {
   title: string
-  description?: string
+  description?: React.ReactNode
   children: React.ReactNode
   footer?: React.ReactNode
   size?: ModalSize

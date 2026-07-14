@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { buildRespondentInviteLink, buildSurveyResponseLink } from '../routing'
+import { buildRespondentInviteLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
 import { Modal } from './Modal'
 
 interface MatrixTableProps {
-  surveyId: number
   targets: Participant[]
   respondents: Participant[]
   allUsers: ApiUser[]
@@ -26,6 +25,12 @@ interface MatrixTableProps {
   onAddParticipant: (userIds: number[], role: 'target' | 'respondent') => Promise<void>
   onRemoveParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
   onSave: (assignments: Record<string, Record<string, boolean>>) => Promise<void>
+  onViewResponse?: (info: {
+    reviewerId: number
+    targetId: number
+    reviewerName: string
+    targetName: string
+  }) => void
   onExpand?: () => void
   expanded?: boolean
 }
@@ -49,7 +54,6 @@ export function matrixToEntries(
 }
 
 export function MatrixTable({
-  surveyId,
   targets,
   respondents,
   allUsers,
@@ -68,6 +72,7 @@ export function MatrixTable({
   onAddParticipant,
   onRemoveParticipant,
   onSave,
+  onViewResponse,
   onExpand,
   onExportCsv,
   exportingCsv = false,
@@ -467,26 +472,53 @@ export function MatrixTable({
                           const targetKey = String(target.id)
                           const assigned = isChecked(reviewerKey, targetKey)
                           const completed = assigned && isCompleted(reviewerKey, targetKey)
-                          const responseLink = completed
-                            ? buildSurveyResponseLink(surveyId, respondent.id, target.id)
-                            : null
 
+                          const cellDisabled = readOnly || respondent.id === target.id
                           return (
-                            <td key={target.id} className="p-4 text-center border-r border-gray-200 last:border-r-0">
+                            <td
+                              key={target.id}
+                              onClick={(e) => {
+                                if (cellDisabled) return
+                                if ((e.target as HTMLElement).closest('button')) return
+                                toggle(reviewerKey, targetKey)
+                              }}
+                              className={`p-4 text-center border-r border-gray-200 last:border-r-0 ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40'}`}
+                            >
                               <div className="flex flex-col items-center gap-1.5">
-                                <input
-                                  type="checkbox"
-                                  checked={assigned}
-                                  onChange={() => toggle(reviewerKey, targetKey)}
-                                  disabled={readOnly || respondent.id === target.id}
-                                  className="w-4 h-4 border-gray-300 rounded focus:ring-[#FF8600] cursor-pointer disabled:opacity-30 disabled:cursor-default"
-                                />
-                                {responseLink && (
-                                  <a
-                                    href={responseLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] hover:underline"
+                                <span
+                                  className={`w-5 h-5 rounded-full flex items-center justify-center transition ${
+                                    assigned
+                                      ? completed
+                                        ? 'bg-green-500'
+                                        : 'bg-[#FF8600]'
+                                      : 'border-2 border-gray-300 bg-transparent'
+                                  }`}
+                                >
+                                  {assigned && completed && (
+                                    <svg
+                                      className="w-3 h-3 text-white"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      stroke="currentColor"
+                                      strokeWidth={3}
+                                    >
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                  )}
+                                </span>
+                                {completed && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      onViewResponse?.({
+                                        reviewerId: respondent.id,
+                                        targetId: target.id,
+                                        reviewerName: respondent.name,
+                                        targetName: target.name,
+                                      })
+                                    }}
+                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] hover:underline cursor-pointer"
                                     title="Просмотреть ответы"
                                   >
                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -494,7 +526,7 @@ export function MatrixTable({
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
                                     Ответы
-                                  </a>
+                                  </button>
                                 )}
                               </div>
                             </td>

@@ -23,6 +23,9 @@ const participationFilters: { id: ParticipationFilter; label: string }[] = [
   { id: 'done', label: 'Пройденные' },
 ]
 
+export const SIDEBAR_WIDTH_COLLAPSED = 80
+export const SIDEBAR_WIDTH_EXPANDED = 320
+
 interface SidebarProps {
   surveys: Survey[]
   activeSurveyId: number | null
@@ -36,6 +39,8 @@ interface SidebarProps {
   onSearch: (query: string) => void
   onOpenDev?: () => void
   onOpenDetails?: () => void
+  collapsed: boolean
+  onToggleCollapsed: () => void
 }
 
 const statusConfig = {
@@ -210,9 +215,10 @@ export function Sidebar({
   onSearch,
   onOpenDev,
   onOpenDetails,
+  collapsed,
+  onToggleCollapsed,
 }: SidebarProps) {
   const [query, setQuery] = useState('')
-  const [collapsed, setCollapsed] = useState(false)
   const [internalScope, setInternalScope] = useState<SurveyScope>('mine')
   const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>('active')
   const [participationFilter, setParticipationFilter] = useState<ParticipationFilter>('pending')
@@ -301,7 +307,7 @@ export function Sidebar({
   const showProgress = hasUserScope && scope === 'participation'
 
   return (
-    <aside className={`flex flex-col flex-shrink-0 h-screen transition-[width] duration-300 ease-out ${collapsed ? 'w-20' : 'w-80'}`}>
+    <aside className={`flex flex-col flex-shrink-0 h-screen bg-white transition-[width] duration-300 ease-out ${collapsed ? 'w-20' : 'w-80'}`}>
       <div
         className={`flex bg-white border-b border-gray-100 ${
           collapsed ? 'flex-col items-center gap-2 p-3' : 'items-center justify-between gap-3 p-4'
@@ -309,7 +315,7 @@ export function Sidebar({
       >
         <button
           type="button"
-          onClick={() => setCollapsed((v) => !v)}
+          onClick={onToggleCollapsed}
           className="shrink-0 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 transition p-2 cursor-pointer hover:bg-gray-200"
           aria-label={collapsed ? 'Показать боковую панель' : 'Скрыть боковую панель'}
         >

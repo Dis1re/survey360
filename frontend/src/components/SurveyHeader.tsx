@@ -447,7 +447,7 @@ export function SurveyHeader({
               </div>
             ) : null}
 
-            {(!readOnly || (onDelete && status !== 'active')) && (
+            {(!readOnly || (onDelete && status === 'closed')) && (
               <div className="flex gap-2">
                 {!readOnly && (
                   <button
@@ -462,7 +462,7 @@ export function SurveyHeader({
                     + Пользователь
                   </button>
                 )}
-                {onDelete && status !== 'active' && (
+                {onDelete && (status === 'draft' || status === 'closed') && (
                   <button
                     type="button"
                     onClick={() => setConfirmDialog('delete')}

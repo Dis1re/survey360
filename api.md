@@ -532,6 +532,81 @@ Swagger (интерактивная документация): http://localhost:
 
 ---
 
+### `GET /api/survey/{id}/report.csv`
+
+Скачивает отчёт по опросу в формате `.csv` (разделитель `;`, UTF-8 с BOM для Excel).
+
+**Response** `200 OK` — файл `text/csv; charset=utf-8`.
+
+**Response** `400` — нет ответов для формирования отчёта.
+
+**Response** `404` — опрос не найден.
+
+---
+
+### `POST /api/survey/{id}/send-invites`
+
+Рассылает приглашения по email через Mailtrap API. Доступно только для активного опроса.
+
+**Request body**
+
+```json
+{
+  "reviewerId": 1
+}
+```
+
+`reviewerId` — опциональный. Если передан, отправляет только указанному респонденту. Если не передан — всем респондентам с email.
+
+**Response** `200 OK`
+
+```json
+{
+  "sent": 3,
+  "skipped": 1,
+  "failed": 0,
+  "items": [
+    { "reviewerId": 1, "reviewerEmail": "ivan@company.ru", "status": "sent", "error": null },
+    { "reviewerId": 2, "reviewerEmail": "", "status": "skipped", "error": "Нет email" }
+  ]
+}
+```
+
+**Response** `400` — опрос не активен.
+
+**Response** `404` — опрос не найден.
+
+---
+
+### `DELETE /api/survey/{id}/questions`
+
+Удаляет **все** вопросы опроса и связанные с ними ответы (каскадно).
+
+**Response** `204 No Content`
+
+**Response** `400` — нельзя удалить вопросы у активного опроса.
+
+**Response** `404` — опрос не найден.
+
+---
+
+### `GET /api/survey/{id}/responses/{reviewerId}/{targetId}`
+
+Возвращает ответы конкретного респондента на конкретного объекта оценки. Каждый элемент содержит текст вопроса и текст ответа, отсортированные по порядку вопросов.
+
+**Response** `200 OK`
+
+```json
+[
+  { "questionText": "Как вы оцениваете работу коллеги?", "answerText": "8" },
+  { "questionText": "Насколько хорошо коллега коммуницирует?", "answerText": "Отлично" }
+]
+```
+
+**Response** `404` — опрос не найден.
+
+---
+
 ## Survey Template — шаблоны анкет
 
 ### `POST /api/survey-template`

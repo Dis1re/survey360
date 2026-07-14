@@ -19,6 +19,7 @@ export function UserApp() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -89,6 +90,8 @@ export function UserApp() {
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
         onOpenDev={user?.isAdmin ? openDevPage : undefined}
+        collapsed={sidebarCollapsed}
+        onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
       />
       <main className="flex-1 overflow-y-auto">
         {selectedSurveyId === null ? (
@@ -109,6 +112,7 @@ export function UserApp() {
             surveyId={selectedSurveyId}
             onSurveyUpdated={loadSurveys}
             onSurveyDeleted={loadSurveys}
+            sidebarCollapsed={sidebarCollapsed}
           />
         ) : (
           <TakeSurvey
