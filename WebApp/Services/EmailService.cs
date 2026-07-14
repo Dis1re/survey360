@@ -8,8 +8,6 @@ using WebApp.Data;
 
 namespace WebApp.Services;
 
-public record OutgoingEmail(string ToEmail, string ToName, string Subject, string TextBody);
-
 public class EmailService(
     HttpClient httpClient,
     IOptions<EmailSettings> options,
@@ -28,9 +26,6 @@ public class EmailService(
             throw new InvalidOperationException(
                 "Email не настроен для HTTPS API: укажите Email:ApiToken и Email:SandboxId " +
                 "(Mailtrap → Settings → API Tokens и ID sandbox из URL).");
-
-        httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", _settings.ApiToken);
 
         var url = $"https://sandbox.api.mailtrap.io/api/send/{_settings.SandboxId}";
         var payload = new
@@ -53,7 +48,15 @@ public class EmailService(
         {
             ct.ThrowIfCancellationRequested();
 
-            using var response = await httpClient.PostAsJsonAsync(url, payload, ct);
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Headers =
+                {
+                    Authorization = new AuthenticationHeaderValue("Bearer", _settings.ApiToken),
+                },
+                Content = JsonContent.Create(payload),
+            };
+            using var response = await httpClient.SendAsync(request, ct);
             var body = await response.Content.ReadAsStringAsync(ct);
 
             if (response.IsSuccessStatusCode)

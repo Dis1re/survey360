@@ -710,9 +710,15 @@ public class SurveyController(
         return File(result.Value.Stream, contentType, result.Value.FileName);
     }
 
+    [Authorize]
     [HttpGet("{id:int}/report.csv")]
     public async Task<IActionResult> DownloadCsvReport(int id, CancellationToken ct)
     {
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
+
         var result = await csvReportService.BuildCsvAsync(id, ct);
         if (result is null)
         {
