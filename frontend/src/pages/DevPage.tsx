@@ -511,7 +511,9 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                         <td className="px-4 py-3 text-right">
                           <button
                             type="button"
-                            className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-lg transition cursor-pointer"
+                            disabled={survey.status === 'active'}
+                            className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition cursor-pointer"
+                            title={survey.status === 'active' ? 'Сначала завершите опрос' : undefined}
                             onClick={() => handleDeleteSurvey(survey.id, survey.name)}
                           >
                             Удалить

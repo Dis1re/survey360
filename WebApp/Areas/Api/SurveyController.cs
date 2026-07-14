@@ -495,6 +495,12 @@ public class SurveyController(
         if (accessError is not null)
             return accessError;
 
+        var status = (survey!.Status ?? "").Trim();
+        var isActive = status.Contains("актив", StringComparison.OrdinalIgnoreCase)
+            || status.Equals("active", StringComparison.OrdinalIgnoreCase);
+        if (isActive)
+            return BadRequest("Нельзя удалить активный опрос. Сначала завершите его.");
+
         var deleted = await context.Surveys
             .Where(s => s.Id == id)
             .ExecuteDeleteAsync(ct);
