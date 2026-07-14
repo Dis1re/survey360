@@ -34,6 +34,19 @@ public record SaveAssignmentsRequest(List<AssignmentEntry> Entries);
 
 public record AssignmentEntry(int ReviewerId, int TargetId, bool IsAssigned);
 
+public record SurveyListItemDto(
+    int Id,
+    string Name,
+    string Description,
+    string Status,
+    DateTime CreatedAt,
+    DateTime StartedAt,
+    DateTime ClosedAt,
+    int? CreatedByUserId,
+    int? MyAssignedCount,
+    int? MyCompletedCount
+);
+
 public record CompleteAssignmentRequest(int ReviewerId, int TargetId);
 
 public record SaveAsTemplateRequest(string Name, string Description);
@@ -78,7 +91,7 @@ public class SurveyController(
 
     [Authorize]
     [HttpGet]
-    public async Task<IEnumerable<Survey>> List(CancellationToken ct)
+    public async Task<IEnumerable<SurveyListItemDto>> List(CancellationToken ct)
     {
         var userId = User.GetUserId();
         if (userId is null)
@@ -86,20 +99,42 @@ public class SurveyController(
 
         var surveys = await context.Surveys.AsNoTracking().ToListAsync(ct);
 
-        var respondentSurveyIds = await context.SurveyAssignments
+        var myAssignments = await context.SurveyAssignments
             .AsNoTracking()
             .Where(a => a.ReviewerId == userId.Value && a.IsAssigned)
-            .Select(a => a.SurveyId)
-            .Distinct()
+            .Select(a => new { a.SurveyId, a.IsCompleted })
             .ToListAsync(ct);
 
-        var respondentSurveyIdSet = respondentSurveyIds.ToHashSet();
+        var statsBySurvey = myAssignments
+            .GroupBy(a => a.SurveyId)
+            .ToDictionary(
+                g => g.Key,
+                g => (Assigned: g.Count(), Completed: g.Count(a => a.IsCompleted)));
+
+        var respondentSurveyIdSet = statsBySurvey.Keys.ToHashSet();
 
         return surveys
             .Where(s =>
                 s.CreatedByUserId == userId.Value ||
                 (!IsSurveyDraft(s.Status) && respondentSurveyIdSet.Contains(s.Id)))
             .OrderByDescending(s => s.CreatedAt)
+            .Select(s =>
+            {
+                statsBySurvey.TryGetValue(s.Id, out var stats);
+                int? assigned = stats.Assigned > 0 ? stats.Assigned : null;
+                int? completed = stats.Assigned > 0 ? stats.Completed : null;
+                return new SurveyListItemDto(
+                    s.Id,
+                    s.Name,
+                    s.Description,
+                    s.Status,
+                    s.CreatedAt,
+                    s.StartedAt,
+                    s.ClosedAt,
+                    s.CreatedByUserId,
+                    assigned,
+                    completed);
+            })
             .ToList();
     }
 

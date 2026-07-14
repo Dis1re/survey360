@@ -6,6 +6,8 @@ export interface Survey {
   status: 'active' | 'draft' | 'closed'
   date: string
   createdByUserId?: number | null
+  myAssignedCount?: number | null
+  myCompletedCount?: number | null
 }
 
 export interface SurveyInput {
@@ -113,6 +115,8 @@ export interface ApiSurvey {
   startedAt: string
   closedAt: string
   createdByUserId?: number | null
+  myAssignedCount?: number | null
+  myCompletedCount?: number | null
 }
 
 export interface ApiQuestion {

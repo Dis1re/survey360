@@ -73,7 +73,7 @@ export default function App() {
         activeSurveyId={selectedSurveyId}
         loading={loading}
         creating={creating}
-        onSurveySelect={setSelectedSurveyId}
+        onSurveySelect={(id) => setSelectedSurveyId(id)}
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
         onOpenDev={handleOpenDev}
