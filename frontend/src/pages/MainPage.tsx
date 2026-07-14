@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { questionApi, surveyApi, userApi } from '../api'
 import { MatrixTable, matrixToEntries } from '../components/MatrixTable'
+import { ConfirmModal } from '../components/ConfirmModal'
 import { QuestionEditor } from '../components/QuestionEditor'
 import { QuestionList } from '../components/QuestionList'
 import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '../components/SurveyHeader'
@@ -46,6 +47,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [exportingReport, setExportingReport] = useState(false)
+  const [exportConfirmOpen, setExportConfirmOpen] = useState(false)
   const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
@@ -376,12 +378,24 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
         return
       }
       if (!info.allAssignedCompleted) {
-        const confirmed = confirm(
-          'Ещё не все опрашиваемые дали свои ответы — всё равно сформировать?',
-        )
-        if (!confirmed) return
+        setExportConfirmOpen(true)
+        return
       }
       await surveyApi.downloadReport(surveyId)
+    } catch (err) {
+      console.error(err)
+      alert('Не удалось сформировать отчёт')
+    } finally {
+      setExportingReport(false)
+    }
+  }
+
+  const handleConfirmExportReport = async () => {
+    if (surveyId === null) return
+    setExportingReport(true)
+    try {
+      await surveyApi.downloadReport(surveyId)
+      setExportConfirmOpen(false)
     } catch (err) {
       console.error(err)
       alert('Не удалось сформировать отчёт')
@@ -541,6 +555,19 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted }: MainPag
             setTemplateModal(null)
             setEditingTemplateId(id)
           }}
+        />
+      )}
+
+      {exportConfirmOpen && (
+        <ConfirmModal
+          title="Сформировать отчёт?"
+          variant="warning"
+          confirmLabel="Сформировать"
+          loadingLabel="Формирование…"
+          loading={exportingReport}
+          onConfirm={handleConfirmExportReport}
+          onCancel={() => !exportingReport && setExportConfirmOpen(false)}
+          message="Ещё не все опрашиваемые дали свои ответы. Отчёт будет сформирован на основе имеющихся данных."
         />
       )}
     </>

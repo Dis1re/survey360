@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { userApi } from '../api'
 import type { Survey } from '../types'
+import { ConfirmModal } from './ConfirmModal'
+import { Modal } from './Modal'
 
 export interface SurveyHeaderForm {
   title: string
@@ -92,6 +94,7 @@ export function SurveyHeader({
   const [userEmail, setUserEmail] = useState('')
   const [userSaving, setUserSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [confirmDialog, setConfirmDialog] = useState<'delete' | 'stop' | null>(null)
 
   const publicLink = `${window.location.origin}/survey/${surveyId}`
   const readOnly = status !== 'draft'
@@ -117,16 +120,8 @@ export function SurveyHeader({
     resizeDescription()
   }, [form.description, initial.description])
 
-  useEffect(() => {
-    if (!startModalOpen) return
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && !starting) setStartModalOpen(false)
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [startModalOpen, starting])
-
   const cfg = statusConfig[status]
+  const surveyTitle = form.title.trim() || 'этот опрос'
 
   const updateField = <K extends keyof SurveyHeaderForm>(key: K, value: SurveyHeaderForm[K]) => {
     if (readOnly) return
@@ -200,11 +195,9 @@ export function SurveyHeader({
   }
 
   const handleStopSurvey = async () => {
-    const title = form.title.trim() || 'этот опрос'
-    if (!confirm(`Остановить опрос «${title}»? Респонденты больше не смогут его заполнять.`)) return
-
     try {
       await onStopSurvey(form)
+      setConfirmDialog(null)
       setDirty(false)
     } catch (err) {
       console.error(err)
@@ -212,12 +205,10 @@ export function SurveyHeader({
   }
 
   const handleDeleteSurvey = async () => {
-    const title = form.title.trim() || 'этот опрос'
-    if (!confirm(`Удалить опрос «${title}»?`)) return
-
     setDeleting(true)
     try {
       await onDelete?.()
+      setConfirmDialog(null)
     } catch (err) {
       console.error(err)
     } finally {
@@ -326,7 +317,7 @@ export function SurveyHeader({
                 </div>
                 <button
                   type="button"
-                  onClick={handleStopSurvey}
+                  onClick={() => setConfirmDialog('stop')}
                   disabled={stopping}
                   className="w-full px-4 py-2.5 text-sm font-semibold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl transition cursor-pointer border border-red-700"
                 >
@@ -367,7 +358,7 @@ export function SurveyHeader({
             {onDelete && (
               <button
                 type="button"
-                onClick={handleDeleteSurvey}
+                onClick={() => setConfirmDialog('delete')}
                 disabled={deleting}
                 className="w-full px-3 py-2 text-xs font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 rounded-xl transition cursor-pointer border border-red-700"
               >
@@ -416,161 +407,175 @@ export function SurveyHeader({
       </form>
 
       {startModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-          <div
-            className="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="start-survey-title"
-          >
-            <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3 border-b border-gray-100">
-              <div>
-                <h2 id="start-survey-title" className="text-base font-bold text-gray-900">
-                  Опубликовать опрос
-                </h2>
-                <p className="text-sm text-gray-500 mt-1 leading-relaxed">
-                  Опрос станет доступен по персональным ссылкам. Каждый респондент получит свою ссылку на вкладке «Матрица участников».
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setStartModalOpen(false)}
-                disabled={starting}
-                className="shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition cursor-pointer disabled:opacity-50"
-                aria-label="Закрыть"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
-            <div className="px-5 py-4 space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                  Ссылка на опрос
-                </label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="text"
-                    readOnly
-                    value={publicLink}
-                    className="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 bg-gray-50 truncate"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => handleCopyLink(publicLink, 'modal')}
-                    className="shrink-0 px-3 py-2 text-sm font-medium text-[#FF8600] border border-[#FF8600]/30 hover:bg-[#FF8600]/5 rounded-xl transition cursor-pointer"
-                  >
-                    {modalLinkCopied ? 'Скопировано' : 'Копировать'}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
-                  Дата начала
-                </label>
+        <Modal
+          title="Опубликовать опрос"
+          description="Опрос станет доступен по персональным ссылкам. Каждый респондент получит свою ссылку на вкладке «Матрица участников»."
+          size="md"
+          onClose={() => setStartModalOpen(false)}
+          preventClose={starting}
+          scrollable={false}
+          footer={
+            <button
+              type="button"
+              onClick={handleStartSurvey}
+              disabled={starting || !form.title.trim()}
+              className="w-full py-2.5 text-sm font-semibold text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition cursor-pointer"
+            >
+              {starting ? 'Запуск…' : 'Начать опрос'}
+            </button>
+          }
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                Ссылка на опрос
+              </label>
+              <div className="flex items-center gap-2">
                 <input
-                  type="date"
-                  className={modalDateClass}
-                  value={startDates.startDate}
-                  onChange={(e) => setStartDates((prev) => ({ ...prev, startDate: e.target.value }))}
-                  disabled={starting}
+                  type="text"
+                  readOnly
+                  value={publicLink}
+                  className="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 bg-gray-50 truncate"
                 />
-
-                {showEndDate ? (
-                  <div className="mt-3">
-                    <div className="flex items-baseline justify-between gap-2 mb-2">
-                      <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                        Дата окончания
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setShowEndDate(false)
-                          setStartDates((prev) => ({ ...prev, endDate: '' }))
-                        }}
-                        disabled={starting}
-                        className="text-[11px] text-gray-400 hover:text-gray-600 transition cursor-pointer disabled:opacity-50"
-                      >
-                        Убрать
-                      </button>
-                    </div>
-                    <input
-                      type="date"
-                      className={modalDateClass}
-                      value={startDates.endDate}
-                      min={startDates.startDate || undefined}
-                      onChange={(e) => setStartDates((prev) => ({ ...prev, endDate: e.target.value }))}
-                      disabled={starting}
-                    />
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => setShowEndDate(true)}
-                    disabled={starting}
-                    className="mt-2 text-sm text-[#FF8600] hover:text-[#FF6B00] transition cursor-pointer disabled:opacity-50"
-                  >
-                    + Добавить дату окончания
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={() => handleCopyLink(publicLink, 'modal')}
+                  className="shrink-0 px-3 py-2 text-sm font-medium text-[#FF8600] border border-[#FF8600]/30 hover:bg-[#FF8600]/5 rounded-xl transition cursor-pointer"
+                >
+                  {modalLinkCopied ? 'Скопировано' : 'Копировать'}
+                </button>
               </div>
             </div>
 
-            <div className="px-5 pb-5">
-              <button
-                type="button"
-                onClick={handleStartSurvey}
-                disabled={starting || !form.title.trim()}
-                className="w-full py-2.5 text-sm font-semibold text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition cursor-pointer"
-              >
-                {starting ? 'Запуск…' : 'Начать опрос'}
-              </button>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+                Дата начала
+              </label>
+              <input
+                type="date"
+                className={modalDateClass}
+                value={startDates.startDate}
+                onChange={(e) => setStartDates((prev) => ({ ...prev, startDate: e.target.value }))}
+                disabled={starting}
+              />
+
+              {showEndDate ? (
+                <div className="mt-3">
+                  <div className="flex items-baseline justify-between gap-2 mb-2">
+                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      Дата окончания
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowEndDate(false)
+                        setStartDates((prev) => ({ ...prev, endDate: '' }))
+                      }}
+                      disabled={starting}
+                      className="text-[11px] text-gray-400 hover:text-gray-600 transition cursor-pointer disabled:opacity-50"
+                    >
+                      Убрать
+                    </button>
+                  </div>
+                  <input
+                    type="date"
+                    className={modalDateClass}
+                    value={startDates.endDate}
+                    min={startDates.startDate || undefined}
+                    onChange={(e) => setStartDates((prev) => ({ ...prev, endDate: e.target.value }))}
+                    disabled={starting}
+                  />
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setShowEndDate(true)}
+                  disabled={starting}
+                  className="mt-2 text-sm text-[#FF8600] hover:text-[#FF6B00] transition cursor-pointer disabled:opacity-50"
+                >
+                  + Добавить дату окончания
+                </button>
+              )}
             </div>
           </div>
-        </div>
+        </Modal>
       )}
 
       {userModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => !userSaving && setUserModalOpen(false)}>
-          <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-5" onClick={(e) => e.stopPropagation()}>
-            <h2 className="text-base font-bold text-gray-900 mb-4">Новый пользователь</h2>
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Имя</label>
-                <input
-                  type="text"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  placeholder="Иван Иванов"
-                  autoFocus
-                  disabled={userSaving}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email</label>
-                <input
-                  type="email"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
-                  value={userEmail}
-                  onChange={(e) => setUserEmail(e.target.value)}
-                  placeholder="ivan@example.com"
-                  disabled={userSaving}
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={userSaving || !userName.trim() || !userEmail.trim()}
-                className="w-full py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition cursor-pointer"
-              >
-                {userSaving ? 'Добавление…' : 'Добавить'}
-              </button>
-            </form>
-          </div>
-        </div>
+        <Modal
+          title="Новый пользователь"
+          size="sm"
+          onClose={() => setUserModalOpen(false)}
+          preventClose={userSaving}
+          scrollable={false}
+        >
+          <form onSubmit={handleCreateUser} className="space-y-4">
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Имя</label>
+              <input
+                type="text"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
+                value={userName}
+                onChange={(e) => setUserName(e.target.value)}
+                placeholder="Иван Иванов"
+                autoFocus
+                disabled={userSaving}
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email</label>
+              <input
+                type="email"
+                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
+                value={userEmail}
+                onChange={(e) => setUserEmail(e.target.value)}
+                placeholder="ivan@example.com"
+                disabled={userSaving}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={userSaving || !userName.trim() || !userEmail.trim()}
+              className="w-full py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition cursor-pointer"
+            >
+              {userSaving ? 'Добавление…' : 'Добавить'}
+            </button>
+          </form>
+        </Modal>
+      )}
+
+      {confirmDialog === 'delete' && (
+        <ConfirmModal
+          title="Удалить опрос?"
+          variant="danger"
+          confirmLabel="Удалить"
+          loadingLabel="Удаление…"
+          loading={deleting}
+          onConfirm={handleDeleteSurvey}
+          onCancel={() => !deleting && setConfirmDialog(null)}
+          message={
+            <>
+              Опрос <span className="font-semibold text-gray-900">«{surveyTitle}»</span> будет удалён безвозвратно вместе со всеми данными.
+            </>
+          }
+        />
+      )}
+
+      {confirmDialog === 'stop' && (
+        <ConfirmModal
+          title="Остановить опрос?"
+          variant="warning"
+          confirmLabel="Остановить"
+          loadingLabel="Остановка…"
+          loading={stopping}
+          onConfirm={handleStopSurvey}
+          onCancel={() => !stopping && setConfirmDialog(null)}
+          message={
+            <>
+              Опрос <span className="font-semibold text-gray-900">«{surveyTitle}»</span> будет закрыт. Респонденты больше не смогут его заполнять.
+            </>
+          }
+        />
       )}
     </header>
   )
