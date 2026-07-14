@@ -1,10 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
-import { buildRespondentInviteLink, buildSurveyResponseLink } from '../routing'
+import { buildRespondentInviteLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
 import { Modal } from './Modal'
 
 interface MatrixTableProps {
-  surveyId: number
   targets: Participant[]
   respondents: Participant[]
   allUsers: ApiUser[]
@@ -23,6 +22,12 @@ interface MatrixTableProps {
   onAddParticipant: (userIds: number[], role: 'target' | 'respondent') => Promise<void>
   onRemoveParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
   onSave: (assignments: Record<string, Record<string, boolean>>) => Promise<void>
+  onViewResponse?: (info: {
+    reviewerId: number
+    targetId: number
+    reviewerName: string
+    targetName: string
+  }) => void
 }
 
 export function matrixToEntries(
@@ -44,7 +49,6 @@ export function matrixToEntries(
 }
 
 export function MatrixTable({
-  surveyId,
   targets,
   respondents,
   allUsers,
@@ -63,6 +67,7 @@ export function MatrixTable({
   onAddParticipant,
   onRemoveParticipant,
   onSave,
+  onViewResponse,
 }: MatrixTableProps) {
   const [assignments, setAssignments] =
     useState<Record<string, Record<string, boolean>>>(initialAssignments)
@@ -445,9 +450,6 @@ export function MatrixTable({
                           const targetKey = String(target.id)
                           const assigned = isChecked(reviewerKey, targetKey)
                           const completed = assigned && isCompleted(reviewerKey, targetKey)
-                          const responseLink = completed
-                            ? buildSurveyResponseLink(surveyId, respondent.id, target.id)
-                            : null
 
                           const cellDisabled = readOnly || respondent.id === target.id
                           return (
@@ -455,7 +457,7 @@ export function MatrixTable({
                               key={target.id}
                               onClick={(e) => {
                                 if (cellDisabled) return
-                                if ((e.target as HTMLElement).closest('a')) return
+                                if ((e.target as HTMLElement).closest('button')) return
                                 toggle(reviewerKey, targetKey)
                               }}
                               className={`p-4 text-center border-r border-gray-200 last:border-r-0 ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40'}`}
@@ -482,13 +484,19 @@ export function MatrixTable({
                                     </svg>
                                   )}
                                 </span>
-                                {responseLink && (
-                                  <a
-                                    href={responseLink}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    onClick={(e) => e.stopPropagation()}
-                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] hover:underline"
+                                {completed && (
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.stopPropagation()
+                                      onViewResponse?.({
+                                        reviewerId: respondent.id,
+                                        targetId: target.id,
+                                        reviewerName: respondent.name,
+                                        targetName: target.name,
+                                      })
+                                    }}
+                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] hover:underline cursor-pointer"
                                     title="Просмотреть ответы"
                                   >
                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -496,7 +504,7 @@ export function MatrixTable({
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
                                     Ответы
-                                  </a>
+                                  </button>
                                 )}
                               </div>
                             </td>
