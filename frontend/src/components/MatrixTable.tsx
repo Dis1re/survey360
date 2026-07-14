@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { buildInviteMailto, buildRespondentInviteLink, buildSurveyResponseLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
+import { Modal } from './Modal'
 
 interface MatrixTableProps {
   surveyId: number
@@ -321,96 +322,96 @@ export function MatrixTable({
       </form>
 
       {pickerRole && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40" onClick={() => !adding && setPickerRole(null)}>
-          <div className="w-full max-w-md bg-white rounded-2xl shadow-xl p-5 max-h-[80vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base font-bold text-gray-900">
-                {pickerRole === 'target' ? 'Добавить объекты оценки' : 'Добавить респондентов'}
-              </h2>
-              {availableUsers.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() =>
-                    setSelectedUserIds(
-                      selectedUserIds.length === availableUsers.length
-                        ? []
-                        : availableUsers.map((u) => u.id),
-                    )
-                  }
-                  className="text-xs font-medium text-[#FF8600] hover:text-[#FF6B00] cursor-pointer"
-                >
-                  {selectedUserIds.length === availableUsers.length ? 'Снять все' : 'Выбрать все'}
-                </button>
-              )}
-            </div>
-            {availableUsers.length === 0 ? (
-              <p className="text-sm text-gray-500 py-4">Все пользователи уже добавлены</p>
-            ) : (
-              <>
-                <input
-                  type="text"
-                  placeholder="Поиск по имени или email…"
-                  className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#FF8600] shadow-sm mb-3"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  autoFocus
-                />
-                {filteredUsers.length === 0 ? (
-                  <p className="text-sm text-gray-500 py-4">Ничего не найдено</p>
-                ) : (
-                  <div className="overflow-y-auto space-y-1">
-                    {filteredUsers.map((user) => {
-                      const checked = selectedUserIds.includes(user.id)
-                      return (
-                        <label
-                          key={user.id}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 border border-gray-100 cursor-pointer"
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() =>
-                              setSelectedUserIds((prev) =>
-                                checked ? prev.filter((id) => id !== user.id) : [...prev, user.id],
-                              )
-                            }
-                            className="w-4 h-4 text-[#FF8600] rounded focus:ring-[#FF8600]"
-                          />
-                          <div className="min-w-0">
-                            <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
-                            <div className="text-xs text-gray-400 truncate">{user.email}</div>
-                          </div>
-                        </label>
-                      )
-                    })}
-                  </div>
-                )}
-              </>
-            )}
-            <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => { setPickerRole(null); setSelectedUserIds([]) }}
-                disabled={adding}
-                className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
-              >
-                Отмена
-              </button>
+        <Modal
+          title={pickerRole === 'target' ? 'Добавить объекты оценки' : 'Добавить респондентов'}
+          size="md"
+          onClose={() => { setPickerRole(null); setSelectedUserIds([]) }}
+          preventClose={adding}
+        >
+          {availableUsers.length > 0 && (
+            <div className="flex justify-end mb-2">
               <button
                 type="button"
                 onClick={() =>
-                  onAddParticipant(selectedUserIds, pickerRole)
-                    .then(() => { setPickerRole(null); setSelectedUserIds([]); setSearch('') })
-                    .catch(console.error)
+                  setSelectedUserIds(
+                    selectedUserIds.length === availableUsers.length
+                      ? []
+                      : availableUsers.map((u) => u.id),
+                  )
                 }
-                disabled={adding || selectedUserIds.length === 0}
-                className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
+                className="text-xs font-medium text-[#FF8600] hover:text-[#FF6B00] cursor-pointer"
               >
-                {adding ? 'Добавление…' : `Добавить выбранных (${selectedUserIds.length})`}
+                {selectedUserIds.length === availableUsers.length ? 'Снять все' : 'Выбрать все'}
               </button>
             </div>
+          )}
+          {availableUsers.length === 0 ? (
+            <p className="text-sm text-gray-500 py-4">Все пользователи уже добавлены</p>
+          ) : (
+            <>
+              <input
+                type="text"
+                placeholder="Поиск по имени или email…"
+                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#FF8600] shadow-sm mb-3"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                autoFocus
+              />
+              {filteredUsers.length === 0 ? (
+                <p className="text-sm text-gray-500 py-4">Ничего не найдено</p>
+              ) : (
+                <div className="overflow-y-auto space-y-1 max-h-[50vh]">
+                  {filteredUsers.map((user) => {
+                    const checked = selectedUserIds.includes(user.id)
+                    return (
+                      <label
+                        key={user.id}
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 border border-gray-100 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() =>
+                            setSelectedUserIds((prev) =>
+                              checked ? prev.filter((id) => id !== user.id) : [...prev, user.id],
+                            )
+                          }
+                          className="w-4 h-4 text-[#FF8600] rounded focus:ring-[#FF8600]"
+                        />
+                        <div className="min-w-0">
+                          <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
+                          <div className="text-xs text-gray-400 truncate">{user.email}</div>
+                        </div>
+                      </label>
+                    )
+                  })}
+                </div>
+              )}
+            </>
+          )}
+          <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={() => { setPickerRole(null); setSelectedUserIds([]) }}
+              disabled={adding}
+              className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer disabled:opacity-50"
+            >
+              Отмена
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onAddParticipant(selectedUserIds, pickerRole)
+                  .then(() => { setPickerRole(null); setSelectedUserIds([]); setSearch('') })
+                  .catch(console.error)
+              }
+              disabled={adding || selectedUserIds.length === 0}
+              className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl transition shadow-sm cursor-pointer"
+            >
+              {adding ? 'Добавление…' : `Добавить выбранных (${selectedUserIds.length})`}
+            </button>
           </div>
-        </div>
+        </Modal>
       )}
     </>
   )
