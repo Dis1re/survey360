@@ -132,7 +132,7 @@ public class SurveyService(
         survey.StartedAt = IsSurveyActive(request.Status) ? DateTime.UtcNow : request.StartedAt ?? default;
         survey.ClosedAt = request.ClosedAt ?? default;
 
-        if (request.Status == "Активен")
+        if (IsSurveyActive(request.Status))
             await linkService.SyncRespondentLinksAsync(id, ct);
 
         await context.SaveChangesAsync(ct);
@@ -361,18 +361,18 @@ public class SurveyService(
         }
 
         assignment.IsCompleted = true;
+        await context.SaveChangesAsync(ct);
 
         var allAssignedCompleted = await context.SurveyAssignments
             .Where(a => a.SurveyId == surveyId && a.IsAssigned)
-            .AllAsync(a => a.IsAssigned == a.IsCompleted, ct);
+            .AllAsync(a => a.IsCompleted, ct);
 
         if (allAssignedCompleted)
         {
             survey.Status = "Завершен";
             survey.ClosedAt = DateTime.UtcNow;
+            await context.SaveChangesAsync(ct);
         }
-
-        await context.SaveChangesAsync(ct);
 
         return survey.Id;
     }

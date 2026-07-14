@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
@@ -16,6 +17,7 @@ public record QuestionDetailsDto(Question Question, List<Answer> Answers);
 [Route("/api/[controller]")]
 public class QuestionController(ApplicationDbContext context) : Controller
 {
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<int>> Create([FromBody] CreateQuestionRequest request, CancellationToken ct)
     {
@@ -59,6 +61,7 @@ public class QuestionController(ApplicationDbContext context) : Controller
         return new QuestionDetailsDto(question, answers);
     }
 
+    [Authorize]
     [HttpPut("{id:int}")]
     public async Task<ActionResult<Question>> Update(int id, [FromBody] UpdateQuestionRequest request, CancellationToken ct)
     {
@@ -76,6 +79,7 @@ public class QuestionController(ApplicationDbContext context) : Controller
         return question;
     }
 
+    [Authorize]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {

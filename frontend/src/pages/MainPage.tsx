@@ -15,7 +15,6 @@ import { useSurveyData } from '../hooks/useSurveyData'
 import { useMatrix } from '../hooks/useMatrix'
 import { useInviteManager } from '../hooks/useInviteManager'
 import { surveyApi } from '../api'
-import { mapSurveyStatus } from '../mappers'
 
 interface MainPageProps {
   surveyId: number | null
