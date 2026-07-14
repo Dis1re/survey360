@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { buildInviteMailto, buildRespondentInviteLink, buildSurveyResponseLink } from '../routing'
+import { buildRespondentInviteLink, buildSurveyResponseLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
 import { Modal } from './Modal'
 
@@ -130,6 +130,75 @@ export function MatrixTable({
   const isCompleted = (respondentId: string, targetId: string) =>
     completedAssignments[respondentId]?.[targetId] ?? false
 
+  const selectAll = () => {
+    if (readOnly || respondents.length === 0 || targets.length === 0) return
+    const allChecked = respondents.every(
+      (respondent) =>
+        respondent.id !== undefined &&
+        targets.every(
+          (target) =>
+            respondent.id === target.id ||
+            (assignments[String(respondent.id)]?.[String(target.id)] ?? false),
+        ),
+    )
+    const value = !allChecked
+    setAssignments((prev) => {
+      const next: Record<string, Record<string, boolean>> = { ...prev }
+      for (const respondent of respondents) {
+        const rKey = String(respondent.id)
+        next[rKey] = { ...next[rKey] }
+        for (const target of targets) {
+          if (respondent.id === target.id) continue
+          next[rKey][String(target.id)] = value
+        }
+      }
+      return next
+    })
+    dirtyRef.current = true
+  }
+
+  const selectColumn = (targetId: number) => {
+    if (readOnly || respondents.length === 0) return
+    const tKey = String(targetId)
+    const allChecked = respondents.every(
+      (respondent) =>
+        respondent.id === targetId ||
+        (assignments[String(respondent.id)]?.[tKey] ?? false),
+    )
+    const value = !allChecked
+    setAssignments((prev) => {
+      const next: Record<string, Record<string, boolean>> = { ...prev }
+      for (const respondent of respondents) {
+        if (respondent.id === targetId) continue
+        const rKey = String(respondent.id)
+        next[rKey] = { ...next[rKey], [tKey]: value }
+      }
+      return next
+    })
+    dirtyRef.current = true
+  }
+
+  const selectRow = (respondentId: number) => {
+    if (readOnly || targets.length === 0) return
+    const rKey = String(respondentId)
+    const allChecked = targets.every(
+      (target) =>
+        respondentId === target.id ||
+        (assignments[rKey]?.[String(target.id)] ?? false),
+    )
+    const value = !allChecked
+    setAssignments((prev) => {
+      const next: Record<string, Record<string, boolean>> = { ...prev }
+      next[rKey] = { ...next[rKey] }
+      for (const target of targets) {
+        if (respondentId === target.id) continue
+        next[rKey][String(target.id)] = value
+      }
+      return next
+    })
+    dirtyRef.current = true
+  }
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
   }
@@ -178,14 +247,37 @@ export function MatrixTable({
     )
   })
 
+  const allSelectedActive =
+    respondents.length > 0 &&
+    targets.length > 0 &&
+    respondents.every((r) =>
+      targets.every((t) => r.id === t.id || (assignments[String(r.id)]?.[String(t.id)] ?? false)),
+    )
+
   return (
     <>
       <form onSubmit={handleSubmit}>
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-3">
-            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-              Матрица оценки
-            </span>
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                Матрица оценки
+              </span>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={selectAll}
+                  disabled={adding || respondents.length === 0 || targets.length === 0}
+                  className={`px-3 py-1.5 text-xs font-medium border rounded-lg transition cursor-pointer disabled:opacity-50 ${
+                    allSelectedActive
+                      ? 'bg-orange-100 text-[#FF6B00] border-orange-300'
+                      : 'text-gray-700 bg-white border-gray-200 hover:border-[#FF8600] hover:bg-orange-50'
+                  }`}
+                >
+                  {allSelectedActive ? 'Снять всех' : 'Выбрать всех'}
+                </button>
+              )}
+            </div>
             {surveyActive && onSendInvites && respondentLinks.length > 0 && (
               <button
                 type="button"
@@ -230,6 +322,28 @@ export function MatrixTable({
                             )}
                           </div>
                           <span>{target.name}</span>
+                          {!readOnly && (
+                            (() => {
+                              const colActive = respondents.length > 0 && respondents.every(
+                                (r) => r.id === target.id || (assignments[String(r.id)]?.[String(target.id)] ?? false),
+                              )
+                              return (
+                            <button
+                              type="button"
+                              onClick={() => selectColumn(target.id)}
+                              disabled={respondents.length === 0}
+                              className={`mt-1 text-[10px] font-medium border rounded px-2 py-0.5 transition cursor-pointer disabled:opacity-40 disabled:cursor-default whitespace-nowrap ${
+                                colActive
+                                  ? 'bg-orange-100 text-[#FF6B00] border-orange-300'
+                                  : 'text-[#FF8600] hover:text-[#FF6B00] border-orange-200 hover:bg-orange-50'
+                              }`}
+                              title={colActive ? 'Снять выбор столбца' : 'Выбрать весь столбец'}
+                            >
+                              {colActive ? 'снять столбец' : 'весь столбец'}
+                            </button>
+                              )
+                            })()
+                          )}
                         </div>
                       </th>
                     ))}
@@ -274,6 +388,26 @@ export function MatrixTable({
                             </div>
                             <div className="min-w-0">
                               <div>{respondent.name}</div>
+                              {!readOnly && targets.length > 0 && (() => {
+                                const rowActive = targets.every(
+                                  (t) => respondent.id === t.id || (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
+                                )
+                                return (
+                                  <button
+                                    type="button"
+                                    onClick={() => selectRow(respondent.id)}
+                                    disabled={targets.length === 0}
+                                    className={`mt-1.5 text-[10px] font-medium border rounded px-2 py-0.5 transition cursor-pointer disabled:opacity-40 disabled:cursor-default whitespace-nowrap ${
+                                      rowActive
+                                        ? 'bg-orange-100 text-[#FF6B00] border-orange-300'
+                                        : 'text-[#FF8600] hover:text-[#FF6B00] border-orange-200 hover:bg-orange-50'
+                                    }`}
+                                    title={rowActive ? 'Снять выбор ряда' : 'Выбрать весь ряд'}
+                                  >
+                                    {rowActive ? 'снять ряд' : 'весь ряд'}
+                                  </button>
+                                )
+                              })()}
                               {surveyActive && inviteLink && (
                                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
                                   <button
@@ -344,7 +478,6 @@ export function MatrixTable({
                             </td>
                           )
                         })}
-                        {!readOnly && <td className="p-4" />}
                       </tr>
                     )
                   })}
@@ -358,7 +491,7 @@ export function MatrixTable({
                           disabled={adding || allUsers.length === 0}
                           className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-[#FF8600] border-2 border-dashed border-orange-200 hover:border-[#FF8600] hover:bg-orange-50 rounded-xl soft-press cursor-pointer disabled:opacity-50"
                         >
-                          + Добавить респондента
+                          + Респондента
                         </button>
                       </td>
                       {targets.map((target) => (

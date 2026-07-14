@@ -5,6 +5,7 @@ import { apiSurveyToSurvey } from './mappers'
 import { MainPage } from './pages/MainPage'
 import { EntityPage } from './pages/SurveyDetails'
 import { TakeSurvey } from './pages/TakeSurvey'
+import { openDevPage } from './routing'
 import type { Survey } from './types'
 
 type View = 'main' | 'details' | 'take'
@@ -70,6 +71,7 @@ export default function App() {
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
         onOpenDetails={handleOpenDetails}
+        onOpenDev={openDevPage}
       />
       <main className="flex-1 overflow-y-auto bg-gray-100">
         {view === 'details' ? (

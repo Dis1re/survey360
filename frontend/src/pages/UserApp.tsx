@@ -4,6 +4,7 @@ import { Sidebar } from '../components/Sidebar'
 import { useAuth } from '../context/AuthContext'
 import { useSurveyLive } from '../hooks/useSurveyLive'
 import { apiSurveyToSurvey, isMySurvey } from '../mappers'
+import { openDevPage } from '../routing'
 import { MainPage } from './MainPage'
 import { TakeSurvey } from './TakeSurvey'
 import type { Survey } from '../types'
@@ -87,6 +88,7 @@ export function UserApp() {
         }}
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
+        onOpenDev={user?.isAdmin ? openDevPage : undefined}
       />
       <main className="flex-1 overflow-y-auto">
         {selectedSurveyId === null ? (
