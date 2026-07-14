@@ -36,7 +36,6 @@ interface SidebarProps {
   onSearch: (query: string) => void
   onOpenDev?: () => void
   onOpenDetails?: () => void
-  onOpenTake?: () => void
 }
 
 const statusConfig = {

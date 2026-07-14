@@ -44,10 +44,6 @@ export default function App() {
 
   const handleOpenDetails = () => setView('details')
 
-  const handleOpenTake = () => {
-    setView('take')
-  }
-
   const handleBack = () => {
     setView('main')
     loadSurveys()
@@ -78,7 +74,6 @@ export default function App() {
         onSearch={setSearchQuery}
         onOpenDev={handleOpenDev}
         onOpenDetails={handleOpenDetails}
-        onOpenTake={handleOpenTake}
       />
       <main className="flex-1 overflow-y-auto bg-gray-100">
         {view === 'details' ? (

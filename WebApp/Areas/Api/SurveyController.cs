@@ -70,6 +70,53 @@ public class SurveyController(
         return normalized.Contains("черновик") || normalized == "draft";
     }
 
+    private bool CanManageSurvey(Survey survey)
+    {
+        var userId = User.GetUserId();
+        if (userId is null)
+            return false;
+
+        return User.IsAdmin() || survey.CreatedByUserId == userId.Value;
+    }
+
+    private async Task<bool> CanViewSurveyAsync(Survey survey, CancellationToken ct)
+    {
+        if (CanManageSurvey(survey))
+            return true;
+
+        var userId = User.GetUserId();
+        if (userId is null || IsSurveyDraft(survey.Status))
+            return false;
+
+        return await context.SurveyAssignments
+            .AsNoTracking()
+            .AnyAsync(
+                a => a.SurveyId == survey.Id && a.ReviewerId == userId.Value && a.IsAssigned,
+                ct);
+    }
+
+    private ActionResult? RequireManageSurvey(Survey? survey)
+    {
+        if (survey is null)
+            return NotFound();
+
+        if (!CanManageSurvey(survey))
+            return Forbid();
+
+        return null;
+    }
+
+    private async Task<ActionResult?> RequireViewSurveyAsync(Survey? survey, CancellationToken ct)
+    {
+        if (survey is null)
+            return NotFound();
+
+        if (!await CanViewSurveyAsync(survey, ct))
+            return Forbid();
+
+        return null;
+    }
+
     [Authorize]
     [HttpPost]
     public async Task<ActionResult<int>> Create(CancellationToken ct)
@@ -138,15 +185,18 @@ public class SurveyController(
             .ToList();
     }
 
+    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<SurveyDetailsDto>> Get(int id, CancellationToken ct)
     {
         var survey = await context.Surveys
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == id, ct);
-        if (survey is null)
-            return NotFound();
+        var accessError = await RequireViewSurveyAsync(survey, ct);
+        if (accessError is not null)
+            return accessError;
 
+        var resolvedSurvey = survey!;
         var questions = await context.Questions
             .AsNoTracking()
             .Where(q => q.SurveyId == id)
@@ -167,7 +217,7 @@ public class SurveyController(
             .Where(a => a.SurveyId == id)
             .ToListAsync(ct);
 
-        return new SurveyDetailsDto(survey, questions, answers, assignments);
+        return new SurveyDetailsDto(resolvedSurvey, questions, answers, assignments);
     }
 
     [Authorize]
@@ -175,9 +225,11 @@ public class SurveyController(
     public async Task<ActionResult<Survey>> Update(int id, [FromBody] UpdateSurveyRequest request, CancellationToken ct)
     {
         var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == id, ct);
-        if (survey is null)
-            return NotFound();
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
 
+        var resolvedSurvey = survey!;
         var targetStatus = (request.Status ?? "").Trim();
         var isActive = targetStatus.Contains("актив", StringComparison.OrdinalIgnoreCase)
             || targetStatus.Equals("active", StringComparison.OrdinalIgnoreCase);
@@ -196,24 +248,27 @@ public class SurveyController(
             }
         }
 
-        survey.Name = request.Name;
-        survey.Description = request.Description;
-        survey.Status = request.Status;
-        survey.StartedAt = request.StartedAt ?? default;
-        survey.ClosedAt = request.ClosedAt ?? default;
+        resolvedSurvey.Name = request.Name;
+        resolvedSurvey.Description = request.Description;
+        resolvedSurvey.Status = request.Status;
+        resolvedSurvey.StartedAt = request.StartedAt ?? default;
+        resolvedSurvey.ClosedAt = request.ClosedAt ?? default;
 
         if (request.Status == "Активен")
             await linkService.SyncRespondentLinksAsync(id, ct);
 
         await context.SaveChangesAsync(ct);
-        return survey;
+        return resolvedSurvey;
     }
 
+    [Authorize]
     [HttpGet("{id:int}/matrix")]
     public async Task<ActionResult<SurveyMatrixDto>> GetMatrix(int id, CancellationToken ct)
     {
-        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
-            return NotFound();
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = await RequireViewSurveyAsync(survey, ct);
+        if (accessError is not null)
+            return accessError;
 
         var participants = await context.Set<SurveyParticipant>()
             .AsNoTracking()
@@ -250,11 +305,12 @@ public class SurveyController(
         [FromBody] AddSurveyParticipantRequest request,
         CancellationToken ct)
     {
-        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
-            return NotFound();
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
 
-        var survey = await context.Surveys.AsNoTracking().FirstAsync(s => s.Id == id, ct);
-        if (!IsSurveyDraft(survey.Status))
+        if (!IsSurveyDraft(survey!.Status))
             return BadRequest("Добавлять участников можно только в черновике опроса");
 
         if (!await context.Users.AnyAsync(u => u.Id == request.UserId, ct))
@@ -290,11 +346,12 @@ public class SurveyController(
         [FromQuery] string role,
         CancellationToken ct)
     {
-        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
-            return NotFound();
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
 
-        var survey = await context.Surveys.AsNoTracking().FirstAsync(s => s.Id == id, ct);
-        if (!IsSurveyDraft(survey.Status))
+        if (!IsSurveyDraft(survey!.Status))
             return BadRequest("Удалять участников можно только в черновике опроса");
 
         var roleNormalized = role.Trim().ToLowerInvariant();
@@ -345,8 +402,10 @@ public class SurveyController(
         [FromBody] SaveAssignmentsRequest request,
         CancellationToken ct)
     {
-        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
-            return NotFound();
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
 
         var participants = await context.Set<SurveyParticipant>()
             .AsNoTracking()
@@ -389,8 +448,9 @@ public class SurveyController(
         var survey = await context.Surveys
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == id, ct);
-        if (survey is null)
-            return NotFound();
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
 
         var questions = await context.Questions
             .AsNoTracking()
@@ -430,6 +490,11 @@ public class SurveyController(
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
+
         var deleted = await context.Surveys
             .Where(s => s.Id == id)
             .ExecuteDeleteAsync(ct);
@@ -439,14 +504,17 @@ public class SurveyController(
 
     public record ReorderQuestionsRequest(List<int> OrderedIds);
 
+    [Authorize]
     [HttpPut("{id:int}/questions/order")]
     public async Task<IActionResult> ReorderQuestions(
         int id,
         [FromBody] ReorderQuestionsRequest request,
         CancellationToken ct)
     {
-        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
-            return NotFound();
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
 
         var ids = request.OrderedIds.Distinct().ToList();
         if (ids.Count == 0)
@@ -474,11 +542,14 @@ public class SurveyController(
         return NoContent();
     }
 
+    [Authorize]
     [HttpDelete("{id:int}/questions")]
     public async Task<IActionResult> DeleteAllQuestions(int id, CancellationToken ct)
     {
-        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
-            return NotFound();
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
 
         var questionIds = await context.Questions
             .Where(q => q.SurveyId == id)
@@ -499,6 +570,7 @@ public class SurveyController(
         return NoContent();
     }
 
+    [Authorize]
     [HttpPost("{id:int}/assignments/complete")]
     public async Task<IActionResult> CompleteAssignment(
         int id,
@@ -508,6 +580,13 @@ public class SurveyController(
         var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == id, ct);
         if (survey is null)
             return NotFound();
+
+        var userId = User.GetUserId();
+        if (userId is null)
+            return Unauthorized();
+
+        if (!User.IsAdmin() && request.ReviewerId != userId.Value)
+            return Forbid();
 
         if (request.ReviewerId <= 0 || request.TargetId <= 0)
             return BadRequest("ReviewerId и TargetId обязательны");
@@ -574,6 +653,11 @@ public class SurveyController(
     [HttpGet("{id:int}/report/info")]
     public async Task<ActionResult<SurveyReportInfoDto>> GetReportInfo(int id, CancellationToken ct)
     {
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
+
         var info = await reportService.GetReportInfoAsync(id, ct);
         if (info is null)
             return NotFound();
@@ -589,6 +673,11 @@ public class SurveyController(
     [HttpGet("{id:int}/report.docx")]
     public async Task<IActionResult> DownloadReport(int id, CancellationToken ct)
     {
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
+
         var result = await reportService.BuildReportAsync(id, ct);
         if (result is null)
         {
@@ -603,11 +692,14 @@ public class SurveyController(
         return File(result.Value.Stream, contentType, result.Value.FileName);
     }
 
+    [Authorize]
     [HttpGet("{id:int}/links")]
     public async Task<ActionResult<List<RespondentLinkDto>>> GetRespondentLinks(int id, CancellationToken ct)
     {
-        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
-            return NotFound();
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
 
         return await linkService.GetLinksAsync(id, ct);
     }
@@ -619,8 +711,10 @@ public class SurveyController(
         [FromBody] SendInvitesRequest? request,
         CancellationToken ct)
     {
-        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
-            return NotFound();
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
 
         try
         {

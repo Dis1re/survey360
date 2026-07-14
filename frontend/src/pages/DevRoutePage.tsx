@@ -3,6 +3,14 @@ import { useAuth } from '../context/AuthContext'
 import { closeDevPage } from '../routing'
 import { EntitiesPage } from './DevPage'
 
+function devAccessError(err: unknown): string {
+  const status = (err as Error & { status?: number }).status
+  if (status === 403) return 'Нет прав администратора для доступа к базе данных'
+  if (status === 404) return 'Администратор не найден. Убедитесь, что БД инициализирована (миграции применены).'
+  if (status === 401) return 'Сессия истекла. Попробуйте открыть страницу снова.'
+  return 'Не удалось получить доступ к базе данных. Проверьте, что сервер запущен и БД доступна.'
+}
+
 export function DevRoutePage() {
   const { user, loading, login } = useAuth()
   const [ready, setReady] = useState(false)
@@ -21,8 +29,8 @@ export function DevRoutePage() {
       .then(() => {
         if (!cancelled) setReady(true)
       })
-      .catch(() => {
-        if (!cancelled) setError('Не удалось получить доступ к базе данных')
+      .catch((err) => {
+        if (!cancelled) setError(devAccessError(err))
       })
 
     return () => {
@@ -33,7 +41,7 @@ export function DevRoutePage() {
   if (error) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 gap-4">
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-500 text-center max-w-md">{error}</p>
         <button
           type="button"
           onClick={closeDevPage}

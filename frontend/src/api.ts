@@ -25,6 +25,7 @@ import type {
 } from './types'
 
 async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
+  // credentials: 'include' sends auth cookies on all requests, including public invite/survey routes.
   const response = await fetch(url, {
     credentials: 'include',
     ...options,
