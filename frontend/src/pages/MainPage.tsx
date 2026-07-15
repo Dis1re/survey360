@@ -673,7 +673,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               >
                 <MatrixTable
                   key={`expanded-${surveyId}`}
-                  surveyId={surveyId}
                   targets={targets}
                   respondents={respondents}
                   allUsers={allUsers}

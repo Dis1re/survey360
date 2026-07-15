@@ -238,6 +238,13 @@ export const templateApi = {
     sendRequest<number>(`${API}/survey-template/${id}/create-survey`, { method: 'POST' }),
 }
 
+export interface ImportResult {
+  imported: number
+  updated: number
+  skipped: number
+  errors: string[]
+}
+
 export const userApi = {
   list: () => sendRequest<ApiUser[]>(`${API}/user`),
 
@@ -248,6 +255,34 @@ export const userApi = {
     }),
 
   get: (id: number) => sendRequest<ApiUser>(`${API}/user/${id}`),
+
+  exportCsv: async () => {
+    const response = await fetch(`${API}/user/export-csv`, { credentials: 'include' })
+    if (!response.ok) throw new Error(`Ошибка API [${response.status}]`)
+
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = 'users.csv'
+    link.click()
+    URL.revokeObjectURL(url)
+  },
+
+  importCsv: async (file: File) => {
+    const formData = new FormData()
+    formData.append('file', file)
+    const response = await fetch(`${API}/user/import-csv`, {
+      method: 'POST',
+      credentials: 'include',
+      body: formData,
+    })
+    if (!response.ok) {
+      const errorText = await response.text()
+      throw new Error(errorText || `Ошибка API [${response.status}]`)
+    }
+    return (await response.json()) as ImportResult
+  },
 }
 
 export const questionApi = {

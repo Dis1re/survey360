@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { answerApi, databaseApi, questionApi, surveyApi, userApi } from '../api'
+import type { ImportResult } from '../api'
 import { ConfirmModal } from '../components/ConfirmModal'
 import type { ApiAnswer, ApiQuestion, ApiQuestionDetails, ApiSurvey, ApiUser } from '../types'
 
@@ -113,6 +114,10 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
   const [knownQuestions, setKnownQuestions] = useState<ApiQuestion[]>([])
   const [knownAnswers, setKnownAnswers] = useState<ApiAnswer[]>([])
   const [knownUserIds, setKnownUserIds] = useState<number[]>([])
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<ImportResult | null>(null)
+  const [exportingUsers, setExportingUsers] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const loadRelatedEntities = async (surveyList: ApiSurvey[]) => {
     if (surveyList.length === 0) {
@@ -228,6 +233,32 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
       setError(err instanceof Error ? err.message : 'Не удалось получить пользователя')
     } finally {
       setUserBusy(false)
+    }
+  }
+
+  const handleExportUsers = async () => {
+    setExportingUsers(true)
+    setError(null)
+    try {
+      await userApi.exportCsv()
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось экспортировать пользователей')
+    } finally {
+      setExportingUsers(false)
+    }
+  }
+
+  const handleImportUsers = async (file: File) => {
+    setImporting(true)
+    setImportResult(null)
+    setError(null)
+    try {
+      const result = await userApi.importCsv(file)
+      setImportResult(result)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Не удалось импортировать пользователей')
+    } finally {
+      setImporting(false)
     }
   }
 
@@ -370,6 +401,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     setAnswerUserId('')
     setAnswerGetId('')
     setAnswerResult(null)
+    setImportResult(null)
   }
 
   const handleClearDatabase = () => {
@@ -529,7 +561,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
 
           <Section
             title="Пользователи"
-            endpoints={<>POST /api/user · GET /api/user/&#123;id&#125;</>}
+            endpoints={<>POST /api/user · GET /api/user/&#123;id&#125; · GET /api/user/export-csv · POST /api/user/import-csv</>}
           >
             <form className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4" onSubmit={handleCreateUser}>
               <Field label="Имя" hint="ФИО или отображаемое имя. Поле name в POST /api/user.">
@@ -557,6 +589,49 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                 </button>
               </div>
             </form>
+
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button
+                type="button"
+                className={btnSecondary}
+                onClick={handleExportUsers}
+                disabled={exportingUsers}
+              >
+                {exportingUsers ? 'Экспорт…' : 'Экспорт CSV'}
+              </button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    handleImportUsers(file)
+                    e.target.value = ''
+                  }
+                }}
+              />
+              <button
+                type="button"
+                className={btnSecondary}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={importing}
+              >
+                {importing ? 'Импорт…' : 'Импорт CSV'}
+              </button>
+            </div>
+
+            {importResult && (
+              <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-xl px-4 py-3 mb-4">
+                Импорт завершён: создано {importResult.imported}, обновлено {importResult.updated}, пропущено {importResult.skipped}
+                {importResult.errors.length > 0 && (
+                  <ul className="mt-2 text-xs text-green-600 list-disc list-inside">
+                    {importResult.errors.map((err, i) => <li key={i}>{err}</li>)}
+                  </ul>
+                )}
+              </div>
+            )}
 
             {knownUserIds.length > 0 ? (
               <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
