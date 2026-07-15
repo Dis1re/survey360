@@ -19,6 +19,7 @@ import type {
   SurveyReportInfo,
   RespondentLink,
   InviteInfo,
+  InviteLoginResult,
   SendInvitesResult,
   UpdateQuestionRequest,
   UpdateSurveyRequest,
@@ -78,6 +79,12 @@ export const authApi = {
   me: () => sendRequest<AuthUser>(`${API}/auth/me`),
 
   logout: () => sendRequest<void>(`${API}/auth/logout`, { method: 'POST' }),
+
+  inviteLogin: (token: string) =>
+    sendRequest<InviteLoginResult>(`${API}/auth/invite-login`, {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    }),
 }
 
 export const surveyApi = {

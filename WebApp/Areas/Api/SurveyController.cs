@@ -273,7 +273,7 @@ public class SurveyController(
         }
 
         const string contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        return File(result.Value.Stream, contentType, result.Value.FileName);
+        return File(result.Value.Bytes, contentType, result.Value.FileName);
     }
 
     [Authorize]
@@ -308,7 +308,9 @@ public class SurveyController(
         var accessError = await RequireViewSurveyAsync(survey, ct);
         if (accessError is not null) return accessError;
 
-        return await surveyService.GetResponsesAsync(id, reviewerId, targetId, ct);
+        var items = await surveyService.GetResponsesAsync(id, reviewerId, targetId, ct);
+
+        return items;
     }
 
     [Authorize]

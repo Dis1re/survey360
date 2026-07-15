@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { surveyApi } from '../api'
+import { authApi } from '../api'
 import { TakeSurvey } from './TakeSurvey'
 
 export function InviteSurveyPage({ token }: { token: string }) {
@@ -10,8 +10,8 @@ export function InviteSurveyPage({ token }: { token: string }) {
 
   useEffect(() => {
     setLoading(true)
-    surveyApi
-      .resolveInvite(token)
+    authApi
+      .inviteLogin(token)
       .then((info) => {
         setSurveyId(info.surveyId)
         setReviewerId(info.reviewerId)

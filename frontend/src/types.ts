@@ -222,6 +222,12 @@ export interface InviteInfo {
   reviewerId: number
 }
 
+export interface InviteLoginResult {
+  surveyId: number
+  reviewerId: number
+  user: AuthUser
+}
+
 export interface SendInviteItemResult {
   reviewerId: number
   reviewerEmail: string

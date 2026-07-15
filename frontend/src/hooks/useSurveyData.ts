@@ -171,6 +171,7 @@ export function useSurveyData(
       })
       setSurvey(updated)
       onSurveyUpdated?.()
+      if (loadMatrix) await loadMatrix(surveyId)
       if (loadRespondentLinks) await loadRespondentLinks(surveyId)
     } catch (err) {
       console.error(err)
@@ -178,7 +179,7 @@ export function useSurveyData(
     } finally {
       setStartingSurvey(false)
     }
-  }, [surveyId, survey, onSurveyUpdated, loadRespondentLinks])
+  }, [surveyId, survey, onSurveyUpdated, loadMatrix, loadRespondentLinks])
 
   const handleStopSurvey = useCallback(async (data: { title: string; description: string }) => {
     if (surveyId === null || !survey) return

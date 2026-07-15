@@ -10,12 +10,16 @@ namespace WebApp.Areas.Api;
 
 public record LoginRequest(string Email);
 
+public record InviteLoginRequest(string Token);
+
 public record AuthUserDto(int Id, string Name, string Email, bool IsAdmin);
+
+public record InviteLoginResult(int SurveyId, int ReviewerId, AuthUserDto User);
 
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
-public class AuthController(ApplicationDbContext context) : Controller
+public class AuthController(ApplicationDbContext context, SurveyRespondentLinkService linkService) : Controller
 {
     [HttpPost("login")]
     public async Task<ActionResult<AuthUserDto>> Login([FromBody] LoginRequest request, CancellationToken ct)
@@ -63,6 +67,29 @@ public class AuthController(ApplicationDbContext context) : Controller
 
         await SignInAsync(user);
         return ToDto(user);
+    }
+
+    [HttpPost("invite-login")]
+    public async Task<ActionResult<InviteLoginResult>> InviteLogin(
+        [FromBody] InviteLoginRequest request, CancellationToken ct)
+    {
+        var token = request.Token?.Trim();
+        if (string.IsNullOrEmpty(token))
+            return BadRequest("Token обязателен");
+
+        var info = await linkService.ResolveTokenAsync(token, ct);
+        if (info is null)
+            return NotFound("Ссылка недействительна или устарела");
+
+        var user = await context.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u => u.Id == info.ReviewerId, ct);
+
+        if (user is null)
+            return NotFound("Ссылка недействительна или устарела");
+
+        await SignInAsync(user);
+        return new InviteLoginResult(info.SurveyId, info.ReviewerId, ToDto(user));
     }
 
     [Authorize]

@@ -135,19 +135,19 @@ export function apiQuestionToQuestion(api: ApiQuestion): Question {
   }
 }
 
-export function apiUserToParticipant(user: ApiUser, index: number): Participant {
+export function apiUserToParticipant(user: ApiUser): Participant {
   const initial = user.name.trim().charAt(0).toUpperCase() || '?'
   return {
     id: user.id,
     name: user.name,
     role: user.email.split('@')[0] ?? '',
     initial,
-    color: PARTICIPANT_COLORS[index % PARTICIPANT_COLORS.length],
+    color: PARTICIPANT_COLORS[Math.abs(user.id) % PARTICIPANT_COLORS.length],
   }
 }
 
 export function usersToParticipants(users: ApiUser[]): Participant[] {
-  return users.map((user, index) => apiUserToParticipant(user, index))
+  return users.map((user) => apiUserToParticipant(user))
 }
 
 export function assignmentsToMatrix(

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { MatrixTable, matrixToEntries } from '../components/MatrixTable'
 import { SIDEBAR_WIDTH_COLLAPSED, SIDEBAR_WIDTH_EXPANDED } from '../components/Sidebar'
 import { ConfirmModal } from '../components/ConfirmModal'
@@ -28,6 +28,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [matrixExpanded, setMatrixExpanded] = useState(false)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null)
+  const liveMatrixAssignmentsRef = useRef<Record<string, Record<string, boolean>> | null>(null)
 
   const {
     respondentLinks,
@@ -97,13 +98,15 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
 
   const handleStartSurveyWithAssignments = async (data: StartSurveyPayload) => {
     if (surveyId === null) return
-    const entries = matrixToEntries(assignments, respondents, targets).map((e) => ({
+    const currentAssignments = liveMatrixAssignmentsRef.current ?? assignments
+    const entries = matrixToEntries(currentAssignments, respondents, targets).map((e) => ({
       reviewerId: e.reviewerId,
       targetId: e.targetId,
       isAssigned: e.isAssigned,
     }))
     await surveyApi.saveAssignments(surveyId, entries)
     await handleStartSurvey(data)
+    await loadMatrix(surveyId)
   }
 
   useSurveyLive((event) => {
@@ -275,6 +278,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               onRemoveParticipant={(userId, role) => handleRemoveMatrixParticipant(userId, role, surveyEditable)}
               onSave={(next) => handleSaveMatrix(next, surveyEditable)}
               onExpand={() => setMatrixExpanded(true)}
+              liveAssignmentsRef={liveMatrixAssignmentsRef}
             />
 
             {matrixExpanded && (
@@ -308,6 +312,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                   onSave={(next) => handleSaveMatrix(next, surveyEditable)}
                   onViewResponse={(info) => setResponseView(info)}
                   expanded
+                  liveAssignmentsRef={liveMatrixAssignmentsRef}
                 />
               </Modal>
             )}

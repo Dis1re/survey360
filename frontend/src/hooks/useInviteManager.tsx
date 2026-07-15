@@ -131,7 +131,7 @@ export function useInviteManager(surveyId: number | null): UseInviteManagerRetur
       await surveyApi.downloadReport(surveyId)
     } catch (err) {
       console.error(err)
-      alert('Не удалось сформировать отчёт')
+      alert(err instanceof Error && err.message ? err.message : 'Не удалось сформировать отчёт')
     } finally {
       setExportingReport(false)
     }

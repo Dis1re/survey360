@@ -7,6 +7,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="Assets\Survey360Logo.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <EmbeddedResource Include="Assets\Survey360Logo.png" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
 	<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.0">

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { surveyApi } from '../api'
 import { matrixToEntries } from '../components/MatrixTable'
 import { assignmentsToCompletionMatrix, assignmentsToMatrix, usersToParticipants } from '../mappers'
@@ -28,8 +28,10 @@ export function useMatrix(surveyId: number | null): UseMatrixReturn {
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [responseView, setResponseView] = useState<ResponseView | null>(null)
+  const loadMatrixRequestRef = useRef(0)
 
   useEffect(() => {
+    loadMatrixRequestRef.current += 1
     setTargets([])
     setRespondents([])
     setAssignments({})
@@ -45,7 +47,9 @@ export function useMatrix(surveyId: number | null): UseMatrixReturn {
   }, [])
 
   const loadMatrix = useCallback(async (id: number) => {
+    const requestId = ++loadMatrixRequestRef.current
     const matrix = await surveyApi.getMatrix(id)
+    if (requestId !== loadMatrixRequestRef.current) return
     setTargets(usersToParticipants(matrix.targets))
     setRespondents(usersToParticipants(matrix.respondents))
     setAssignments(assignmentsToMatrix(matrix.assignments))
@@ -81,6 +85,7 @@ export function useMatrix(surveyId: number | null): UseMatrixReturn {
 
   const handleSaveMatrix = useCallback(async (next: Record<string, Record<string, boolean>>, surveyEditable: boolean) => {
     if (surveyId === null || !surveyEditable) return
+    if (respondents.length === 0 || targets.length === 0) return
     setSavingMatrix(true)
     try {
       const entries = matrixToEntries(next, respondents, targets).map((e) => ({

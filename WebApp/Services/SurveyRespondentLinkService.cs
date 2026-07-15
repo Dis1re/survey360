@@ -22,8 +22,16 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
         var assignedSet = assignedReviewerIds.ToHashSet();
 
         await context.SurveyParticipants
-            .Where(p => p.SurveyId == surveyId && p.IsRespondent && !assignedSet.Contains(p.UserId))
+            .Where(p => p.SurveyId == surveyId && p.IsRespondent && !p.IsTarget && !assignedSet.Contains(p.UserId))
             .ExecuteDeleteAsync(ct);
+
+        await context.SurveyParticipants
+            .Where(p => p.SurveyId == surveyId && p.IsRespondent && p.IsTarget && !assignedSet.Contains(p.UserId))
+            .ExecuteUpdateAsync(s => s
+                .SetProperty(p => p.IsRespondent, false)
+                .SetProperty(p => p.Token, (string?)null)
+                .SetProperty(p => p.CreatedAt, default(DateTime)),
+                ct);
 
         if (assignedReviewerIds.Count == 0)
             return;
@@ -71,7 +79,7 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
 
     public async Task<List<RespondentLinkDto>> GetLinksAsync(int surveyId, CancellationToken ct)
     {
-        return await context.SurveyParticipants
+        var rows = await context.SurveyParticipants
             .AsNoTracking()
             .Where(p => p.SurveyId == surveyId && p.IsRespondent && p.Token != null)
             .Join(
@@ -79,9 +87,12 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
                 p => p.UserId,
                 u => u.Id,
                 (p, u) => new { p.Token, u.Id, u.Name, u.Email })
+            .ToListAsync(ct);
+
+        return rows
             .OrderBy(x => x.Name)
             .Select(x => new RespondentLinkDto(x.Id, x.Name, x.Email, x.Token!))
-            .ToListAsync(ct);
+            .ToList();
     }
 
     public async Task<InviteInfoDto?> ResolveTokenAsync(string token, CancellationToken ct)

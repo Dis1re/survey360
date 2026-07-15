@@ -176,8 +176,19 @@ public class SurveyService(
             .Where(p => p.SurveyId == id)
             .ToListAsync(ct);
 
+        var assignments = await context.SurveyAssignments
+            .AsNoTracking()
+            .Where(a => a.SurveyId == id)
+            .ToListAsync(ct);
+
         var targetIds = participants.Where(p => p.IsTarget).Select(p => p.UserId).ToHashSet();
+        foreach (var targetId in assignments.Where(a => a.IsAssigned).Select(a => a.TargetId))
+            targetIds.Add(targetId);
+
         var respondentIds = participants.Where(p => p.IsRespondent).Select(p => p.UserId).ToHashSet();
+        foreach (var reviewerId in assignments.Where(a => a.IsAssigned).Select(a => a.ReviewerId))
+            respondentIds.Add(reviewerId);
+
         var userIds = targetIds.Union(respondentIds).ToList();
 
         var users = userIds.Count == 0
@@ -185,17 +196,31 @@ public class SurveyService(
             : await context.Users
                 .AsNoTracking()
                 .Where(u => userIds.Contains(u.Id))
-                .OrderBy(u => u.Name)
                 .ToListAsync(ct);
 
-        var assignments = await context.SurveyAssignments
-            .AsNoTracking()
-            .Where(a => a.SurveyId == id)
-            .ToListAsync(ct);
+        var usersById = users.ToDictionary(u => u.Id);
+
+        var orderedTargetIds = participants
+            .Where(p => p.IsTarget)
+            .OrderBy(p => p.Id)
+            .Select(p => p.UserId)
+            .Concat(assignments.Where(a => a.IsAssigned).Select(a => a.TargetId))
+            .Distinct()
+            .Where(targetIds.Contains)
+            .ToList();
+
+        var orderedRespondentIds = participants
+            .Where(p => p.IsRespondent)
+            .OrderBy(p => p.Id)
+            .Select(p => p.UserId)
+            .Concat(assignments.Where(a => a.IsAssigned).Select(a => a.ReviewerId))
+            .Distinct()
+            .Where(respondentIds.Contains)
+            .ToList();
 
         return new SurveyMatrixDto(
-            users.Where(u => targetIds.Contains(u.Id)).ToList(),
-            users.Where(u => respondentIds.Contains(u.Id)).ToList(),
+            orderedTargetIds.Where(usersById.ContainsKey).Select(id => usersById[id]).ToList(),
+            orderedRespondentIds.Where(usersById.ContainsKey).Select(id => usersById[id]).ToList(),
             assignments);
     }
 
@@ -404,7 +429,7 @@ public class SurveyService(
     public async Task<List<ResponseItemDto>> GetResponsesAsync(
         int surveyId, int reviewerId, int targetId, CancellationToken ct)
     {
-        return await context.Answers
+        var rows = await context.Answers
             .AsNoTracking()
             .Where(a => a.UserId == reviewerId && a.TargetId == targetId)
             .Join(
@@ -415,8 +440,13 @@ public class SurveyService(
             .Where(x => x.q.SurveyId == surveyId)
             .OrderBy(x => x.q.Order)
             .ThenBy(x => x.q.Text)
-            .Select(x => new ResponseItemDto(x.q.Text, x.a.Text))
             .ToListAsync(ct);
+
+        return rows
+            .Select(x => new ResponseItemDto(
+                x.q.Text,
+                SurveyAnswerFormatter.FormatPlain(x.q, x.a.Text)))
+            .ToList();
     }
 
     public async Task<int?> SaveAsTemplateAsync(int surveyId, string name, string description, CancellationToken ct)
@@ -462,7 +492,7 @@ public class SurveyService(
         return new SurveyReportInfoDto(info.AnswerCount, info.AssignedCount, info.CompletedCount, info.AllAssignedCompleted);
     }
 
-    public async Task<(System.IO.MemoryStream Stream, string FileName)?> BuildReportAsync(int surveyId, CancellationToken ct) =>
+    public async Task<(byte[] Bytes, string FileName)?> BuildReportAsync(int surveyId, CancellationToken ct) =>
         await reportService.BuildReportAsync(surveyId, ct);
 
     public async Task<(string Csv, string FileName)?> BuildCsvReportAsync(int surveyId, CancellationToken ct) =>
