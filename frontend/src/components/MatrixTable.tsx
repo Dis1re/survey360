@@ -567,10 +567,10 @@ export function MatrixTable({
                 type="button"
                 onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
                 disabled={adding || allUsers.length === 0}
-                className="shrink-0 w-11 flex flex-col items-center justify-center gap-2 text-[#FF8600] border-l-2 border-dashed border-orange-200 hover:border-[#FF8600] hover:bg-orange-50 rounded-r-2xl transition cursor-pointer disabled:opacity-50"
+                className="shrink-0 w-12 flex flex-col items-center justify-center gap-2 text-[#FF6B00] bg-orange-50 border-l-2 border-[#FF8600] hover:bg-orange-100 shadow-[2px_0_6px_-2px_rgba(255,134,0,0.35)] rounded-r-2xl transition cursor-pointer disabled:opacity-50"
                 title="Добавить объект (столбец сверху)"
               >
-                <span className="text-2xl font-light leading-none">+</span>
+                <span className="text-3xl font-bold leading-none">+</span>
                 <span className="text-xs font-medium [writing-mode:vertical-rl] rotate-180">Объект</span>
               </button>
             )}
@@ -580,10 +580,10 @@ export function MatrixTable({
               type="button"
               onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
               disabled={adding || allUsers.length === 0}
-              className="w-full flex items-center justify-center gap-1 px-3 py-2.5 text-sm font-medium text-[#FF8600] border-t-2 border-dashed border-orange-200 hover:border-[#FF8600] hover:bg-orange-50 rounded-b-2xl transition cursor-pointer disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-3 text-sm font-semibold text-[#FF6B00] bg-orange-50 border-t-2 border-[#FF8600] hover:bg-orange-100 shadow-[0_2px_6px_-2px_rgba(255,134,0,0.35)] rounded-b-2xl transition cursor-pointer disabled:opacity-50"
               title="Добавить респондента (строку снизу)"
             >
-              + Респондент
+              <span className="text-lg font-bold leading-none">+</span> Респондент
             </button>
           )}
         </div>
