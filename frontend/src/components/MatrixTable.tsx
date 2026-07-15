@@ -271,8 +271,8 @@ export function MatrixTable({
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+      <form onSubmit={handleSubmit} className="h-full flex flex-col">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex-1 min-h-0 flex flex-col">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -323,8 +323,8 @@ export function MatrixTable({
               Сначала добавьте пользователей через кнопку «Добавить пользователя» в шапке опроса
             </div>
           ) : (
-            <div className={`overflow-x-auto ${expanded ? 'overflow-y-visible' : 'overflow-y-auto max-h-[calc(100vh-240px)]'}`}>
-              <table className="w-full text-left border-collapse">
+            <div className={`overflow-x-auto flex-1 min-h-0 ${expanded ? 'overflow-y-visible' : 'overflow-y-auto'}`}>
+              <table className="w-full text-left border-collapse min-h-full">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
                     <th className="p-4 text-xs font-bold text-gray-400 w-64 border-r border-b border-gray-200 sticky left-0 top-0 z-10 bg-gray-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
@@ -395,7 +395,7 @@ export function MatrixTable({
                     const inviteLink = invite ? buildRespondentInviteLink(invite.token) : null
 
                     return (
-                      <tr key={respondent.id} className="hover:bg-blue-50/30 transition">
+                      <tr key={respondent.id} className="hover:bg-blue-50/30 transition border-b border-gray-100">
                         <td className="p-4 font-medium text-gray-900 border-r border-gray-200 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                           <div className="flex items-center gap-2">
                             <div className="relative inline-flex">
@@ -537,8 +537,8 @@ export function MatrixTable({
                   })}
 
                   {!readOnly && (
-                    <tr className="hover:bg-blue-50/30 transition">
-                      <td className="p-4 border-r border-gray-200 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                    <tr className="hover:bg-blue-50/30 transition border-b border-gray-200">
+                      <td className="p-4 border-r-2 border-gray-300 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
@@ -549,9 +549,9 @@ export function MatrixTable({
                         </button>
                       </td>
                       {targets.map((target) => (
-                        <td key={target.id} className="p-4" />
+                        <td key={target.id} className="p-4 border-r border-b border-gray-200 min-w-[120px]" />
                       ))}
-                      {!readOnly && <td className="p-4" />}
+                      {!readOnly && <td className="p-4 border-b border-gray-200" />}
                     </tr>
                   )}
 
