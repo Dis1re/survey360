@@ -64,17 +64,20 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <header className="md:hidden flex items-center gap-3 px-4 py-3 bg-[#FF8600] text-white shadow-sm z-20 shrink-0">
+      {!mobileNavOpen && (
         <button
           type="button"
           onClick={() => setMobileNavOpen(true)}
-          className="shrink-0 rounded-xl border border-white/30 bg-white/10 hover:bg-white/20 p-2 cursor-pointer transition"
           aria-label="Открыть меню"
+          className="fixed top-3 left-3 z-50 rounded-xl bg-white text-[#FF8600] border border-[#FF8600]/20 shadow-lg ring-1 ring-black/5 p-2 cursor-pointer transition hover:bg-orange-50"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+      )}
+
+      <header className="flex items-center justify-center gap-3 px-4 py-3 bg-[#FF8600] text-white shadow-sm z-20 shrink-0">
         <span className="text-base font-semibold truncate">Опросы 360</span>
       </header>
 
@@ -91,6 +94,7 @@ export default function App() {
         onOpenDev={openDevPage}
         collapsed={sidebarCollapsed}
         onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+        isMobile={true}
         mobileOpen={mobileNavOpen}
         onCloseMobile={() => setMobileNavOpen(false)}
       />

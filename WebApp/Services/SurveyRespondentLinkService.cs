@@ -67,16 +67,20 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
 
     public async Task<List<RespondentLinkDto>> GetLinksAsync(int surveyId, CancellationToken ct)
     {
-        return await context.SurveyParticipants
+        var links = await context.SurveyParticipants
             .AsNoTracking()
             .Where(p => p.SurveyId == surveyId && p.IsRespondent && p.Token != null)
             .Join(
                 context.Users.AsNoTracking(),
                 p => p.UserId,
                 u => u.Id,
-                (p, u) => new RespondentLinkDto(u.Id, u.Name, u.Email, p.Token!))
-            .OrderBy(x => x.ReviewerName)
+                (p, u) => new { u.Id, u.Name, u.Email, Token = p.Token! })
+            .OrderBy(x => x.Name)
             .ToListAsync(ct);
+
+        return links
+            .Select(x => new RespondentLinkDto(x.Id, x.Name, x.Email, x.Token))
+            .ToList();
     }
 
     public async Task<InviteInfoDto?> ResolveTokenAsync(string token, CancellationToken ct)

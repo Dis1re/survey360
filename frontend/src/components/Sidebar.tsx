@@ -6,7 +6,6 @@ import {
   isParticipationSurvey,
 } from '../mappers'
 import type { Survey } from '../types'
-import { useIsMobile } from '../hooks/useMediaQuery'
 import { UserBar } from './UserBar'
 
 type SurveyStatusFilter = Survey['status']
@@ -42,6 +41,8 @@ interface SidebarProps {
   onOpenDetails?: () => void
   collapsed: boolean
   onToggleCollapsed: () => void
+  /** Whether the viewport is in mobile (drawer) mode. */
+  isMobile?: boolean
   /** Mobile drawer open state (ignored on >=md screens) */
   mobileOpen?: boolean
   /** Close the mobile drawer */
@@ -222,10 +223,10 @@ export function Sidebar({
   onOpenDetails,
   collapsed,
   onToggleCollapsed,
+  isMobile = false,
   mobileOpen = false,
   onCloseMobile,
 }: SidebarProps) {
-  const isMobile = useIsMobile()
   const showCollapsed = collapsed && !isMobile
 
   const handleSelect = (id: number, sc?: SurveyScope) => {
@@ -323,9 +324,9 @@ export function Sidebar({
 
   return (
     <>
-      {isMobile && mobileOpen && (
+      {mobileOpen && (
         <div
-          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          className="fixed inset-0 z-30 bg-black/40"
           onClick={onCloseMobile}
           aria-hidden="true"
         />
@@ -346,28 +347,29 @@ export function Sidebar({
       >
         <button
           type="button"
-          onClick={onToggleCollapsed}
-          className="hidden md:inline-flex shrink-0 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 transition p-2 cursor-pointer hover:bg-gray-200"
-          aria-label={showCollapsed ? 'Показать боковую панель' : 'Скрыть боковую панель'}
+          onClick={isMobile ? onCloseMobile : onToggleCollapsed}
+          className="inline-flex shrink-0 items-center justify-center rounded-xl border border-gray-200 bg-gray-100 text-gray-700 transition p-2 cursor-pointer hover:bg-gray-200"
+          aria-label={
+            isMobile
+              ? 'Закрыть боковую панель'
+              : showCollapsed
+                ? 'Показать боковую панель'
+                : 'Скрыть боковую панель'
+          }
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            {showCollapsed ? (
+          {isMobile ? (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : showCollapsed ? (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4m11-7 5 7-5 7" />
-            ) : (
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M9 5l-5 7 5 7" />
-            )}
-          </svg>
-        </button>
-
-        <button
-          type="button"
-          onClick={onCloseMobile}
-          className="md:hidden shrink-0 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 transition p-2 cursor-pointer hover:bg-gray-200"
-          aria-label="Закрыть меню"
-        >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+            </svg>
+          )}
         </button>
 
         {!showCollapsed ? (

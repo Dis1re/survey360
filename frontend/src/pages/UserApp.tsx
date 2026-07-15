@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { surveyApi } from '../api'
 import { Sidebar } from '../components/Sidebar'
 import { useAuth } from '../context/AuthContext'
+import { useIsMobile } from '../hooks/useMediaQuery'
 import { useSurveyLive } from '../hooks/useSurveyLive'
 import { apiSurveyToSurvey, isMySurvey } from '../mappers'
 import { openDevPage } from '../routing'
@@ -20,6 +21,8 @@ export function UserApp() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const isMobile = useIsMobile()
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -75,6 +78,18 @@ export function UserApp() {
 
   return (
     <div className="flex h-screen overflow-hidden">
+      {isMobile && !mobileNavOpen && (
+        <button
+          type="button"
+          onClick={() => setMobileNavOpen(true)}
+          aria-label="Открыть меню"
+          className="fixed top-3 left-3 z-50 rounded-xl bg-white text-[#FF8600] border border-[#FF8600]/20 shadow-lg ring-1 ring-black/5 p-2 cursor-pointer transition hover:bg-orange-50"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+      )}
       <Sidebar
         surveys={filteredSurveys}
         activeSurveyId={selectedSurveyId}
@@ -92,6 +107,9 @@ export function UserApp() {
         onOpenDev={user?.isAdmin ? openDevPage : undefined}
         collapsed={sidebarCollapsed}
         onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+        isMobile={isMobile}
+        mobileOpen={mobileNavOpen}
+        onCloseMobile={() => setMobileNavOpen(false)}
       />
       <main className="flex-1 overflow-y-auto">
         {selectedSurveyId === null ? (
