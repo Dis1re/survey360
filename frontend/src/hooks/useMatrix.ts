@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { surveyApi } from '../api'
 import { matrixToEntries } from '../components/MatrixTable'
 import { assignmentsToCompletionMatrix, assignmentsToMatrix, usersToParticipants } from '../mappers'
+import {
+  clearAdminResponseViewParams,
+  parseAdminResponseViewParams,
+  setAdminResponseViewParams,
+} from '../routing'
 import type { Participant, ResponseView } from '../types'
 
 export interface UseMatrixReturn {
@@ -12,7 +17,8 @@ export interface UseMatrixReturn {
   savingMatrix: boolean
   addingMatrixParticipant: boolean
   responseView: ResponseView | null
-  setResponseView: (v: ResponseView | null) => void
+  openResponseView: (info: ResponseView) => void
+  closeResponseView: () => void
   loadMatrix: (id: number) => Promise<void>
   clearMatrix: () => void
   handleAddMatrixParticipant: (userIds: number[], role: 'target' | 'respondent', surveyEditable: boolean) => Promise<void>
@@ -29,15 +35,37 @@ export function useMatrix(surveyId: number | null): UseMatrixReturn {
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [responseView, setResponseView] = useState<ResponseView | null>(null)
   const loadMatrixRequestRef = useRef(0)
+  const prevSurveyIdRef = useRef<number | null>(null)
 
   useEffect(() => {
+    if (prevSurveyIdRef.current !== null && prevSurveyIdRef.current !== surveyId) {
+      clearAdminResponseViewParams()
+      setResponseView(null)
+    }
+    prevSurveyIdRef.current = surveyId
+
     loadMatrixRequestRef.current += 1
     setTargets([])
     setRespondents([])
     setAssignments({})
     setCompletedAssignments({})
-    setResponseView(null)
   }, [surveyId])
+
+  useEffect(() => {
+    const pending = parseAdminResponseViewParams()
+    if (!pending || surveyId === null) return
+
+    const reviewer = respondents.find((r) => r.id === pending.reviewerId)
+    const target = targets.find((t) => t.id === pending.targetId)
+    if (!reviewer || !target) return
+
+    setResponseView({
+      reviewerId: pending.reviewerId,
+      targetId: pending.targetId,
+      reviewerName: reviewer.name,
+      targetName: target.name,
+    })
+  }, [surveyId, respondents, targets])
 
   const clearMatrix = useCallback(() => {
     setTargets([])
@@ -54,6 +82,16 @@ export function useMatrix(surveyId: number | null): UseMatrixReturn {
     setRespondents(usersToParticipants(matrix.respondents))
     setAssignments(assignmentsToMatrix(matrix.assignments))
     setCompletedAssignments(assignmentsToCompletionMatrix(matrix.assignments))
+  }, [])
+
+  const openResponseView = useCallback((info: ResponseView) => {
+    setAdminResponseViewParams(info.reviewerId, info.targetId)
+    setResponseView(info)
+  }, [])
+
+  const closeResponseView = useCallback(() => {
+    clearAdminResponseViewParams()
+    setResponseView(null)
   }, [])
 
   const handleAddMatrixParticipant = useCallback(async (userIds: number[], role: 'target' | 'respondent', surveyEditable: boolean) => {
@@ -112,7 +150,8 @@ export function useMatrix(surveyId: number | null): UseMatrixReturn {
     savingMatrix,
     addingMatrixParticipant,
     responseView,
-    setResponseView,
+    openResponseView,
+    closeResponseView,
     loadMatrix,
     clearMatrix,
     handleAddMatrixParticipant,

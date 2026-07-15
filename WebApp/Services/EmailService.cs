@@ -20,6 +20,7 @@ public class EmailService(
         string toName,
         string subject,
         string textBody,
+        string? htmlBody = null,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_settings.ApiToken) || _settings.SandboxId <= 0)
@@ -28,20 +29,42 @@ public class EmailService(
                 "(Mailtrap → Settings → API Tokens и ID sandbox из URL).");
 
         var url = $"https://sandbox.api.mailtrap.io/api/send/{_settings.SandboxId}";
-        var payload = new
+        object payload;
+        if (string.IsNullOrWhiteSpace(htmlBody))
         {
-            from = new { email = _settings.From, name = _settings.FromName },
-            to = new[]
+            payload = new
             {
-                new
+                from = new { email = _settings.From, name = _settings.FromName },
+                to = new[]
                 {
-                    email = toEmail,
-                    name = string.IsNullOrWhiteSpace(toName) ? toEmail : toName,
+                    new
+                    {
+                        email = toEmail,
+                        name = string.IsNullOrWhiteSpace(toName) ? toEmail : toName,
+                    },
                 },
-            },
-            subject,
-            text = textBody,
-        };
+                subject,
+                text = textBody,
+            };
+        }
+        else
+        {
+            payload = new
+            {
+                from = new { email = _settings.From, name = _settings.FromName },
+                to = new[]
+                {
+                    new
+                    {
+                        email = toEmail,
+                        name = string.IsNullOrWhiteSpace(toName) ? toEmail : toName,
+                    },
+                },
+                subject,
+                text = textBody,
+                html = htmlBody,
+            };
+        }
 
         const int maxAttempts = 4;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)

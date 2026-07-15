@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { MatrixTable, matrixToEntries } from '../components/MatrixTable'
 import { SIDEBAR_WIDTH_COLLAPSED, SIDEBAR_WIDTH_EXPANDED } from '../components/Sidebar'
 import { ConfirmModal } from '../components/ConfirmModal'
@@ -15,6 +15,8 @@ import { useSurveyLive } from '../hooks/useSurveyLive'
 import { useSurveyData } from '../hooks/useSurveyData'
 import { useMatrix } from '../hooks/useMatrix'
 import { useInviteManager } from '../hooks/useInviteManager'
+import { mapSurveyStatus } from '../mappers'
+import { resolveInitialMainPageTab, setMainPageTabState } from '../routing'
 import { surveyApi } from '../api'
 
 interface MainPageProps {
@@ -25,12 +27,24 @@ interface MainPageProps {
 }
 
 export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCollapsed = false }: MainPageProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('editor')
+  const [activeTab, setActiveTab] = useState<Tab>(() => resolveInitialMainPageTab(surveyId))
   const [matrixExpanded, setMatrixExpanded] = useState(false)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null)
   const liveMatrixAssignmentsRef = useRef<Record<string, Record<string, boolean>> | null>(null)
+
+  const handleTabChange = useCallback(
+    (tab: Tab) => {
+      setActiveTab(tab)
+      setMainPageTabState(surveyId, tab)
+    },
+    [surveyId],
+  )
+
+  useEffect(() => {
+    setMainPageTabState(surveyId, activeTab)
+  }, [surveyId, activeTab])
 
   const {
     respondentLinks,
@@ -53,7 +67,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     savingMatrix,
     addingMatrixParticipant,
     responseView,
-    setResponseView,
+    openResponseView,
+    closeResponseView,
     loadMatrix,
     handleAddMatrixParticipant,
     handleRemoveMatrixParticipant,
@@ -108,13 +123,20 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     }))
     await surveyApi.saveAssignments(surveyId, entries)
     await handleStartSurvey(data)
-    await loadMatrix(surveyId)
   }
+
+  useEffect(() => {
+    if (surveyId === null || surveyStatus !== 'active') return
+    void loadRespondentLinks(surveyId).catch(console.error)
+  }, [surveyId, surveyStatus, loadRespondentLinks])
 
   useSurveyLive((event) => {
     if (surveyId === null || event.surveyId !== surveyId) return
     setSurvey((prev) => (prev ? { ...prev, status: event.status } : prev))
     void loadMatrix(surveyId).catch(console.error)
+    if (mapSurveyStatus(event.status) === 'active') {
+      void loadRespondentLinks(surveyId).catch(console.error)
+    }
   })
 
   const surveyHeaderInitial = useMemo<SurveyHeaderForm>(
@@ -196,7 +218,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
         onUserCreated={loadUsers}
         onDelete={handleDeleteSurvey}
       />
-      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {activeTab === 'editor' && (
         <div className="flex-1 min-h-0 p-6 overflow-hidden flex flex-col">
@@ -273,7 +295,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               onExportReport={handleExportReport}
               onExportCsv={handleExportCsv}
               onSendInvites={handleSendInvites}
-              onViewResponse={(info) => setResponseView(info)}
+              onViewResponse={openResponseView}
               onAddParticipant={(userIds, role) => handleAddMatrixParticipant(userIds, role, surveyEditable)}
               onRemoveParticipant={(userId, role) => handleRemoveMatrixParticipant(userId, role, surveyEditable)}
               onSave={(next) => handleSaveMatrix(next, surveyEditable)}
@@ -310,7 +332,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                   onAddParticipant={(userIds, role) => handleAddMatrixParticipant(userIds, role, surveyEditable)}
                   onRemoveParticipant={(userId, role) => handleRemoveMatrixParticipant(userId, role, surveyEditable)}
                   onSave={(next) => handleSaveMatrix(next, surveyEditable)}
-                  onViewResponse={(info) => setResponseView(info)}
+                  onViewResponse={openResponseView}
                   expanded
                   liveAssignmentsRef={liveMatrixAssignmentsRef}
                 />
@@ -371,7 +393,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
           targetName={responseView.targetName}
           fullscreen
           sidebarWidth={sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED}
-          onClose={() => setResponseView(null)}
+          onClose={closeResponseView}
         />
       )}
 

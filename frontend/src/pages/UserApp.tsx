@@ -97,7 +97,9 @@ export function UserApp() {
   const isMySelectedSurvey =
     selectedSurvey !== null && user !== null && isMySurvey(selectedSurvey, user.id)
 
-  const showEditor = isMySelectedSurvey && sidebarScope === 'mine'
+  const showEditor =
+    sidebarScope === 'mine' &&
+    (isMySelectedSurvey || (loading && selectedSurveyId !== null))
 
   const handleCreateClick = async () => {
     setCreating(true)
@@ -113,8 +115,8 @@ export function UserApp() {
     }
   }
 
-  // Remount open page when list status changes (e.g. Активен → Завершен).
-  const openPageKey = `${selectedSurveyId ?? 'none'}-${selectedSurvey?.status ?? ''}`
+  // Remount TakeSurvey when list status changes (e.g. Активен → Завершен).
+  const takeSurveyPageKey = `${selectedSurveyId ?? 'none'}-${selectedSurvey?.status ?? ''}`
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -151,7 +153,7 @@ export function UserApp() {
           </div>
         ) : showEditor ? (
           <MainPage
-            key={openPageKey}
+            key={selectedSurveyId ?? 'none'}
             surveyId={selectedSurveyId}
             onSurveyUpdated={loadSurveys}
             onSurveyDeleted={loadSurveys}
@@ -159,7 +161,7 @@ export function UserApp() {
           />
         ) : (
           <TakeSurvey
-            key={openPageKey}
+            key={takeSurveyPageKey}
             surveyId={selectedSurveyId}
             authUserId={user?.id ?? null}
             hideUserSwitch

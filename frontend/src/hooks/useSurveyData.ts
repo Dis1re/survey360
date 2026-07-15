@@ -171,8 +171,12 @@ export function useSurveyData(
       })
       setSurvey(updated)
       onSurveyUpdated?.()
-      if (loadMatrix) await loadMatrix(surveyId)
-      if (loadRespondentLinks) await loadRespondentLinks(surveyId)
+      try {
+        if (loadMatrix) await loadMatrix(surveyId)
+        if (loadRespondentLinks) await loadRespondentLinks(surveyId)
+      } catch (refreshErr) {
+        console.error(refreshErr)
+      }
     } catch (err) {
       console.error(err)
       throw err

@@ -170,10 +170,7 @@ export function useSurveyTaking({
       : null
 
   useEffect(() => {
-    if (!storageKey) {
-      setAnswers({})
-      return
-    }
+    if (!storageKey) return
     try {
       const saved = localStorage.getItem(storageKey)
       setAnswers(saved ? (JSON.parse(saved) as Record<number, string>) : {})

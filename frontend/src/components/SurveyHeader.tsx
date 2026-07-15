@@ -114,6 +114,12 @@ export function SurveyHeader({
   }, [initial])
 
   useEffect(() => {
+    if (status !== 'draft') {
+      setStartModalOpen(false)
+    }
+  }, [status])
+
+  useEffect(() => {
     if (readOnly || !dirtyRef.current) return
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
