@@ -58,8 +58,14 @@ public class SurveyController(
 
     [Authorize]
     [HttpPost]
-    public async Task<ActionResult<int>> Create(CancellationToken ct) =>
-        await surveyService.CreateSurveyAsync(User.GetUserId(), ct);
+    public async Task<ActionResult<int>> Create(CancellationToken ct)
+    {
+        var userId = User.GetUserId();
+        if (userId is null || !await context.Users.AnyAsync(u => u.Id == userId, ct))
+            return Unauthorized("Пользователь не найден. Войдите заново.");
+
+        return await surveyService.CreateSurveyAsync(userId, ct);
+    }
 
     [Authorize]
     [HttpGet]

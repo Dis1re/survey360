@@ -318,10 +318,8 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     try {
       const id = await answerApi.create({
         questionId,
-        userId,
         targetId,
         text: answerText,
-        type: answerType,
       })
       setAnswerGetId(String(id))
       setAnswerResult(await answerApi.get(id))
