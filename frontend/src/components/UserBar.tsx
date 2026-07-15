@@ -22,9 +22,9 @@ export function UserBar({ variant = 'sidebar', compact = false, stacked = false 
         compact || stacked ? 'w-8 h-8' : 'w-8 h-8'
       } ${
         isHeader
-          ? 'bg-white text-[#FF8600]'
+          ? 'bg-white dark:bg-[#1e222e] text-[#FF8600]'
           : user.isAdmin
-            ? 'bg-gray-800 text-white'
+            ? 'bg-gray-800 dark:bg-[#3a4250] text-white'
             : 'bg-[#FF8600] text-white'
       }`}
       title={user.email}
@@ -42,7 +42,7 @@ export function UserBar({ variant = 'sidebar', compact = false, stacked = false 
       className={`soft-press rounded-full cursor-pointer ${stacked ? 'p-1.5' : compact ? 'p-1.5' : 'p-2'} ${
         isHeader
           ? 'text-white/80 hover:text-white border border-white/25 hover:bg-white/10'
-          : 'border border-gray-200 bg-white hover:bg-gray-50 text-gray-500 shadow-sm'
+          : 'border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:bg-gray-50 dark:hover:bg-[#262d3a] text-gray-500 dark:text-gray-300 shadow-sm'
       }`}
     >
       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -59,7 +59,7 @@ export function UserBar({ variant = 'sidebar', compact = false, stacked = false 
     return (
       <div className="flex flex-col items-center gap-2 w-full">
         <div
-          className="rounded-full p-0.5 border border-gray-200 bg-white shadow-sm"
+          className="rounded-full p-0.5 border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] shadow-sm"
           title={`${label}${user.isAdmin ? ' · Администратор' : ''}`}
         >
           {avatar}
@@ -76,8 +76,8 @@ export function UserBar({ variant = 'sidebar', compact = false, stacked = false 
           isHeader
             ? 'rounded-full pl-1 pr-2.5 py-1 border border-white/25'
             : compact
-              ? 'rounded-full p-0.5 border border-gray-200 bg-white shadow-sm'
-              : 'rounded-full pl-1.5 pr-3 py-1.5 bg-white border border-gray-200 shadow-sm'
+              ? 'rounded-full p-0.5 border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] shadow-sm'
+              : 'rounded-full pl-1.5 pr-3 py-1.5 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] shadow-sm'
         }`}
         style={isHeader ? { backgroundColor: 'rgba(255,255,255,0.12)' } : undefined}
         title={user.email}
@@ -87,13 +87,13 @@ export function UserBar({ variant = 'sidebar', compact = false, stacked = false 
           <div className="min-w-0 hidden sm:block">
             <div
               className={`text-sm font-medium truncate max-w-[140px] ${
-                isHeader ? 'text-white' : 'text-gray-900'
+                isHeader ? 'text-white' : 'text-gray-900 dark:text-gray-100'
               }`}
             >
               {label}
             </div>
             {user.isAdmin && (
-              <div className={`text-[10px] leading-none ${isHeader ? 'text-white/60' : 'text-gray-400'}`}>
+              <div className={`text-[10px] leading-none ${                isHeader ? 'text-white/60' : 'text-gray-400 dark:text-gray-400'}`}>
                 Администратор
               </div>
             )}

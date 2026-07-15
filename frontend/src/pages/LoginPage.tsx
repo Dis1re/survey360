@@ -108,6 +108,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
       {popupOpen && (
         <Modal
           title={mode === 'admin' ? 'Вход администратора' : 'Вход в систему'}
+          forceLight
           description={
             mode === 'admin'
               ? 'Нажмите «Войти» — логин уже подставлен'

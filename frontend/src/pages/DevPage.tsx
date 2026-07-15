@@ -9,17 +9,17 @@ interface EntitiesPageProps {
 }
 
 const inputClass =
-  'w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 text-sm shadow-sm'
+  'w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] text-sm shadow-sm'
 const btnPrimary =
   'px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl transition shadow-sm disabled:opacity-50 cursor-pointer'
 const btnSecondary =
-  'px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-xl transition disabled:opacity-50 cursor-pointer'
+  'px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:bg-[#161a22] dark:hover:bg-[#262d3a] rounded-xl transition disabled:opacity-50 cursor-pointer'
 const btnDangerOutline =
   'px-4 py-2 text-sm font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-xl transition disabled:opacity-50 cursor-pointer'
 
 const thClass =
-  'text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider'
-const tdClass = 'px-4 py-3 text-sm text-gray-600'
+  'text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-500 dark:text-gray-400 uppercase tracking-wider'
+const tdClass = 'px-4 py-3 text-sm text-gray-600 dark:text-gray-400'
 
 function formatDate(value: string) {
   if (!value || value.startsWith('0001')) return '—'
@@ -29,7 +29,7 @@ function formatDate(value: string) {
 function JsonBlock({ data }: { data: unknown }) {
   if (data === null || data === undefined) return null
   return (
-    <pre className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs text-gray-700 overflow-x-auto mt-3">
+    <pre className="bg-gray-50 dark:bg-[#161a22] border border-gray-200 dark:border-[#3a4250] rounded-xl p-4 text-xs text-gray-700 dark:text-gray-200 overflow-x-auto mt-3">
       {JSON.stringify(data, null, 2)}
     </pre>
   )
@@ -46,11 +46,11 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+      <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 dark:text-gray-300 uppercase tracking-wider mb-2">
         {label}
       </label>
       {children}
-      <p className="text-xs text-gray-400 mt-1.5">{hint}</p>
+      <p className="text-xs text-gray-400 dark:text-gray-400 dark:text-gray-300 mt-1.5">{hint}</p>
     </div>
   )
 }
@@ -65,10 +65,10 @@ function Section({
   children: ReactNode
 }) {
   return (
-    <section className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+    <section className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-6 shadow-sm">
       <div className="mb-5">
-        <h2 className="text-lg font-bold text-gray-900">{title}</h2>
-        <p className="text-xs text-gray-400 mt-1 font-mono">{endpoints}</p>
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{title}</h2>
+        <p className="text-xs text-gray-400 dark:text-gray-400 dark:text-gray-300 mt-1 font-mono">{endpoints}</p>
       </div>
       {children}
     </section>
@@ -393,12 +393,12 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 p-6 flex-shrink-0">
+      <header className="bg-white dark:bg-[#1e222e] border-b border-gray-200 dark:border-[#3a4250] p-6 flex-shrink-0">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 flex-wrap">
-              <h1 className="text-xl font-bold text-gray-900">Тест API</h1>
-              <span className="px-2.5 py-1 text-xs font-medium text-amber-800 bg-amber-50 rounded-md border border-amber-200">
+              <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Тест API</h1>
+              <span className="px-2.5 py-1 text-xs font-medium text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 rounded-md border border-amber-200 dark:border-amber-500/40">
                 Dev
               </span>
             </div>
@@ -407,7 +407,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
             <button
               type="button"
               onClick={onBack}
-              className="px-4 py-2 text-sm font-medium text-gray-600 border-2 border-orange-300 rounded-xl hover:bg-orange-50 cursor-pointer"
+              className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 border-2 border-orange-300 dark:border-[#FF8600]/45 rounded-xl hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 cursor-pointer"
             >
                К редактору
             </button>
@@ -427,7 +427,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
       <div className="p-6">
         <div className="max-w-6xl mx-auto space-y-6">
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-xl px-4 py-3">
+            <div className="bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 text-red-700 dark:text-red-400 text-sm rounded-xl px-4 py-3">
               {error}
             </div>
           )}
@@ -462,57 +462,57 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
             </div>
 
             {loading ? (
-              <p className="text-sm text-gray-500">Загрузка…</p>
+              <p className="text-sm text-gray-500 dark:text-gray-300">Загрузка…</p>
             ) : surveys.length === 0 ? (
-              <p className="text-sm text-gray-500">Опросов пока нет — создайте первый.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-300">Опросов пока нет — создайте первый.</p>
             ) : (
-              <div className="border border-gray-200 rounded-xl overflow-hidden">
+              <div className="border border-gray-200 dark:border-[#3a4250] rounded-xl overflow-hidden">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="bg-gray-50/80 border-b border-gray-200">
-                      <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <tr className="bg-gray-50/80 dark:bg-[#161a22]/80 border-b border-gray-200 dark:border-[#3a4250]">
+                      <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-400 dark:text-gray-300 uppercase tracking-wider">
                         Id
                       </th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-400 dark:text-gray-300 uppercase tracking-wider">
                         Название
                       </th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-400 dark:text-gray-300 uppercase tracking-wider">
                         Описание
                       </th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-400 dark:text-gray-300 uppercase tracking-wider">
                         Статус
                       </th>
-                      <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 uppercase tracking-wider">
+                      <th className="text-left px-4 py-3 text-xs font-bold text-gray-400 dark:text-gray-400 dark:text-gray-300 uppercase tracking-wider">
                         Создан
                       </th>
                       <th className="px-4 py-3" />
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-100 dark:divide-[#3a4250]">
                     {surveys.map((survey) => (
-                      <tr key={survey.id} className="hover:bg-gray-50/50 transition">
-                        <td className="px-4 py-3 text-gray-500 font-mono">{survey.id}</td>
+                      <tr key={survey.id} className="hover:bg-gray-50 dark:hover:bg-#1e222e/50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50 transition">
+                        <td className="px-4 py-3 text-gray-500 dark:text-gray-300 font-mono">{survey.id}</td>
                         <td className="px-4 py-3 font-medium">
                           <button
                             type="button"
                             onClick={() => onOpenSurvey(survey.id)}
-                            className="text-blue-600 hover:text-blue-800 hover:underline cursor-pointer text-left"
+                            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-400 hover:underline cursor-pointer text-left"
                           >
                             {survey.name}
                           </button>
                         </td>
-                        <td className="px-4 py-3 text-gray-600">{survey.description || '—'}</td>
+                        <td className="px-4 py-3 text-gray-600 dark:text-gray-300">{survey.description || '—'}</td>
                         <td className="px-4 py-3">
-                          <span className="text-xs font-medium text-gray-600 bg-gray-100 px-2 py-0.5 rounded-full">
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-[#303a48] px-2 py-0.5 rounded-full">
                             {survey.status}
                           </span>
                         </td>
-                        <td className="px-4 py-3 text-gray-500">{formatDate(survey.createdAt)}</td>
+                        <td className="px-4 py-3 text-gray-500 dark:text-gray-300">{formatDate(survey.createdAt)}</td>
                         <td className="px-4 py-3 text-right">
                           {survey.status !== 'active' && (
                             <button
                               type="button"
-                              className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-lg transition cursor-pointer"
+                              className="px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 hover:bg-red-100 dark:hover:bg-red-500/15 rounded-lg transition cursor-pointer"
                               onClick={() => handleDeleteSurvey(survey.id, survey.name)}
                             >
                               Удалить
@@ -559,25 +559,25 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
             </form>
 
             {knownUserIds.length > 0 ? (
-              <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
-                <div className="px-4 py-2 bg-gray-50/80 border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <div className="mt-4 border border-gray-200 dark:border-[#3a4250] rounded-xl overflow-hidden">
+                <div className="px-4 py-2 bg-gray-50/80 dark:bg-[#161a22]/80 border-b border-gray-200 dark:border-[#3a4250] text-xs font-bold text-gray-400 dark:text-gray-400 dark:text-gray-300 uppercase tracking-wider">
                   В базе (из ответов опросов)
                 </div>
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gray-50/50 border-b border-gray-200">
+                    <tr className="bg-gray-50/50 dark:bg-[#161a22]/50 border-b border-gray-200 dark:border-[#3a4250]">
                       <th className={thClass}>Id</th>
                       <th className={thClass} />
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-100 dark:divide-[#3a4250]">
                     {knownUserIds.map((userId) => (
-                      <tr key={userId} className="hover:bg-gray-50/50">
+                      <tr key={userId} className="hover:bg-gray-50 dark:hover:bg-#1e222e/50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50">
                         <td className={`${tdClass} font-mono`}>{userId}</td>
                         <td className={`${tdClass} text-right`}>
                           <button
                             type="button"
-                            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition cursor-pointer disabled:opacity-50"
+                            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-#1e222e dark:bg-[#161a22] dark:hover:bg-[#262d3a] rounded-lg transition cursor-pointer disabled:opacity-50"
                             onClick={() => handleGetUser(userId)}
                             disabled={userBusy}
                           >
@@ -590,7 +590,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                 </table>
               </div>
             ) : (
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs text-gray-400 dark:text-gray-400 dark:text-gray-300 mt-3">
                 Пользователей в ответах пока нет — создайте пользователя или укажите id вручную.
               </p>
             )}
@@ -650,13 +650,13 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
             </form> 
 
             {knownQuestions.length > 0 ? (
-              <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
-                <div className="px-4 py-2 bg-gray-50/80 border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <div className="mt-4 border border-gray-200 dark:border-[#3a4250] rounded-xl overflow-hidden">
+                <div className="px-4 py-2 bg-gray-50/80 dark:bg-[#161a22]/80 border-b border-gray-200 dark:border-[#3a4250] text-xs font-bold text-gray-400 dark:text-gray-400 dark:text-gray-300 uppercase tracking-wider">
                   В базе (из опросов)
                 </div>
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gray-50/50 border-b border-gray-200">
+                    <tr className="bg-gray-50/50 dark:bg-[#161a22]/50 border-b border-gray-200 dark:border-[#3a4250]">
                       <th className={thClass}>Id</th>
                       <th className={thClass}>Survey</th>
                       <th className={thClass}>Текст</th>
@@ -664,9 +664,9 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                       <th className={thClass} />
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-100 dark:divide-[#3a4250]">
                     {knownQuestions.map((question) => (
-                      <tr key={question.id} className="hover:bg-gray-50/50">
+                      <tr key={question.id} className="hover:bg-gray-50 dark:hover:bg-#1e222e/50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50">
                         <td className={`${tdClass} font-mono`}>{question.id}</td>
                         <td className={tdClass}>{question.surveyId}</td>
                         <td className={tdClass}>{question.text || '—'}</td>
@@ -674,7 +674,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                         <td className={`${tdClass} text-right whitespace-nowrap`}>
                           <button
                             type="button"
-                            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition cursor-pointer disabled:opacity-50 mr-1"
+                            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-#1e222e dark:bg-[#161a22] dark:hover:bg-[#262d3a] rounded-lg transition cursor-pointer disabled:opacity-50 mr-1"
                             onClick={() => handleGetQuestion(question.id)}
                             disabled={questionBusy}
                           >
@@ -682,7 +682,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                           </button>
                           <button
                             type="button"
-                            className="px-3 py-1.5 text-xs font-medium text-red-700 bg-red-50 border border-red-200 hover:bg-red-100 rounded-lg transition cursor-pointer disabled:opacity-50"
+                            className="px-3 py-1.5 text-xs font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 hover:bg-red-100 dark:hover:bg-red-500/15 rounded-lg transition cursor-pointer disabled:opacity-50"
                             onClick={() => handleDeleteQuestion(question.id)}
                             disabled={questionBusy}
                           >
@@ -695,14 +695,14 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                 </table>
               </div>
             ) : (
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs text-gray-400 dark:text-gray-400 dark:text-gray-300 mt-3">
                 Вопросов пока нет — создайте вопрос или укажите id вручную.
               </p>
             )}
 
             <JsonBlock data={questionResult} />
             {questionResult && (
-              <p className="text-xs text-gray-400 mt-2">
+              <p className="text-xs text-gray-400 dark:text-gray-400 dark:text-gray-300 mt-2">
                 Ответы к вопросу: {questionResult.answers.length}. После создания ответа блок обновится
                 автоматически.
               </p>
@@ -783,13 +783,13 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
             </form>
 
             {knownAnswers.length > 0 ? (
-              <div className="mt-4 border border-gray-200 rounded-xl overflow-hidden">
-                <div className="px-4 py-2 bg-gray-50/80 border-b border-gray-200 text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <div className="mt-4 border border-gray-200 dark:border-[#3a4250] rounded-xl overflow-hidden">
+                <div className="px-4 py-2 bg-gray-50/80 dark:bg-[#161a22]/80 border-b border-gray-200 dark:border-[#3a4250] text-xs font-bold text-gray-400 dark:text-gray-400 dark:text-gray-300 uppercase tracking-wider">
                   В базе (из опросов)
                 </div>
                 <table className="w-full">
                   <thead>
-                    <tr className="bg-gray-50/50 border-b border-gray-200">
+                    <tr className="bg-gray-50/50 dark:bg-[#161a22]/50 border-b border-gray-200 dark:border-[#3a4250]">
                       <th className={thClass}>Id</th>
                       <th className={thClass}>Question</th>
                       <th className={thClass}>User</th>
@@ -797,9 +797,9 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                       <th className={thClass} />
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-gray-100">
+                  <tbody className="divide-y divide-gray-100 dark:divide-[#3a4250]">
                     {knownAnswers.map((answer) => (
-                      <tr key={answer.id} className="hover:bg-gray-50/50">
+                      <tr key={answer.id} className="hover:bg-gray-50 dark:hover:bg-#1e222e/50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50">
                         <td className={`${tdClass} font-mono`}>{answer.id}</td>
                         <td className={tdClass}>{answer.questionId}</td>
                         <td className={tdClass}>{answer.userId}</td>
@@ -807,7 +807,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                         <td className={`${tdClass} text-right whitespace-nowrap`}>
                           <button
                             type="button"
-                            className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 rounded-lg transition cursor-pointer disabled:opacity-50 mr-1"
+                            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-#1e222e dark:bg-[#161a22] dark:hover:bg-[#262d3a] rounded-lg transition cursor-pointer disabled:opacity-50 mr-1"
                             onClick={() => handleGetAnswer(answer.id)}
                             disabled={questionBusy}
                           >
@@ -820,7 +820,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                 </table>
               </div>
             ) : (
-              <p className="text-xs text-gray-400 mt-3">
+              <p className="text-xs text-gray-400 dark:text-gray-400 dark:text-gray-300 mt-3">
                 Ответов пока нет — создайте ответ или укажите id вручную.
               </p>
             )}
@@ -842,7 +842,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
           message={
             <>
               Опрос{' '}
-              <span className="font-semibold text-gray-900">
+              <span className="font-semibold text-gray-900 dark:text-gray-100">
                 «{confirmAction.name}» (id {confirmAction.id})
               </span>{' '}
               будет удалён безвозвратно.
@@ -862,7 +862,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
           onCancel={() => !questionBusy && setConfirmAction(null)}
           message={
             <>
-              Вопрос <span className="font-semibold text-gray-900">id {confirmAction.id}</span> будет
+              Вопрос <span className="font-semibold text-gray-900 dark:text-gray-100">id {confirmAction.id}</span> будет
               удалён безвозвратно.
             </>
           }
@@ -880,7 +880,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
           onCancel={() => !clearingDb && setConfirmAction(null)}
           message={
             <>
-              Будут удалены <span className="font-semibold text-gray-900">все</span> опросы, пользователи,
+              Будут удалены <span className="font-semibold text-gray-900 dark:text-gray-100">все</span> опросы, пользователи,
               вопросы, ответы и назначения. Это действие нельзя отменить.
             </>
           }
