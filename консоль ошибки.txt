@@ -1,0 +1,531 @@
+useInviteManager.tsx:95 Error: System.InvalidOperationException: The LINQ expression 'DbSet<SurveyParticipant>()
+    .Where(s => s.SurveyId == @surveyId && s.IsRespondent && s.Token != null)
+    .Join(
+        inner: DbSet<User>(), 
+        outerKeySelector: s => (object)s.UserId, 
+        innerKeySelector: u => (object)u.Id, 
+        resultSelector: (s, u) => new TransparentIdentifier<SurveyParticipant, User>(
+            Outer = s, 
+            Inner = u
+        ))
+    .OrderBy(ti => new RespondentLinkDto(
+        ti.Inner.Id, 
+        ti.Inner.Name, 
+        ti.Inner.Email, 
+        ti.Outer.Token
+    ).ReviewerName)' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
+   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WebApp.Services.SurveyRespondentLinkService.GetLinksAsync(Int32 surveyId, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Services\SurveyRespondentLinkService.cs:line 70
+   at WebApp.Areas.Api.SurveyController.GetRespondentLinks(Int32 id, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Areas\Api\SurveyController.cs:line 322
+   at lambda_method745(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+
+HEADERS
+=======
+Accept: application/json
+Connection: close
+Host: localhost:5175
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7
+Content-Type: application/json
+Cookie: Survey360.Auth=CfDJ8FOlgOyy42tMsqHqNbMD52CR9R2OpEUTjXUUUIWCU6ZOvKXFL56Wi4QeMI_jhh-fm9SQDX9Q8kxtFoAhX3_5ux0ecjeI47H_211SjY93_fTP1dupFwmAEORoIAZEIkdptNVb-yPxtSX9G8Q3fyPLNfc90feoW6g3A_Vzj-fdSr2RiuNIfaVM0C5kFuMgsHC5_cLNckByPDGAvI1Ewgbd2ZrW9L2OLZwYq_PyvZYmFckD2BTqApzQ-BsOZoQWTeVDpr-fQpMkdc0Zdsry6VCh1FaKbRe6AFHh5cVNYTf7CsqhZPYx8xE5YDKEhk5rfZzbed2q54r3n93VRPKlhvXhUEcGwGgxYeHo_iR9pQk_5UbyVNJEe0DvlryZkxa1KKY9w_Jyh2G6KZ1fTK721KxUWeBnn61MZkrIQYAhuz_kEtbyJgdhCQvSxCFzDlU8qlAeadqQlAjds6bfNWNE7PRXcb5tkWpaxyUgDXPm3096Lz_5ZMAvxXa0-m-eD7g2Jl_8dQ
+Referer: http://localhost:5173/
+sec-ch-ua-platform: "Windows"
+sec-ch-ua: "Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-fetch-site: same-origin
+sec-fetch-mode: cors
+sec-fetch-dest: empty
+
+    at sendRequest (http://localhost:5173/src/api.ts:23:15)
+    at async http://localhost:5173/src/hooks/useInviteManager.tsx:77:18
+    at async http://localhost:5173/src/hooks/useSurveyData.ts:49:5
+    at async Promise.all (index 0)
+(anonymous) @ useInviteManager.tsx:95
+:5173/api/survey/44/links:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api.ts:41 API /api/survey/44/links [500]: System.InvalidOperationException: The LINQ expression 'DbSet<SurveyParticipant>()
+    .Where(s => s.SurveyId == @surveyId && s.IsRespondent && s.Token != null)
+    .Join(
+        inner: DbSet<User>(), 
+        outerKeySelector: s => (object)s.UserId, 
+        innerKeySelector: u => (object)u.Id, 
+        resultSelector: (s, u) => new TransparentIdentifier<SurveyParticipant, User>(
+            Outer = s, 
+            Inner = u
+        ))
+    .OrderBy(ti => new RespondentLinkDto(
+        ti.Inner.Id, 
+        ti.Inner.Name, 
+        ti.Inner.Email, 
+        ti.Outer.Token
+    ).ReviewerName)' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
+   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WebApp.Services.SurveyRespondentLinkService.GetLinksAsync(Int32 surveyId, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Services\SurveyRespondentLinkService.cs:line 70
+   at WebApp.Areas.Api.SurveyController.GetRespondentLinks(Int32 id, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Areas\Api\SurveyController.cs:line 322
+   at lambda_method745(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+
+HEADERS
+=======
+Accept: application/json
+Connection: close
+Host: localhost:5175
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7
+Content-Type: application/json
+Cookie: Survey360.Auth=CfDJ8FOlgOyy42tMsqHqNbMD52CR9R2OpEUTjXUUUIWCU6ZOvKXFL56Wi4QeMI_jhh-fm9SQDX9Q8kxtFoAhX3_5ux0ecjeI47H_211SjY93_fTP1dupFwmAEORoIAZEIkdptNVb-yPxtSX9G8Q3fyPLNfc90feoW6g3A_Vzj-fdSr2RiuNIfaVM0C5kFuMgsHC5_cLNckByPDGAvI1Ewgbd2ZrW9L2OLZwYq_PyvZYmFckD2BTqApzQ-BsOZoQWTeVDpr-fQpMkdc0Zdsry6VCh1FaKbRe6AFHh5cVNYTf7CsqhZPYx8xE5YDKEhk5rfZzbed2q54r3n93VRPKlhvXhUEcGwGgxYeHo_iR9pQk_5UbyVNJEe0DvlryZkxa1KKY9w_Jyh2G6KZ1fTK721KxUWeBnn61MZkrIQYAhuz_kEtbyJgdhCQvSxCFzDlU8qlAeadqQlAjds6bfNWNE7PRXcb5tkWpaxyUgDXPm3096Lz_5ZMAvxXa0-m-eD7g2Jl_8dQ
+Referer: http://localhost:5173/
+sec-ch-ua-platform: "Windows"
+sec-ch-ua: "Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-fetch-site: same-origin
+sec-fetch-mode: cors
+sec-fetch-dest: empty
+
+sendRequest @ api.ts:41
+useInviteManager.tsx:95 Error: System.InvalidOperationException: The LINQ expression 'DbSet<SurveyParticipant>()
+    .Where(s => s.SurveyId == @surveyId && s.IsRespondent && s.Token != null)
+    .Join(
+        inner: DbSet<User>(), 
+        outerKeySelector: s => (object)s.UserId, 
+        innerKeySelector: u => (object)u.Id, 
+        resultSelector: (s, u) => new TransparentIdentifier<SurveyParticipant, User>(
+            Outer = s, 
+            Inner = u
+        ))
+    .OrderBy(ti => new RespondentLinkDto(
+        ti.Inner.Id, 
+        ti.Inner.Name, 
+        ti.Inner.Email, 
+        ti.Outer.Token
+    ).ReviewerName)' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
+   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WebApp.Services.SurveyRespondentLinkService.GetLinksAsync(Int32 surveyId, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Services\SurveyRespondentLinkService.cs:line 70
+   at WebApp.Areas.Api.SurveyController.GetRespondentLinks(Int32 id, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Areas\Api\SurveyController.cs:line 322
+   at lambda_method745(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+
+HEADERS
+=======
+Accept: application/json
+Connection: close
+Host: localhost:5175
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7
+Content-Type: application/json
+Cookie: Survey360.Auth=CfDJ8FOlgOyy42tMsqHqNbMD52CR9R2OpEUTjXUUUIWCU6ZOvKXFL56Wi4QeMI_jhh-fm9SQDX9Q8kxtFoAhX3_5ux0ecjeI47H_211SjY93_fTP1dupFwmAEORoIAZEIkdptNVb-yPxtSX9G8Q3fyPLNfc90feoW6g3A_Vzj-fdSr2RiuNIfaVM0C5kFuMgsHC5_cLNckByPDGAvI1Ewgbd2ZrW9L2OLZwYq_PyvZYmFckD2BTqApzQ-BsOZoQWTeVDpr-fQpMkdc0Zdsry6VCh1FaKbRe6AFHh5cVNYTf7CsqhZPYx8xE5YDKEhk5rfZzbed2q54r3n93VRPKlhvXhUEcGwGgxYeHo_iR9pQk_5UbyVNJEe0DvlryZkxa1KKY9w_Jyh2G6KZ1fTK721KxUWeBnn61MZkrIQYAhuz_kEtbyJgdhCQvSxCFzDlU8qlAeadqQlAjds6bfNWNE7PRXcb5tkWpaxyUgDXPm3096Lz_5ZMAvxXa0-m-eD7g2Jl_8dQ
+Referer: http://localhost:5173/
+sec-ch-ua-platform: "Windows"
+sec-ch-ua: "Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-fetch-site: same-origin
+sec-fetch-mode: cors
+sec-fetch-dest: empty
+
+    at sendRequest (http://localhost:5173/src/api.ts:23:15)
+    at async http://localhost:5173/src/hooks/useInviteManager.tsx:77:18
+    at async http://localhost:5173/src/hooks/useSurveyData.ts:49:5
+    at async Promise.all (index 0)
+(anonymous) @ useInviteManager.tsx:95
+:5173/api/survey/44/links:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api.ts:41 API /api/survey/44/links [500]: System.InvalidOperationException: The LINQ expression 'DbSet<SurveyParticipant>()
+    .Where(s => s.SurveyId == @surveyId && s.IsRespondent && s.Token != null)
+    .Join(
+        inner: DbSet<User>(), 
+        outerKeySelector: s => (object)s.UserId, 
+        innerKeySelector: u => (object)u.Id, 
+        resultSelector: (s, u) => new TransparentIdentifier<SurveyParticipant, User>(
+            Outer = s, 
+            Inner = u
+        ))
+    .OrderBy(ti => new RespondentLinkDto(
+        ti.Inner.Id, 
+        ti.Inner.Name, 
+        ti.Inner.Email, 
+        ti.Outer.Token
+    ).ReviewerName)' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
+   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WebApp.Services.SurveyRespondentLinkService.GetLinksAsync(Int32 surveyId, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Services\SurveyRespondentLinkService.cs:line 70
+   at WebApp.Areas.Api.SurveyController.GetRespondentLinks(Int32 id, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Areas\Api\SurveyController.cs:line 322
+   at lambda_method745(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+
+HEADERS
+=======
+Accept: application/json
+Connection: close
+Host: localhost:5175
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7
+Content-Type: application/json
+Cookie: Survey360.Auth=CfDJ8FOlgOyy42tMsqHqNbMD52CR9R2OpEUTjXUUUIWCU6ZOvKXFL56Wi4QeMI_jhh-fm9SQDX9Q8kxtFoAhX3_5ux0ecjeI47H_211SjY93_fTP1dupFwmAEORoIAZEIkdptNVb-yPxtSX9G8Q3fyPLNfc90feoW6g3A_Vzj-fdSr2RiuNIfaVM0C5kFuMgsHC5_cLNckByPDGAvI1Ewgbd2ZrW9L2OLZwYq_PyvZYmFckD2BTqApzQ-BsOZoQWTeVDpr-fQpMkdc0Zdsry6VCh1FaKbRe6AFHh5cVNYTf7CsqhZPYx8xE5YDKEhk5rfZzbed2q54r3n93VRPKlhvXhUEcGwGgxYeHo_iR9pQk_5UbyVNJEe0DvlryZkxa1KKY9w_Jyh2G6KZ1fTK721KxUWeBnn61MZkrIQYAhuz_kEtbyJgdhCQvSxCFzDlU8qlAeadqQlAjds6bfNWNE7PRXcb5tkWpaxyUgDXPm3096Lz_5ZMAvxXa0-m-eD7g2Jl_8dQ
+Referer: http://localhost:5173/
+sec-ch-ua-platform: "Windows"
+sec-ch-ua: "Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-fetch-site: same-origin
+sec-fetch-mode: cors
+sec-fetch-dest: empty
+
+sendRequest @ api.ts:41
+useInviteManager.tsx:95 Error: System.InvalidOperationException: The LINQ expression 'DbSet<SurveyParticipant>()
+    .Where(s => s.SurveyId == @surveyId && s.IsRespondent && s.Token != null)
+    .Join(
+        inner: DbSet<User>(), 
+        outerKeySelector: s => (object)s.UserId, 
+        innerKeySelector: u => (object)u.Id, 
+        resultSelector: (s, u) => new TransparentIdentifier<SurveyParticipant, User>(
+            Outer = s, 
+            Inner = u
+        ))
+    .OrderBy(ti => new RespondentLinkDto(
+        ti.Inner.Id, 
+        ti.Inner.Name, 
+        ti.Inner.Email, 
+        ti.Outer.Token
+    ).ReviewerName)' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
+   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WebApp.Services.SurveyRespondentLinkService.GetLinksAsync(Int32 surveyId, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Services\SurveyRespondentLinkService.cs:line 70
+   at WebApp.Areas.Api.SurveyController.GetRespondentLinks(Int32 id, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Areas\Api\SurveyController.cs:line 322
+   at lambda_method745(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+
+HEADERS
+=======
+Accept: application/json
+Connection: close
+Host: localhost:5175
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7
+Content-Type: application/json
+Cookie: Survey360.Auth=CfDJ8FOlgOyy42tMsqHqNbMD52CR9R2OpEUTjXUUUIWCU6ZOvKXFL56Wi4QeMI_jhh-fm9SQDX9Q8kxtFoAhX3_5ux0ecjeI47H_211SjY93_fTP1dupFwmAEORoIAZEIkdptNVb-yPxtSX9G8Q3fyPLNfc90feoW6g3A_Vzj-fdSr2RiuNIfaVM0C5kFuMgsHC5_cLNckByPDGAvI1Ewgbd2ZrW9L2OLZwYq_PyvZYmFckD2BTqApzQ-BsOZoQWTeVDpr-fQpMkdc0Zdsry6VCh1FaKbRe6AFHh5cVNYTf7CsqhZPYx8xE5YDKEhk5rfZzbed2q54r3n93VRPKlhvXhUEcGwGgxYeHo_iR9pQk_5UbyVNJEe0DvlryZkxa1KKY9w_Jyh2G6KZ1fTK721KxUWeBnn61MZkrIQYAhuz_kEtbyJgdhCQvSxCFzDlU8qlAeadqQlAjds6bfNWNE7PRXcb5tkWpaxyUgDXPm3096Lz_5ZMAvxXa0-m-eD7g2Jl_8dQ
+Referer: http://localhost:5173/
+sec-ch-ua-platform: "Windows"
+sec-ch-ua: "Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-fetch-site: same-origin
+sec-fetch-mode: cors
+sec-fetch-dest: empty
+
+    at sendRequest (http://localhost:5173/src/api.ts:23:15)
+    at async http://localhost:5173/src/hooks/useInviteManager.tsx:77:18
+    at async http://localhost:5173/src/hooks/useSurveyData.ts:49:5
+    at async Promise.all (index 0)
+(anonymous) @ useInviteManager.tsx:95
+:5173/api/survey/44/links:1  Failed to load resource: the server responded with a status of 500 (Internal Server Error)
+api.ts:41 API /api/survey/44/links [500]: System.InvalidOperationException: The LINQ expression 'DbSet<SurveyParticipant>()
+    .Where(s => s.SurveyId == @surveyId && s.IsRespondent && s.Token != null)
+    .Join(
+        inner: DbSet<User>(), 
+        outerKeySelector: s => (object)s.UserId, 
+        innerKeySelector: u => (object)u.Id, 
+        resultSelector: (s, u) => new TransparentIdentifier<SurveyParticipant, User>(
+            Outer = s, 
+            Inner = u
+        ))
+    .OrderBy(ti => new RespondentLinkDto(
+        ti.Inner.Id, 
+        ti.Inner.Name, 
+        ti.Inner.Email, 
+        ti.Outer.Token
+    ).ReviewerName)' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
+   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WebApp.Services.SurveyRespondentLinkService.GetLinksAsync(Int32 surveyId, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Services\SurveyRespondentLinkService.cs:line 70
+   at WebApp.Areas.Api.SurveyController.GetRespondentLinks(Int32 id, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Areas\Api\SurveyController.cs:line 322
+   at lambda_method745(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+
+HEADERS
+=======
+Accept: application/json
+Connection: close
+Host: localhost:5175
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7
+Content-Type: application/json
+Cookie: Survey360.Auth=CfDJ8FOlgOyy42tMsqHqNbMD52CR9R2OpEUTjXUUUIWCU6ZOvKXFL56Wi4QeMI_jhh-fm9SQDX9Q8kxtFoAhX3_5ux0ecjeI47H_211SjY93_fTP1dupFwmAEORoIAZEIkdptNVb-yPxtSX9G8Q3fyPLNfc90feoW6g3A_Vzj-fdSr2RiuNIfaVM0C5kFuMgsHC5_cLNckByPDGAvI1Ewgbd2ZrW9L2OLZwYq_PyvZYmFckD2BTqApzQ-BsOZoQWTeVDpr-fQpMkdc0Zdsry6VCh1FaKbRe6AFHh5cVNYTf7CsqhZPYx8xE5YDKEhk5rfZzbed2q54r3n93VRPKlhvXhUEcGwGgxYeHo_iR9pQk_5UbyVNJEe0DvlryZkxa1KKY9w_Jyh2G6KZ1fTK721KxUWeBnn61MZkrIQYAhuz_kEtbyJgdhCQvSxCFzDlU8qlAeadqQlAjds6bfNWNE7PRXcb5tkWpaxyUgDXPm3096Lz_5ZMAvxXa0-m-eD7g2Jl_8dQ
+Referer: http://localhost:5173/
+sec-ch-ua-platform: "Windows"
+sec-ch-ua: "Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-fetch-site: same-origin
+sec-fetch-mode: cors
+sec-fetch-dest: empty
+
+sendRequest @ api.ts:41
+useInviteManager.tsx:95 Error: System.InvalidOperationException: The LINQ expression 'DbSet<SurveyParticipant>()
+    .Where(s => s.SurveyId == @surveyId && s.IsRespondent && s.Token != null)
+    .Join(
+        inner: DbSet<User>(), 
+        outerKeySelector: s => (object)s.UserId, 
+        innerKeySelector: u => (object)u.Id, 
+        resultSelector: (s, u) => new TransparentIdentifier<SurveyParticipant, User>(
+            Outer = s, 
+            Inner = u
+        ))
+    .OrderBy(ti => new RespondentLinkDto(
+        ti.Inner.Id, 
+        ti.Inner.Name, 
+        ti.Inner.Email, 
+        ti.Outer.Token
+    ).ReviewerName)' could not be translated. Either rewrite the query in a form that can be translated, or switch to client evaluation explicitly by inserting a call to 'AsEnumerable', 'AsAsyncEnumerable', 'ToList', or 'ToListAsync'. See https://go.microsoft.com/fwlink/?linkid=2101038 for more information.
+   at Microsoft.EntityFrameworkCore.Query.QueryableMethodTranslatingExpressionVisitor.Translate(Expression expression)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutorExpression[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.QueryCompilationContext.CreateQueryExecutor[TResult](Expression query)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.<>c__DisplayClass11_0`1.<ExecuteCore>b__0()
+   at Microsoft.EntityFrameworkCore.Query.Internal.CompiledQueryCache.GetOrAddQuery[TResult](Object cacheKey, Func`1 compiler)
+   at Microsoft.EntityFrameworkCore.Query.Internal.QueryCompiler.ExecuteAsync[TResult](Expression query, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.EntityQueryable`1.GetAsyncEnumerator(CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at WebApp.Services.SurveyRespondentLinkService.GetLinksAsync(Int32 surveyId, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Services\SurveyRespondentLinkService.cs:line 70
+   at WebApp.Areas.Api.SurveyController.GetRespondentLinks(Int32 id, CancellationToken ct) in C:\Users\rblropb\Documents\GitHub\survey360\WebApp\Areas\Api\SurveyController.cs:line 322
+   at lambda_method745(Closure, Object)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.AwaitableObjectResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+--- End of stack trace from previous location ---
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+
+HEADERS
+=======
+Accept: application/json
+Connection: close
+Host: localhost:5175
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36
+Accept-Encoding: gzip, deflate, br, zstd
+Accept-Language: ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7
+Content-Type: application/json
+Cookie: Survey360.Auth=CfDJ8FOlgOyy42tMsqHqNbMD52CR9R2OpEUTjXUUUIWCU6ZOvKXFL56Wi4QeMI_jhh-fm9SQDX9Q8kxtFoAhX3_5ux0ecjeI47H_211SjY93_fTP1dupFwmAEORoIAZEIkdptNVb-yPxtSX9G8Q3fyPLNfc90feoW6g3A_Vzj-fdSr2RiuNIfaVM0C5kFuMgsHC5_cLNckByPDGAvI1Ewgbd2ZrW9L2OLZwYq_PyvZYmFckD2BTqApzQ-BsOZoQWTeVDpr-fQpMkdc0Zdsry6VCh1FaKbRe6AFHh5cVNYTf7CsqhZPYx8xE5YDKEhk5rfZzbed2q54r3n93VRPKlhvXhUEcGwGgxYeHo_iR9pQk_5UbyVNJEe0DvlryZkxa1KKY9w_Jyh2G6KZ1fTK721KxUWeBnn61MZkrIQYAhuz_kEtbyJgdhCQvSxCFzDlU8qlAeadqQlAjds6bfNWNE7PRXcb5tkWpaxyUgDXPm3096Lz_5ZMAvxXa0-m-eD7g2Jl_8dQ
+Referer: http://localhost:5173/
+sec-ch-ua-platform: "Windows"
+sec-ch-ua: "Chromium";v="148", "Google Chrome";v="148", "Not/A)Brand";v="99"
+sec-ch-ua-mobile: ?0
+sec-fetch-site: same-origin
+sec-fetch-mode: cors
+sec-fetch-dest: empty
+
+    at sendRequest (http://localhost:5173/src/api.ts:23:15)
+    at async http://localhost:5173/src/hooks/useInviteManager.tsx:77:18
+    at async http://localhost:5173/src/hooks/useSurveyData.ts:49:5
+    at async Promise.all (index 0)
+(anonymous) @ useInviteManager.tsx:95
+@microsoft_signalr.js?v=556f882a:303 [2026-07-15T05:27:03.673Z] Error: Connection disconnected with error 'Error: WebSocket closed with status code: 1006 (no reason given).'.
+log @ @microsoft_signalr.js?v=556f882a:303
+_stopConnection @ @microsoft_signalr.js?v=556f882a:2139
+transport.onclose @ @microsoft_signalr.js?v=556f882a:2093
+_close @ @microsoft_signalr.js?v=556f882a:1839
+webSocket.onclose @ @microsoft_signalr.js?v=556f882a:1808
+@microsoft_signalr.js?v=556f882a:414  POST http://localhost:5173/hubs/survey/negotiate?negotiateVersion=1 502 (Bad Gateway)
+send @ @microsoft_signalr.js?v=556f882a:414
+send @ @microsoft_signalr.js?v=556f882a:526
+send @ @microsoft_signalr.js?v=556f882a:1481
+post @ @microsoft_signalr.js?v=556f882a:141
+_getNegotiationResponse @ @microsoft_signalr.js?v=556f882a:1991
+_startInternal @ @microsoft_signalr.js?v=556f882a:1955
+start @ @microsoft_signalr.js?v=556f882a:1892
+_startInternal @ @microsoft_signalr.js?v=556f882a:860
+_reconnect @ @microsoft_signalr.js?v=556f882a:1265
+await in _reconnect
+_connectionClosed @ @microsoft_signalr.js?v=556f882a:1211
+HubConnection.connection.onclose @ @microsoft_signalr.js?v=556f882a:793
+_stopConnection @ @microsoft_signalr.js?v=556f882a:2152
+transport.onclose @ @microsoft_signalr.js?v=556f882a:2093
+_close @ @microsoft_signalr.js?v=556f882a:1839
+webSocket.onclose @ @microsoft_signalr.js?v=556f882a:1808
+@microsoft_signalr.js?v=556f882a:303 [2026-07-15T05:27:03.679Z] Error: Failed to complete negotiation with the server: Error: Bad Gateway: Status code '502'
+log @ @microsoft_signalr.js?v=556f882a:303
+_getNegotiationResponse @ @microsoft_signalr.js?v=556f882a:2010
+await in _getNegotiationResponse
+_startInternal @ @microsoft_signalr.js?v=556f882a:1955
+start @ @microsoft_signalr.js?v=556f882a:1892
+_startInternal @ @microsoft_signalr.js?v=556f882a:860
+_reconnect @ @microsoft_signalr.js?v=556f882a:1265
+await in _reconnect
+_connectionClosed @ @microsoft_signalr.js?v=556f882a:1211
+HubConnection.connection.onclose @ @microsoft_signalr.js?v=556f882a:793
+_stopConnection @ @microsoft_signalr.js?v=556f882a:2152
+transport.onclose @ @microsoft_signalr.js?v=556f882a:2093
+_close @ @microsoft_signalr.js?v=556f882a:1839
+webSocket.onclose @ @microsoft_signalr.js?v=556f882a:1808
+@microsoft_signalr.js?v=556f882a:303 [2026-07-15T05:27:03.680Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: Error: Bad Gateway: Status code '502'
+log @ @microsoft_signalr.js?v=556f882a:303
+_startInternal @ @microsoft_signalr.js?v=556f882a:1977
+await in _startInternal
+start @ @microsoft_signalr.js?v=556f882a:1892
+_startInternal @ @microsoft_signalr.js?v=556f882a:860
+_reconnect @ @microsoft_signalr.js?v=556f882a:1265
+await in _reconnect
+_connectionClosed @ @microsoft_signalr.js?v=556f882a:1211
+HubConnection.connection.onclose @ @microsoft_signalr.js?v=556f882a:793
+_stopConnection @ @microsoft_signalr.js?v=556f882a:2152
+transport.onclose @ @microsoft_signalr.js?v=556f882a:2093
+_close @ @microsoft_signalr.js?v=556f882a:1839
+webSocket.onclose @ @microsoft_signalr.js?v=556f882a:1808
+@microsoft_signalr.js?v=556f882a:414  POST http://localhost:5173/hubs/survey/negotiate?negotiateVersion=1 502 (Bad Gateway)
+send @ @microsoft_signalr.js?v=556f882a:414
+send @ @microsoft_signalr.js?v=556f882a:526
+send @ @microsoft_signalr.js?v=556f882a:1481
+post @ @microsoft_signalr.js?v=556f882a:141
+_getNegotiationResponse @ @microsoft_signalr.js?v=556f882a:1991
+_startInternal @ @microsoft_signalr.js?v=556f882a:1955
+start @ @microsoft_signalr.js?v=556f882a:1892
+_startInternal @ @microsoft_signalr.js?v=556f882a:860
+_reconnect @ @microsoft_signalr.js?v=556f882a:1265
+await in _reconnect
+_connectionClosed @ @microsoft_signalr.js?v=556f882a:1211
+HubConnection.connection.onclose @ @microsoft_signalr.js?v=556f882a:793
+_stopConnection @ @microsoft_signalr.js?v=556f882a:2152
+transport.onclose @ @microsoft_signalr.js?v=556f882a:2093
+_close @ @microsoft_signalr.js?v=556f882a:1839
+webSocket.onclose @ @microsoft_signalr.js?v=556f882a:1808
+@microsoft_signalr.js?v=556f882a:303 [2026-07-15T05:27:05.688Z] Error: Failed to complete negotiation with the server: Error: Bad Gateway: Status code '502'
+log @ @microsoft_signalr.js?v=556f882a:303
+_getNegotiationResponse @ @microsoft_signalr.js?v=556f882a:2010
+await in _getNegotiationResponse
+_startInternal @ @microsoft_signalr.js?v=556f882a:1955
+start @ @microsoft_signalr.js?v=556f882a:1892
+_startInternal @ @microsoft_signalr.js?v=556f882a:860
+_reconnect @ @microsoft_signalr.js?v=556f882a:1265
+await in _reconnect
+_connectionClosed @ @microsoft_signalr.js?v=556f882a:1211
+HubConnection.connection.onclose @ @microsoft_signalr.js?v=556f882a:793
+_stopConnection @ @microsoft_signalr.js?v=556f882a:2152
+transport.onclose @ @microsoft_signalr.js?v=556f882a:2093
+_close @ @microsoft_signalr.js?v=556f882a:1839
+webSocket.onclose @ @microsoft_signalr.js?v=556f882a:1808
+@microsoft_signalr.js?v=556f882a:303 [2026-07-15T05:27:05.688Z] Error: Failed to start the connection: Error: Failed to complete negotiation with the server: Error: Bad Gateway: Status code '502'

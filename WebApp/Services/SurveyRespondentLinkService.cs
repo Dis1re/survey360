@@ -55,10 +55,14 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
                 };
                 await context.SurveyParticipants.AddAsync(participant, ct);
             }
-            else if (participant.Token is null)
+            else
             {
-                participant.Token = Guid.NewGuid().ToString("N");
-                participant.CreatedAt = DateTime.UtcNow;
+                participant.IsRespondent = true;
+                if (participant.Token is null)
+                {
+                    participant.Token = Guid.NewGuid().ToString("N");
+                    participant.CreatedAt = DateTime.UtcNow;
+                }
             }
         }
 
@@ -74,8 +78,9 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
                 context.Users.AsNoTracking(),
                 p => p.UserId,
                 u => u.Id,
-                (p, u) => new RespondentLinkDto(u.Id, u.Name, u.Email, p.Token!))
-            .OrderBy(x => x.ReviewerName)
+                (p, u) => new { p.Token, u.Id, u.Name, u.Email })
+            .OrderBy(x => x.Name)
+            .Select(x => new RespondentLinkDto(x.Id, x.Name, x.Email, x.Token!))
             .ToListAsync(ct);
     }
 
