@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { questionApi, surveyApi, userApi } from '../api'
+import { AnalyticsTab } from '../components/AnalyticsTab'
 import { MatrixTable, matrixToEntries } from '../components/MatrixTable'
 import { SIDEBAR_WIDTH_COLLAPSED, SIDEBAR_WIDTH_EXPANDED } from '../components/Sidebar'
 import { ConfirmModal } from '../components/ConfirmModal'
@@ -24,7 +25,7 @@ import {
   mapSurveyStatusToApi,
   usersToParticipants,
 } from '../mappers'
-import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink, SendInvitesResult, SurveyReportInfo } from '../types'
+import type { ApiAnswer, ApiSurvey, ApiUser, Participant, Question, RespondentLink, SendInvitesResult, SurveyReportInfo } from '../types'
 
 function buildInviteResultModal(result: SendInvitesResult): {
   title: string
@@ -123,6 +124,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [loadError, setLoadError] = useState<string | null>(null)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null)
+  const [answers, setAnswers] = useState<ApiAnswer[]>([])
 
   const loadUsers = useCallback(async () => {
     const users = await userApi.list()
@@ -152,6 +154,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     setSurvey(details.survey)
     const mappedQuestions = details.questions.map(apiQuestionToQuestion)
     setQuestions(mappedQuestions)
+    setAnswers(details.answers)
     setActiveQuestionId((prev) => {
       if (prev !== null && mappedQuestions.some((q) => q.id === prev)) return prev
       return mappedQuestions[0]?.id ?? null
@@ -189,6 +192,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       setCompletedAssignments({})
       setRespondentLinks([])
       setActiveQuestionId(null)
+      setAnswers([])
       return
     }
 
@@ -202,6 +206,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     setAssignments({})
     setCompletedAssignments({})
     setActiveQuestionId(null)
+    setAnswers([])
 
     Promise.all([loadSurvey(surveyId), loadUsers()])
       .catch((err) => {
@@ -695,6 +700,23 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 />
               </Modal>
             )}
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'analytics' && (
+        <div className="flex-1 min-h-0 p-6 overflow-auto">
+          <div className="max-w-6xl mx-auto">
+            <AnalyticsTab
+              questions={questions}
+              answers={answers}
+              targets={targets}
+              respondents={respondents}
+              assignments={assignments}
+              completedAssignments={completedAssignments}
+              reportInfo={reportInfo}
+              allUsers={allUsers}
+            />
           </div>
         </div>
       )}
