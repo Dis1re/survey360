@@ -393,7 +393,7 @@ export function MatrixTable({
                     const inviteLink = invite ? buildRespondentInviteLink(invite.token) : null
 
                     return (
-                      <tr key={respondent.id} className={`transition border-b border-gray-100 hover:bg-blue-50/30 ${ri % 3 === 1 ? 'bg-gray-50/50' : ri % 3 === 2 ? 'bg-gray-100/40' : ''}`}>
+                      <tr key={respondent.id} className={`transition border-b border-gray-100 hover:brightness-95 ${ri % 3 === 0 ? 'bg-pink-50/50' : ri % 3 === 1 ? 'bg-sky-50/50' : 'bg-amber-50/50'}`}>
                         <td className="p-4 font-medium text-gray-900 border-r border-gray-200 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                           <div className="flex items-center gap-2">
                             <div className="relative inline-flex">
