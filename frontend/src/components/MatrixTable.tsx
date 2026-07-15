@@ -481,7 +481,7 @@ export function MatrixTable({
                                 if ((e.target as HTMLElement).closest('button')) return
                                 toggle(reviewerKey, targetKey)
                               }}
-                              className={`p-4 text-center border-r border-gray-200 ${isSelf ? 'bg-purple-50/60' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40'}`}
+                              className={`p-4 text-center border-r border-gray-200 ${isSelf ? 'bg-purple-100/80' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40'}`}
                             >
                               <div className="flex flex-col items-center gap-1.5">
                                 <span
