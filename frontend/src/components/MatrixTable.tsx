@@ -543,7 +543,7 @@ export function MatrixTable({
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
                           disabled={adding || allUsers.length === 0}
-                          className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-[#FF8600] border-2 border-dashed border-orange-200 hover:border-[#FF8600] hover:bg-orange-50 rounded-xl soft-press cursor-pointer disabled:opacity-50"
+                          className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
                         >
                           + Респондента
                         </button>
