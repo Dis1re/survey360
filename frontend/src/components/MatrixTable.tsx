@@ -588,7 +588,6 @@ export function MatrixTable({
           )}
         </div>
         )
-        )
       )}
         </div>
 
