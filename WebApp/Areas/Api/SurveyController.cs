@@ -131,6 +131,10 @@ public class SurveyController(
     [HttpPost]
     public async Task<ActionResult<int>> Create(CancellationToken ct)
     {
+        var userId = User.GetUserId();
+        if (userId is null || !await context.Users.AnyAsync(u => u.Id == userId, ct))
+            return Unauthorized("Пользователь не найден. Войдите заново.");
+
         var survey = new Survey
         {
             Name = "Новый опрос",
@@ -139,7 +143,7 @@ public class SurveyController(
             CreatedAt = DateTime.UtcNow,
             StartedAt = default,
             ClosedAt = default,
-            CreatedByUserId = User.GetUserId(),
+            CreatedByUserId = userId,
         };
         await context.Surveys.AddAsync(survey, ct);
         await context.SaveChangesAsync(ct);
