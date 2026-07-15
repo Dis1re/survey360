@@ -321,8 +321,10 @@ export function MatrixTable({
               Сначала добавьте пользователей через кнопку «Добавить пользователя» в шапке опроса
             </div>
           ) : (
-            <div className={`overflow-x-auto flex-1 min-h-0 ${expanded ? 'overflow-y-visible' : 'overflow-y-auto'}`}>
-              <table className="w-full text-left border-collapse">
+            <div className="flex flex-col">
+              <div className="flex">
+              <div className={`overflow-x-auto ${expanded ? 'overflow-y-visible' : 'overflow-y-auto max-h-[600px]'} flex-1 min-w-0`}>
+                <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
                       <th className="p-4 text-xs font-bold text-gray-400 min-w-[120px] border-r border-b border-gray-200 sticky left-0 top-0 z-10 bg-gray-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
@@ -372,19 +374,6 @@ export function MatrixTable({
                         </div>
                       </th>
                     ))}
-                    {!readOnly && (
-                      <th className="p-4 text-center min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
-                        <button
-                          type="button"
-                          onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
-                          disabled={adding || allUsers.length === 0}
-                          className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
-                          title="Добавить объект (столбец сверху)"
-                        >
-                          + Объект
-                        </button>
-                      </th>
-                    )}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
@@ -540,25 +529,6 @@ export function MatrixTable({
                     )
                   })}
 
-                  {!readOnly && (
-                    <tr className="hover:bg-blue-50/30 transition border-b border-gray-200">
-                      <td className="p-4 border-r-2 border-gray-300 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
-                        <button
-                          type="button"
-                          onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
-                          disabled={adding || allUsers.length === 0}
-                          className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
-                        >
-                          + Респондент
-                        </button>
-                      </td>
-                      {targets.map((target) => (
-                        <td key={target.id} className="p-4 border-r border-b border-gray-200 min-w-[120px]" />
-                      ))}
-                      {!readOnly && <td className="p-4 border-b border-gray-200" />}
-                    </tr>
-                  )}
-
                   {readOnly && respondents.length === 0 && (
                     <tr>
                       <td colSpan={targets.length + 1} className="p-8 text-center text-sm text-gray-400">
@@ -569,7 +539,32 @@ export function MatrixTable({
                 </tbody>
               </table>
             </div>
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
+                disabled={adding || allUsers.length === 0}
+                className="shrink-0 w-11 flex flex-col items-center justify-center gap-2 text-[#FF8600] border-l-2 border-dashed border-orange-200 hover:border-[#FF8600] hover:bg-orange-50 rounded-r-2xl transition cursor-pointer disabled:opacity-50"
+                title="Добавить объект (столбец сверху)"
+              >
+                <span className="text-2xl font-light leading-none">+</span>
+                <span className="text-xs font-medium [writing-mode:vertical-rl] rotate-180">Объект</span>
+              </button>
+            )}
+          </div>
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
+              disabled={adding || allUsers.length === 0}
+              className="w-full flex items-center justify-center gap-1 px-3 py-2.5 text-sm font-medium text-[#FF8600] border-t-2 border-dashed border-orange-200 hover:border-[#FF8600] hover:bg-orange-50 rounded-b-2xl transition cursor-pointer disabled:opacity-50"
+              title="Добавить респондента (строку снизу)"
+            >
+              + Респондент
+            </button>
           )}
+        </div>
+        )}
         </div>
 
         <div className="flex flex-wrap items-center justify-end gap-3 mt-4">
