@@ -375,7 +375,7 @@ export function MatrixTable({
                       </th>
                     ))}
                     {!readOnly && (
-                      <th className="p-4 text-center min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 border-b border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
+                      <th className="p-4 text-center min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
