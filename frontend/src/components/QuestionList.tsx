@@ -79,7 +79,7 @@ export function QuestionList({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col">
+    <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col h-full">
       <div className="flex items-center justify-between gap-2 mb-3">
         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
           Вопросы анкеты ({questions.length})
