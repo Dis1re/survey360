@@ -25,6 +25,12 @@ import type {
   UpdateSurveyRequest,
 } from './types'
 
+let activeInviteToken: string | null = null
+
+export function setActiveInviteToken(token: string | null) {
+  activeInviteToken = token?.trim() || null
+}
+
 async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   // credentials: 'include' sends auth cookies on all requests, including public invite/survey routes.
   const response = await fetch(url, {
@@ -33,6 +39,7 @@ async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T
     headers: {
       'Content-Type': 'application/json',
       Accept: 'application/json',
+      ...(activeInviteToken ? { 'X-Invite-Token': activeInviteToken } : {}),
       ...options.headers,
     },
   })

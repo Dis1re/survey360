@@ -16,6 +16,7 @@ public class SurveyController(
     ApplicationDbContext context,
     SurveyService surveyService,
     SurveyRespondentLinkService linkService,
+    InviteAccessService inviteAccess,
     IHubContext<SurveyHub> surveyHub) : Controller
 {
     private Task NotifySurveyUpdatedAsync(int surveyId, string? status, CancellationToken ct) =>
@@ -69,13 +70,24 @@ public class SurveyController(
         return await surveyService.ListSurveysAsync(userId.Value, ct);
     }
 
-    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<SurveyDetailsDto>> Get(int id, CancellationToken ct)
     {
         var survey = await surveyService.GetSurveyAsync(id, ct);
-        var accessError = await RequireViewSurveyAsync(survey, ct);
-        if (accessError is not null) return accessError;
+        if (survey is null) return NotFound();
+
+        var invite = await inviteAccess.ResolveFromRequestAsync(Request, ct);
+        if (invite is not null)
+        {
+            if (invite.SurveyId != id) return Forbid();
+        }
+        else
+        {
+            var userId = User.GetUserId();
+            if (userId is null) return Unauthorized();
+            var accessError = await RequireViewSurveyAsync(survey, ct);
+            if (accessError is not null) return accessError;
+        }
 
         var details = await surveyService.GetSurveyDetailsAsync(id, ct);
         return details is null ? NotFound() : details;
@@ -219,7 +231,6 @@ public class SurveyController(
         return NoContent();
     }
 
-    [Authorize]
     [HttpPost("{id:int}/assignments/complete")]
     public async Task<IActionResult> CompleteAssignment(
         int id, [FromBody] CompleteAssignmentRequest request, CancellationToken ct)
@@ -227,12 +238,26 @@ public class SurveyController(
         if (request.ReviewerId <= 0 || request.TargetId <= 0)
             return BadRequest("ReviewerId и TargetId обязательны");
 
-        var userId = User.GetUserId();
-        if (userId is null) return Unauthorized();
-        if (!User.IsAdmin() && request.ReviewerId != userId.Value) return Forbid();
+        var invite = await inviteAccess.ResolveFromRequestAsync(Request, ct);
+        int? userId;
+        var isAdmin = false;
+
+        if (invite is not null)
+        {
+            if (invite.SurveyId != id || invite.ReviewerId != request.ReviewerId)
+                return Forbid();
+            userId = invite.ReviewerId;
+        }
+        else
+        {
+            userId = User.GetUserId();
+            if (userId is null) return Unauthorized();
+            isAdmin = User.IsAdmin();
+            if (!isAdmin && request.ReviewerId != userId.Value) return Forbid();
+        }
 
         var result = await surveyService.CompleteAssignmentAsync(
-            id, request.ReviewerId, request.TargetId, userId, User.IsAdmin(), ct);
+            id, request.ReviewerId, request.TargetId, userId, isAdmin, ct);
 
         if (result is null) return NotFound();
         if (result == -1) return BadRequest("Назначение не найдено в матрице опроса");

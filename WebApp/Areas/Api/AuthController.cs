@@ -88,7 +88,6 @@ public class AuthController(ApplicationDbContext context, SurveyRespondentLinkSe
         if (user is null)
             return NotFound("Ссылка недействительна или устарела");
 
-        await SignInAsync(user);
         return new InviteLoginResult(info.SurveyId, info.ReviewerId, ToDto(user));
     }
 

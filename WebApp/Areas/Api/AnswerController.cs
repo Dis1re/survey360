@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
@@ -12,21 +11,33 @@ public record CreateAnswerRequest(int QuestionId, int UserId, int TargetId, stri
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
-[Authorize]
-public class AnswerController(ApplicationDbContext context) : Controller
+public class AnswerController(ApplicationDbContext context, InviteAccessService inviteAccess) : Controller
 {
     [HttpPost]
     public async Task<ActionResult<int>> Create([FromBody] CreateAnswerRequest request, CancellationToken ct)
     {
-        var currentUserId = User.GetUserId();
-        if (currentUserId is null)
-            return Unauthorized();
+        var invite = await inviteAccess.ResolveFromRequestAsync(Request, ct);
+        int reviewerId;
+        if (invite is not null)
+        {
+            reviewerId = invite.ReviewerId;
+        }
+        else
+        {
+            var currentUserId = User.GetUserId();
+            if (currentUserId is null)
+                return Unauthorized();
+            reviewerId = currentUserId.Value;
+        }
 
         var question = await context.Questions
             .AsNoTracking()
             .FirstOrDefaultAsync(q => q.Id == request.QuestionId, ct);
         if (question is null)
             return NotFound($"Вопрос с id {request.QuestionId} не найден");
+
+        if (invite is not null && invite.SurveyId != question.SurveyId)
+            return Forbid();
 
         var targetExists = await context.Users.AnyAsync(u => u.Id == request.TargetId, ct);
         if (!targetExists)
@@ -35,17 +46,15 @@ public class AnswerController(ApplicationDbContext context) : Controller
         var hasAssignment = await context.SurveyAssignments
             .AsNoTracking()
             .AnyAsync(a => a.SurveyId == question.SurveyId
-                && a.ReviewerId == currentUserId.Value
+                && a.ReviewerId == reviewerId
                 && a.TargetId == request.TargetId
                 && a.IsAssigned, ct);
         if (!hasAssignment)
             return Forbid();
 
-        var userId = currentUserId.Value;
-
         var existing = await context.Answers
             .FirstOrDefaultAsync(a => a.QuestionId == request.QuestionId
-                && a.UserId == userId && a.TargetId == request.TargetId, ct);
+                && a.UserId == reviewerId && a.TargetId == request.TargetId, ct);
 
         if (existing is not null)
         {
@@ -57,7 +66,7 @@ public class AnswerController(ApplicationDbContext context) : Controller
         var answer = new Answer
         {
             QuestionId = request.QuestionId,
-            UserId = userId,
+            UserId = reviewerId,
             TargetId = request.TargetId,
             Text = request.Text,
         };

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { authApi } from '../api'
+import { setActiveInviteToken, surveyApi } from '../api'
 import { TakeSurvey } from './TakeSurvey'
 
 export function InviteSurveyPage({ token }: { token: string }) {
@@ -9,9 +9,10 @@ export function InviteSurveyPage({ token }: { token: string }) {
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    setActiveInviteToken(token)
     setLoading(true)
-    authApi
-      .inviteLogin(token)
+    surveyApi
+      .resolveInvite(token)
       .then((info) => {
         setSurveyId(info.surveyId)
         setReviewerId(info.reviewerId)
@@ -19,6 +20,10 @@ export function InviteSurveyPage({ token }: { token: string }) {
       })
       .catch(() => setError('Ссылка недействительна или устарела'))
       .finally(() => setLoading(false))
+
+    return () => {
+      setActiveInviteToken(null)
+    }
   }, [token])
 
   if (loading) {
