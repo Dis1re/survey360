@@ -327,9 +327,9 @@ export function MatrixTable({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="p-4 text-xs font-bold text-gray-400 w-64 border-r border-b border-gray-200 sticky left-0 top-0 z-10 bg-gray-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
-                      <span>Респондент \ Объект</span>
-                    </th>
+                      <th className="p-4 text-xs font-bold text-gray-400 min-w-[120px] border-r border-b border-gray-200 sticky left-0 top-0 z-10 bg-gray-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                        <span>Респондент \ Объект</span>
+                      </th>
                     {targets.map((target) => (
                       <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px] sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <div className="flex flex-col items-center gap-1">
@@ -473,7 +473,8 @@ export function MatrixTable({
                           const assigned = isChecked(reviewerKey, targetKey)
                           const completed = assigned && isCompleted(reviewerKey, targetKey)
 
-                          const cellDisabled = readOnly || respondent.id === target.id
+                          const isSelf = respondent.id === target.id
+                          const cellDisabled = readOnly || isSelf
                           return (
                             <td
                               key={target.id}
@@ -482,7 +483,14 @@ export function MatrixTable({
                                 if ((e.target as HTMLElement).closest('button')) return
                                 toggle(reviewerKey, targetKey)
                               }}
-                              className={`p-4 text-center border-r border-gray-200 last:border-r-0 ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40'}`}
+                              className={`p-4 text-center border-r border-gray-200 last:border-r-0 ${
+                                isSelf
+                                  ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
+                                  : cellDisabled
+                                    ? ''
+                                    : 'cursor-pointer hover:bg-orange-50/40'
+                              }`}
+                              title={isSelf ? 'Нельзя выбрать самого себя' : undefined}
                             >
                               <div className="flex flex-col items-center gap-1.5">
                                 <span
@@ -543,7 +551,8 @@ export function MatrixTable({
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
                           disabled={adding || allUsers.length === 0}
-                          className="w-full flex items-center justify-center gap-1 px-3 py-2 text-sm font-medium text-[#FF8600] border-2 border-dashed border-orange-200 hover:border-[#FF8600] hover:bg-orange-50 rounded-xl soft-press cursor-pointer disabled:opacity-50"
+                          className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
+                          title="Добавить респондента (строку слева)"
                         >
                           + Респондента
                         </button>
