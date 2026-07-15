@@ -323,7 +323,7 @@ export function MatrixTable({
               Сначала добавьте пользователей через кнопку «Добавить пользователя» в шапке опроса
             </div>
           ) : (
-            <div className={`overflow-x-auto ${expanded ? 'overflow-y-visible' : 'overflow-y-auto max-h-[600px]'}`}>
+            <div className={`overflow-x-auto ${expanded ? 'overflow-y-visible' : 'overflow-y-auto max-h-[calc(100vh-240px)]'}`}>
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
