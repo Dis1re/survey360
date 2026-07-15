@@ -321,7 +321,7 @@ export function MatrixTable({
               Сначала добавьте пользователей через кнопку «Добавить пользователя» в шапке опроса
             </div>
           ) : (
-            respondents.length === 0 && !readOnly ? (
+            respondents.length === 0 && targets.length === 0 && !readOnly ? (
               <div className="flex flex-col items-center justify-center gap-4 py-12 border-2 border-dashed border-gray-200 rounded-2xl bg-gray-50/30">
                 <div className="text-sm text-gray-400">Матрица пуста — добавьте респондентов и объекты, чтобы начать</div>
                 <div className="flex items-center gap-3">
@@ -329,7 +329,7 @@ export function MatrixTable({
                     type="button"
                     onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
                     disabled={adding || allUsers.length === 0}
-                    className="inline-flex items-center justify-center gap-1 px-4 py-2 text-sm font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1 px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-lg transition cursor-pointer"
                   >
                     + Респондент
                   </button>
@@ -337,7 +337,7 @@ export function MatrixTable({
                     type="button"
                     onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
                     disabled={adding || allUsers.length === 0}
-                    className="inline-flex items-center justify-center gap-1 px-4 py-2 text-sm font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer"
+                    className="inline-flex items-center justify-center gap-1 px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-lg transition cursor-pointer"
                   >
                     + Объект
                   </button>
@@ -567,7 +567,7 @@ export function MatrixTable({
                 type="button"
                 onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
                 disabled={adding || allUsers.length === 0}
-                className="shrink-0 w-12 flex flex-col items-center justify-center gap-2 text-[#FF6B00] bg-orange-50 border-l-2 border-[#FF8600] hover:bg-orange-100 shadow-[2px_0_6px_-2px_rgba(255,134,0,0.35)] rounded-r-2xl transition cursor-pointer disabled:opacity-50"
+                className="shrink-0 w-12 flex flex-col items-center justify-center gap-2 text-white bg-[#FF8600] hover:bg-[#FF6B00] shadow-[2px_0_6px_-2px_rgba(255,134,0,0.35)] rounded-r-2xl transition cursor-pointer disabled:opacity-50"
                 title="Добавить объект (столбец сверху)"
               >
                 <span className="text-3xl font-bold leading-none">+</span>
@@ -575,17 +575,19 @@ export function MatrixTable({
               </button>
             )}
           </div>
-          {!readOnly && (
-            <button
-              type="button"
-              onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
-              disabled={adding || allUsers.length === 0}
-              className="w-full flex items-center justify-center gap-1.5 px-3 py-3 text-sm font-semibold text-[#FF6B00] bg-orange-50 border-t-2 border-[#FF8600] hover:bg-orange-100 shadow-[0_2px_6px_-2px_rgba(255,134,0,0.35)] rounded-b-2xl transition cursor-pointer disabled:opacity-50"
-              title="Добавить респондента (строку снизу)"
-            >
-              <span className="text-lg font-bold leading-none">+</span> Респондент
-            </button>
-          )}
+          <div className="mr-12">
+            {!readOnly && (
+              <button
+                type="button"
+                onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
+                disabled={adding || allUsers.length === 0}
+                className="w-full flex items-center justify-center gap-1.5 px-3 py-3 text-sm font-semibold text-white bg-[#FF8600] hover:bg-[#FF6B00] shadow-[0_2px_6px_-2px_rgba(255,134,0,0.35)] rounded-b-2xl transition cursor-pointer disabled:opacity-50"
+                title="Добавить респондента (строку снизу)"
+              >
+                <span className="text-lg font-bold leading-none">+</span> Респондент
+              </button>
+            )}
+          </div>
         </div>
         )
       )}
