@@ -743,14 +743,14 @@ public class SurveyController(
 
         var items = await context.Answers
             .AsNoTracking()
-            .Where(a => a.Question.SurveyId == id
-                && a.UserId == reviewerId
+            .Where(a => a.UserId == reviewerId
                 && a.TargetId == targetId)
             .Join(
                 context.Questions.AsNoTracking(),
                 a => a.QuestionId,
                 q => q.Id,
-                (a, q) => new { q.Order, QuestionText = q.Text, AnswerText = a.Text })
+                (a, q) => new { q.Order, QuestionText = q.Text, AnswerText = a.Text, q.SurveyId })
+            .Where(x => x.SurveyId == id)
             .OrderBy(x => x.Order)
             .ThenBy(x => x.QuestionText)
             .Select(x => new ResponseItemDto(x.QuestionText, x.AnswerText))
