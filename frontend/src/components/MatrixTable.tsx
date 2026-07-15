@@ -470,6 +470,7 @@ export function MatrixTable({
                           const targetKey = String(target.id)
                           const assigned = isChecked(reviewerKey, targetKey)
                           const completed = assigned && isCompleted(reviewerKey, targetKey)
+                          const isSelf = respondent.id === target.id
 
                           const cellDisabled = readOnly
                           return (
@@ -480,7 +481,7 @@ export function MatrixTable({
                                 if ((e.target as HTMLElement).closest('button')) return
                                 toggle(reviewerKey, targetKey)
                               }}
-                              className={`p-4 text-center border-r border-gray-200 ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40'}`}
+                              className={`p-4 text-center border-r border-gray-200 ${isSelf ? 'bg-purple-50/60' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40'}`}
                             >
                               <div className="flex flex-col items-center gap-1.5">
                                 <span
@@ -488,7 +489,9 @@ export function MatrixTable({
                                     assigned
                                       ? completed
                                         ? 'bg-green-500'
-                                        : 'bg-[#FF8600]'
+                                        : isSelf
+                                          ? 'bg-purple-500'
+                                          : 'bg-[#FF8600]'
                                       : 'border-2 border-gray-300 bg-transparent'
                                   }`}
                                 >
@@ -504,6 +507,9 @@ export function MatrixTable({
                                     </svg>
                                   )}
                                 </span>
+                                {isSelf && (
+                                  <span className="text-[9px] font-medium text-purple-400 leading-none">себя</span>
+                                )}
                                 {completed && (
                                   <button
                                     type="button"
