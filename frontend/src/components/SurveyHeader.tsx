@@ -109,11 +109,6 @@ export function SurveyHeader({
   const endDateLabel = formatHeaderDate(closedAt)
 
   useEffect(() => {
-    setForm(initial)
-    dirtyRef.current = false
-  }, [initial])
-
-  useEffect(() => {
     if (readOnly || !dirtyRef.current) return
     if (timerRef.current) clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
