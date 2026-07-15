@@ -176,7 +176,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   }
 
   return (
-    <div className="relative min-h-full">
+    <div className="relative h-screen flex flex-col overflow-hidden">
       <SurveyHeader
         surveyId={surveyId}
         initial={surveyHeaderInitial}
@@ -197,8 +197,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 'editor' && (
-        <div className="p-6">
-          <div className="max-w-6xl mx-auto space-y-3">
+        <div className="flex-1 min-h-0 p-6 overflow-hidden">
+          <div className="max-w-6xl mx-auto space-y-3 h-full overflow-hidden">
             <div className="flex justify-start gap-2">
               <button
                 type="button"
@@ -219,8 +219,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6" style={{height: 'calc(100% - 80px)'}}>
+              <div className="lg:col-span-1 h-full">
                 <QuestionList
                   questions={questions}
                   activeQuestionId={activeQuestionId}
@@ -237,7 +237,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                   }
                 />
               </div>
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 h-full">
                 <QuestionEditor
                   question={activeQuestion}
                   saving={savingQuestion}
@@ -251,8 +251,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       )}
 
       {activeTab === 'matrix' && (
-        <div className="p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex-1 min-h-0 p-6 overflow-hidden">
+          <div className="max-w-6xl mx-auto h-full overflow-hidden">
             <MatrixTable
               key={surveyId}
               targets={targets}
