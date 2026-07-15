@@ -578,8 +578,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 'editor' && (
-        <div className="flex-1 min-h-0 p-6 overflow-hidden">
-          <div className="max-w-6xl mx-auto space-y-3">
+        <div className="flex-1 min-h-0 p-6 overflow-hidden flex flex-col">
+          <div className="max-w-6xl mx-auto flex-1 min-h-0 flex flex-col w-full gap-3">
             <div className="flex justify-start gap-2">
               <button
                 type="button"
@@ -600,8 +600,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+              <div className="lg:col-span-1 min-h-0 h-full">
                 <QuestionList
                   questions={questions}
                   activeQuestionId={activeQuestionId}
@@ -618,7 +618,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 }
                 />
               </div>
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 min-h-0 h-full">
                 <QuestionEditor
                   question={activeQuestion}
                   saving={savingQuestion}
