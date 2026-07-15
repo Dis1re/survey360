@@ -2,12 +2,13 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Areas.Api;
 
-public record CreateSurveyTemplateRequest(string Name, string Description, string Props);
+public record CreateSurveyTemplateRequest(string Name, string Description);
 
-public record UpdateSurveyTemplateRequest(string Name, string Description, string Props);
+public record UpdateSurveyTemplateRequest(string Name, string Description);
 
 public record CreateQuestionTemplateRequest(string Text, string Type, bool IsRequired = false, string? Props = null);
 
@@ -30,7 +31,6 @@ public class SurveyTemplateController(ApplicationDbContext context) : Controller
         {
             Name = request.Name,
             Description = request.Description,
-            Props = request.Props,
             CreatedAt = DateTime.UtcNow,
         };
         await context.SurveyTemplates.AddAsync(template, ct);
@@ -74,7 +74,6 @@ public class SurveyTemplateController(ApplicationDbContext context) : Controller
 
         template.Name = request.Name;
         template.Description = request.Description;
-        template.Props = request.Props;
 
         await context.SaveChangesAsync(ct);
         return template;
@@ -163,6 +162,7 @@ public class SurveyTemplateController(ApplicationDbContext context) : Controller
             CreatedAt = DateTime.UtcNow,
             StartedAt = default,
             ClosedAt = default,
+            CreatedByUserId = User.GetUserId(),
         };
         await context.Surveys.AddAsync(survey, ct);
         await context.SaveChangesAsync(ct);

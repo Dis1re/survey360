@@ -100,8 +100,8 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
       props = scaleProps
     } else if (f.type === 'radio') {
       const radioProps: QuestionProps = {}
-      f.options.forEach((o, i) => {
-        radioProps[String(i + 1)] = o.label.trim()
+      f.options.forEach((o) => {
+        radioProps[String(o.value)] = o.label.trim()
       })
       props = radioProps
     }
@@ -309,7 +309,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
             <button
               type="button"
               onClick={() => {
-                setOptions([...options, { value: options.length + 1, label: '' }])
+                setOptions([...options, { value: Math.max(0, ...options.map(o => o.value)) + 1, label: '' }])
                 markDirty()
               }}
               className="mt-2 w-full py-2 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 text-sm font-medium rounded-xl transition flex items-center justify-center gap-1 cursor-pointer"

@@ -1,7 +1,9 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Areas.Api;
 
@@ -16,12 +18,23 @@ public record QuestionDetailsDto(Question Question, List<Answer> Answers);
 [Route("/api/[controller]")]
 public class QuestionController(ApplicationDbContext context) : Controller
 {
+    private bool CanManageSurvey(Survey survey)
+    {
+        var userId = User.GetUserId();
+        if (userId is null) return false;
+        return User.IsAdmin() || survey.CreatedByUserId == userId.Value;
+    }
+
+    [Authorize]
     [HttpPost]
     public async Task<ActionResult<int>> Create([FromBody] CreateQuestionRequest request, CancellationToken ct)
     {
-        var surveyExists = await context.Surveys.AnyAsync(s => s.Id == request.SurveyId, ct);
-        if (!surveyExists)
+        var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == request.SurveyId, ct);
+        if (survey is null)
             return NotFound($"Опрос с id {request.SurveyId} не найден");
+
+        if (!CanManageSurvey(survey))
+            return Forbid();
 
         var maxOrder = await context.Questions
             .Where(q => q.SurveyId == request.SurveyId)
@@ -41,6 +54,7 @@ public class QuestionController(ApplicationDbContext context) : Controller
         return question.Id;
     }
 
+    [Authorize]
     [HttpGet("{id:int}")]
     public async Task<ActionResult<QuestionDetailsDto>> Get(int id, CancellationToken ct)
     {
@@ -51,6 +65,10 @@ public class QuestionController(ApplicationDbContext context) : Controller
         if (question is null)
             return NotFound();
 
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == question.SurveyId, ct);
+        if (survey is null) return NotFound();
+        if (!CanManageSurvey(survey)) return Forbid();
+
         var answers = await context.Answers
             .AsNoTracking()
             .Where(a => a.QuestionId == id)
@@ -59,12 +77,19 @@ public class QuestionController(ApplicationDbContext context) : Controller
         return new QuestionDetailsDto(question, answers);
     }
 
+    [Authorize]
     [HttpPut("{id:int}")]
     public async Task<ActionResult<Question>> Update(int id, [FromBody] UpdateQuestionRequest request, CancellationToken ct)
     {
         var question = await context.Questions.FirstOrDefaultAsync(q => q.Id == id, ct);
         if (question is null)
             return NotFound();
+
+        var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == question.SurveyId, ct);
+        if (survey is null) return NotFound();
+        if (!CanManageSurvey(survey)) return Forbid();
+        if (SurveyService.IsSurveyActive(survey.Status))
+            return BadRequest("Нельзя изменять вопросы активного опроса");
 
         question.Text = request.Text;
         question.Type = request.Type;
@@ -76,12 +101,19 @@ public class QuestionController(ApplicationDbContext context) : Controller
         return question;
     }
 
+    [Authorize]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {
-        var questionExists = await context.Questions.AnyAsync(q => q.Id == id, ct);
-        if (!questionExists)
+        var question = await context.Questions.FirstOrDefaultAsync(q => q.Id == id, ct);
+        if (question is null)
             return NotFound();
+
+        var survey = await context.Surveys.FirstOrDefaultAsync(s => s.Id == question.SurveyId, ct);
+        if (survey is null) return NotFound();
+        if (!CanManageSurvey(survey)) return Forbid();
+        if (SurveyService.IsSurveyActive(survey.Status))
+            return BadRequest("Нельзя удалять вопросы активного опроса");
 
         await context.Answers
             .Where(a => a.QuestionId == id)

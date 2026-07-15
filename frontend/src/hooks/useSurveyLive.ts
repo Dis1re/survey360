@@ -58,7 +58,7 @@ function getConnection(): HubConnection {
 async function ensureStarted() {
   const connection = getConnection()
   if (connection.state === HubConnectionState.Connected) return
-  if (connection.state === HubConnectionState.Connecting) {
+  if (connection.state === HubConnectionState.Connecting || connection.state === HubConnectionState.Reconnecting) {
     await startPromise
     return
   }

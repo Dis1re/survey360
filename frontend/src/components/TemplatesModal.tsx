@@ -189,7 +189,7 @@ function LoadTemplate({
     setApplying(true)
     try {
       for (const q of preview) {
-        const props = q.props ? JSON.parse(q.props) as Record<string, string | number> : undefined
+        const props = q.props ? (() => { try { return JSON.parse(q.props) as Record<string, string | number> } catch { return undefined } })() : undefined
         await questionApi.create({ surveyId, text: q.text, type: q.type, isRequired: q.isRequired, props })
       }
       setDone(true)

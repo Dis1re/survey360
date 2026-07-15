@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApp.Data;
 
@@ -10,9 +11,11 @@ using WebApp.Data;
 namespace WebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260714225646_RemoveAnswerTypeRemoveTemplatePropsAddIndexes")]
+    partial class RemoveAnswerTypeRemoveTemplatePropsAddIndexes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
@@ -187,9 +190,6 @@ namespace WebApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("IsRespondent")
                         .HasColumnType("INTEGER");
 
@@ -199,16 +199,10 @@ namespace WebApp.Migrations
                     b.Property<int>("SurveyId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Token")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -216,6 +210,38 @@ namespace WebApp.Migrations
                         .IsUnique();
 
                     b.ToTable("SurveyParticipants");
+                });
+
+            modelBuilder.Entity("WebApp.Models.SurveyRespondentLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ReviewerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SurveyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewerId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("SurveyId", "ReviewerId")
+                        .IsUnique();
+
+                    b.ToTable("SurveyRespondentLinks");
                 });
 
             modelBuilder.Entity("WebApp.Models.SurveyTemplate", b =>
@@ -373,6 +399,25 @@ namespace WebApp.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("WebApp.Models.SurveyRespondentLink", b =>
+                {
+                    b.HasOne("WebApp.Models.User", "Reviewer")
+                        .WithMany("RespondentLinks")
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebApp.Models.Survey", "Survey")
+                        .WithMany("RespondentLinks")
+                        .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Reviewer");
+
+                    b.Navigation("Survey");
+                });
+
             modelBuilder.Entity("WebApp.Models.Question", b =>
                 {
                     b.Navigation("Answers");
@@ -385,6 +430,8 @@ namespace WebApp.Migrations
                     b.Navigation("Participants");
 
                     b.Navigation("Questions");
+
+                    b.Navigation("RespondentLinks");
                 });
 
             modelBuilder.Entity("WebApp.Models.SurveyTemplate", b =>
@@ -399,6 +446,8 @@ namespace WebApp.Migrations
                     b.Navigation("CreatedSurveys");
 
                     b.Navigation("Participations");
+
+                    b.Navigation("RespondentLinks");
 
                     b.Navigation("ReviewerAssignments");
 

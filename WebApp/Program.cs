@@ -31,6 +31,7 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.Cookie.Name = "Survey360.Auth";
         options.Cookie.HttpOnly = true;
         options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
         options.Cookie.Path = "/";
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
@@ -54,6 +55,7 @@ builder.Services.AddScoped<SurveyCsvReportService>();
 builder.Services.AddScoped<SurveyRespondentLinkService>();
 builder.Services.AddHttpClient<EmailService>();
 builder.Services.AddScoped<SurveyInviteEmailService>();
+builder.Services.AddScoped<SurveyService>();
 
 builder.Services.AddCors(options =>
 {

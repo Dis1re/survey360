@@ -150,7 +150,7 @@ export const surveyApi = {
     sendRequest<InviteInfo>(`${API}/survey/invite/${token}`),
 
   downloadReport: async (id: number) => {
-    const response = await fetch(`${API}/survey/${id}/report.docx`)
+    const response = await fetch(`${API}/survey/${id}/report.docx`, { credentials: 'include' })
     if (!response.ok) {
       const errorText = await response.text()
       console.error(`API /survey/${id}/report.docx [${response.status}]:`, errorText || response.statusText)
@@ -169,12 +169,14 @@ export const surveyApi = {
     const link = document.createElement('a')
     link.href = url
     link.download = fileName
+    document.body.appendChild(link)
     link.click()
-    URL.revokeObjectURL(url)
+    document.body.removeChild(link)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   },
 
   downloadCsv: async (id: number) => {
-    const response = await fetch(`${API}/survey/${id}/report.csv`)
+    const response = await fetch(`${API}/survey/${id}/report.csv`, { credentials: 'include' })
     if (!response.ok) {
       const errorText = await response.text()
       console.error(`API /survey/${id}/report.csv [${response.status}]:`, errorText || response.statusText)
@@ -193,8 +195,10 @@ export const surveyApi = {
     const link = document.createElement('a')
     link.href = url
     link.download = fileName
+    document.body.appendChild(link)
     link.click()
-    URL.revokeObjectURL(url)
+    document.body.removeChild(link)
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
   },
   saveAsTemplate: (id: number, data: SaveAsTemplateRequest) =>
     sendRequest<number>(`${API}/survey/${id}/save-as-template`, {
@@ -208,7 +212,7 @@ export const templateApi = {
 
   get: (id: number) => sendRequest<ApiSurveyTemplateDetails>(`${API}/survey-template/${id}`),
 
-  update: (id: number, data: { name: string; description: string; props: string }) =>
+  update: (id: number, data: { name: string; description: string }) =>
     sendRequest<void>(`${API}/survey-template/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),

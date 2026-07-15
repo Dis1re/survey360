@@ -100,10 +100,8 @@ export interface UpdateQuestionRequest {
 
 export interface CreateAnswerRequest {
   questionId: number
-  userId: number
   targetId: number
   text: string
-  type: string
 }
 
 export interface ApiSurvey {
@@ -139,7 +137,6 @@ export interface ApiAnswer {
   userId: number
   targetId: number
   text: string
-  type: string
 }
 
 export interface ApiSurveyAssignment {
@@ -196,7 +193,6 @@ export interface ApiSurveyTemplate {
   id: number
   name: string
   description: string
-  props: string
   createdAt: string
 }
 
@@ -238,4 +234,11 @@ export interface SendInvitesResult {
   skipped: number
   failed: number
   items: SendInviteItemResult[]
+}
+
+export interface ResponseView {
+  reviewerId: number
+  targetId: number
+  reviewerName: string
+  targetName: string
 }
