@@ -578,7 +578,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 'editor' && (
-        <div className="p-6">
+        <div className="flex-1 min-h-0 p-6 overflow-y-auto">
           <div className="max-w-6xl mx-auto space-y-3">
             <div className="flex justify-start gap-2">
               <button
