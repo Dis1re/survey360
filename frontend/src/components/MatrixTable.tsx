@@ -152,7 +152,6 @@ export function MatrixTable({
         respondent.id !== undefined &&
         targets.every(
           (target) =>
-            respondent.id === target.id ||
             (assignments[String(respondent.id)]?.[String(target.id)] ?? false),
         ),
     )
@@ -163,7 +162,6 @@ export function MatrixTable({
         const rKey = String(respondent.id)
         next[rKey] = { ...next[rKey] }
         for (const target of targets) {
-          if (respondent.id === target.id) continue
           next[rKey][String(target.id)] = value
         }
       }
@@ -473,7 +471,7 @@ export function MatrixTable({
                           const assigned = isChecked(reviewerKey, targetKey)
                           const completed = assigned && isCompleted(reviewerKey, targetKey)
 
-                          const cellDisabled = readOnly || respondent.id === target.id
+                          const cellDisabled = readOnly
                           return (
                             <td
                               key={target.id}
