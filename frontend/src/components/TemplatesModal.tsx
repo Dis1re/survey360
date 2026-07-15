@@ -288,6 +288,9 @@ function LoadTemplate({
                         <div className="min-w-0">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">{q.text}</span>
+                            {q.isRequired && (
+                              <span className="text-red-500" title="Обязательный вопрос">*</span>
+                            )}
                             <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded shrink-0">
                               {typeLabels[q.type] ?? q.type}
                             </span>

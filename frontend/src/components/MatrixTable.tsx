@@ -325,9 +325,9 @@ export function MatrixTable({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
-                    <th className="p-4 text-xs font-bold text-gray-400 w-64 border-r border-b border-gray-200 sticky left-0 top-0 z-10 bg-gray-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
-                      <span>Респондент \ Объект</span>
-                    </th>
+                      <th className="p-4 text-xs font-bold text-gray-400 min-w-[120px] border-r border-b border-gray-200 sticky left-0 top-0 z-10 bg-gray-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                        <span>Респондент \ Объект</span>
+                      </th>
                     {targets.map((target) => (
                       <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px] sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <div className="flex flex-col items-center gap-1">

@@ -124,6 +124,9 @@ export function QuestionList({
                 <span className="truncate min-w-0">
                   <span className="text-gray-400 mr-1.5">{index + 1}.</span>
                   {question.text}
+                  {question.isRequired && (
+                    <span className="ml-1.5 text-red-500" title="Обязательный вопрос">*</span>
+                  )}
                 </span>
                 <div className="flex items-center gap-1.5 shrink-0 ml-2">
                   <svg
