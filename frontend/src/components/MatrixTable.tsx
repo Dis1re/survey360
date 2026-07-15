@@ -568,22 +568,22 @@ export function MatrixTable({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-3 mt-4">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 mt-4">
           {!readOnly && saving && (
-            <span className="text-xs text-gray-400 flex items-center gap-1.5">
+            <span className="text-xs text-gray-400 flex items-center justify-center gap-1.5 sm:mr-auto">
               <span className="w-3 h-3 border-2 border-gray-300 border-t-[#FF8600] rounded-full animate-spin" />
               Сохранение…
             </span>
           )}
-          {!readOnly && (
-            <span className="text-xs text-gray-400">Изменения сохраняются автоматически</span>
+          {!readOnly && !saving && (
+            <span className="text-xs text-gray-400 text-center sm:text-right sm:mr-auto">Изменения сохраняются автоматически</span>
           )}
           {onExportReport && canExport && (
             <button
               type="button"
               onClick={() => onExportReport()}
               disabled={exporting}
-              className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl soft-press cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl soft-press cursor-pointer"
             >
               {exporting ? 'Формирование…' : 'Сформировать результаты (.docx)'}
             </button>
@@ -593,7 +593,7 @@ export function MatrixTable({
               type="button"
               onClick={() => onExportCsv()}
               disabled={exportingCsv}
-              className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl transition cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl transition cursor-pointer"
             >
               {exportingCsv ? 'Формирование…' : 'Сформировать результаты (.csv)'}
             </button>

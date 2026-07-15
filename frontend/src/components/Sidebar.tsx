@@ -6,6 +6,7 @@ import {
   isParticipationSurvey,
 } from '../mappers'
 import type { Survey } from '../types'
+import { useIsMobile } from '../hooks/useMediaQuery'
 import { UserBar } from './UserBar'
 
 type SurveyStatusFilter = Survey['status']
@@ -41,6 +42,10 @@ interface SidebarProps {
   onOpenDetails?: () => void
   collapsed: boolean
   onToggleCollapsed: () => void
+  /** Mobile drawer open state (ignored on >=md screens) */
+  mobileOpen?: boolean
+  /** Close the mobile drawer */
+  onCloseMobile?: () => void
 }
 
 const statusConfig = {
@@ -217,7 +222,17 @@ export function Sidebar({
   onOpenDetails,
   collapsed,
   onToggleCollapsed,
+  mobileOpen = false,
+  onCloseMobile,
 }: SidebarProps) {
+  const isMobile = useIsMobile()
+  const showCollapsed = collapsed && !isMobile
+
+  const handleSelect = (id: number, sc?: SurveyScope) => {
+    onSurveySelect(id, sc)
+    if (isMobile) onCloseMobile?.()
+  }
+
   const [query, setQuery] = useState('')
   const [internalScope, setInternalScope] = useState<SurveyScope>('mine')
   const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>('active')
@@ -307,20 +322,36 @@ export function Sidebar({
   const showProgress = hasUserScope && scope === 'participation'
 
   return (
-    <aside className={`flex flex-col flex-shrink-0 h-screen bg-white transition-[width] duration-300 ease-out ${collapsed ? 'w-20' : 'w-80'}`}>
+    <>
+      {isMobile && mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40 md:hidden"
+          onClick={onCloseMobile}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+      className={`flex flex-col flex-shrink-0 h-full bg-white transition-[width,transform] duration-300 ease-out z-40 ${
+        isMobile
+          ? `fixed inset-y-0 left-0 w-[84%] max-w-sm shadow-xl ${
+              mobileOpen ? 'translate-x-0' : '-translate-x-full'
+            }`
+          : `${showCollapsed ? 'w-20' : 'w-80'}`
+      }`}
+    >
       <div
         className={`flex bg-white border-b border-gray-100 ${
-          collapsed ? 'flex-col items-center gap-2 p-3' : 'items-center justify-between gap-3 p-4'
+          showCollapsed ? 'flex-col items-center gap-2 p-3' : 'items-center justify-between gap-3 p-4'
         }`}
       >
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="shrink-0 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 transition p-2 cursor-pointer hover:bg-gray-200"
-          aria-label={collapsed ? 'Показать боковую панель' : 'Скрыть боковую панель'}
+          className="hidden md:inline-flex shrink-0 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 transition p-2 cursor-pointer hover:bg-gray-200"
+          aria-label={showCollapsed ? 'Показать боковую панель' : 'Скрыть боковую панель'}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            {collapsed ? (
+            {showCollapsed ? (
               <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4m11-7 5 7-5 7" />
             ) : (
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M9 5l-5 7 5 7" />
@@ -328,7 +359,18 @@ export function Sidebar({
           </svg>
         </button>
 
-        {!collapsed ? (
+        <button
+          type="button"
+          onClick={onCloseMobile}
+          className="md:hidden shrink-0 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 transition p-2 cursor-pointer hover:bg-gray-200"
+          aria-label="Закрыть меню"
+        >
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        {!showCollapsed ? (
           <>
             <div className="flex items-center gap-2 min-w-0">
               <img
@@ -389,7 +431,7 @@ export function Sidebar({
         )}
       </div>
 
-      {!collapsed && (
+      {!showCollapsed && (
         <div className="p-4 border-b border-gray-100 space-y-3">
           {hasUserScope && (
             <div className="flex gap-1 p-0.5 bg-gray-100 rounded-lg">
@@ -482,24 +524,24 @@ export function Sidebar({
         <div
           key={
             hasUserScope && scope === 'participation'
-              ? `participation-${participationFilter}-${collapsed}`
-              : `mine-${statusFilter}-${collapsed}`
+              ? `participation-${participationFilter}-${showCollapsed}`
+              : `mine-${statusFilter}-${showCollapsed}`
           }
           className="space-y-1 view-fade"
         >
           {loading ? (
-            <p className={`py-2 text-sm text-gray-400 ${collapsed ? 'text-center' : 'px-3'}`}>
-              {collapsed ? '…' : 'Загрузка…'}
+            <p className={`py-2 text-sm text-gray-400 ${showCollapsed ? 'text-center' : 'px-3'}`}>
+              {showCollapsed ? '…' : 'Загрузка…'}
             </p>
           ) : filteredSurveys.length === 0 ? (
-            !collapsed && <p className="px-3 py-2 text-sm text-gray-400">{emptyMessage}</p>
-          ) : collapsed ? (
+            !showCollapsed && <p className="px-3 py-2 text-sm text-gray-400">{emptyMessage}</p>
+          ) : showCollapsed ? (
             filteredSurveys.map((survey) => (
               <SurveyMiniCard
                 key={survey.id}
                 survey={survey}
                 isSelected={survey.id === activeSurveyId}
-                onSelect={() => onSurveySelect(survey.id, scope)}
+                onSelect={() => handleSelect(survey.id, scope)}
                 showProgress={showProgress}
               />
             ))
@@ -509,7 +551,7 @@ export function Sidebar({
                 key={survey.id}
                 survey={survey}
                 isSelected={survey.id === activeSurveyId}
-                onSelect={() => onSurveySelect(survey.id, scope)}
+                onSelect={() => handleSelect(survey.id, scope)}
                 showProgress={showProgress}
                 highlightPending={
                   showProgress &&
@@ -522,7 +564,7 @@ export function Sidebar({
         </div>
       </div>
 
-      {showCreateButton && !collapsed && (
+      {showCreateButton && !showCollapsed && (
         <div className="p-4 border-t border-gray-100">
           <button
             onClick={onCreateClick}
@@ -537,7 +579,7 @@ export function Sidebar({
         </div>
       )}
 
-      {showCreateButton && collapsed && (
+      {showCreateButton && showCollapsed && (
         <div className="p-3 border-t border-gray-100">
           <button
             onClick={onCreateClick}
@@ -552,5 +594,6 @@ export function Sidebar({
         </div>
       )}
     </aside>
+    </>
   )
 }

@@ -18,6 +18,7 @@ export default function App() {
   const [creating, setCreating] = useState(false)
   const [view, setView] = useState<View>('main')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -62,7 +63,22 @@ export default function App() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden">
+      <header className="md:hidden flex items-center gap-3 px-4 py-3 bg-[#FF8600] text-white shadow-sm z-20 shrink-0">
+        <button
+          type="button"
+          onClick={() => setMobileNavOpen(true)}
+          className="shrink-0 rounded-xl border border-white/30 bg-white/10 hover:bg-white/20 p-2 cursor-pointer transition"
+          aria-label="Открыть меню"
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        <span className="text-base font-semibold truncate">Опросы 360</span>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
       <Sidebar
         surveys={filteredSurveys}
         activeSurveyId={selectedSurveyId}
@@ -75,6 +91,8 @@ export default function App() {
         onOpenDev={openDevPage}
         collapsed={sidebarCollapsed}
         onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+        mobileOpen={mobileNavOpen}
+        onCloseMobile={() => setMobileNavOpen(false)}
       />
       <main className="flex-1 overflow-y-auto bg-gray-100">
         {view === 'details' ? (
@@ -91,6 +109,7 @@ export default function App() {
           <MainPage surveyId={selectedSurveyId} onSurveyUpdated={loadSurveys} onSurveyDeleted={loadSurveys} sidebarCollapsed={sidebarCollapsed} />
         )}
       </main>
+      </div>
     </div>
   )
 }

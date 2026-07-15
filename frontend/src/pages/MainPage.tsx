@@ -578,9 +578,9 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 'editor' && (
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="max-w-6xl mx-auto space-y-3">
-            <div className="flex justify-start gap-2">
+            <div className="flex flex-wrap justify-start gap-2">
               <button
                 type="button"
                 onClick={() => setTemplateModal('save')}
@@ -632,7 +632,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       )}
 
       {activeTab === 'matrix' && (
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="max-w-6xl mx-auto space-y-6">
             
             <MatrixTable
@@ -673,7 +673,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               >
                 <MatrixTable
                   key={`expanded-${surveyId}`}
-                  surveyId={surveyId}
                   targets={targets}
                   respondents={respondents}
                   allUsers={allUsers}
