@@ -185,11 +185,12 @@ function LoadTemplate({
     }
   }
 
-  const handleApply = async () => {
+  const handleApply = async (mode: 'add' | 'replace') => {
     if (selectedId === null || !preview) return
+    setApplyMode(mode)
     setApplying(true)
     try {
-      if (applyMode === 'replace') {
+      if (mode === 'replace') {
         await surveyApi.deleteAllQuestions(surveyId)
       }
       for (const q of preview) {
@@ -321,22 +322,6 @@ function LoadTemplate({
           )}
 
           <div className="flex items-center gap-3 pt-2">
-            <div className="flex items-center gap-1 text-sm">
-              <button
-                type="button"
-                onClick={() => setApplyMode('add')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${applyMode === 'add' ? 'bg-[#FF8600] text-white' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-              >
-                Добавить
-              </button>
-              <button
-                type="button"
-                onClick={() => setApplyMode('replace')}
-                className={`px-3 py-1.5 rounded-lg font-medium transition cursor-pointer ${applyMode === 'replace' ? 'bg-red-500 text-white' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-              >
-                Заменить
-              </button>
-            </div>
             <div className="flex-1" />
             <button
               type="button"
@@ -348,15 +333,19 @@ function LoadTemplate({
             </button>
             <button
               type="button"
-              onClick={handleApply}
+              onClick={() => handleApply('add')}
               disabled={selectedId === null || applying || !preview || preview.length === 0}
               className="px-5 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl soft-press shadow-sm cursor-pointer"
             >
-              {applying
-                ? (applyMode === 'replace' ? 'Замена…' : 'Добавление…')
-                : applyMode === 'replace'
-                  ? `Заменить на ${preview?.length ?? 0} вопрос(ов)`
-                  : `Добавить ${preview?.length ?? 0} вопрос(ов)`}
+              {applying && applyMode === 'add' ? 'Добавление…' : `Добавить ${preview?.length ?? 0}`}
+            </button>
+            <button
+              type="button"
+              onClick={() => handleApply('replace')}
+              disabled={selectedId === null || applying || !preview || preview.length === 0}
+              className="px-5 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 rounded-xl soft-press shadow-sm cursor-pointer"
+            >
+              {applying && applyMode === 'replace' ? 'Замена…' : `Заменить на ${preview?.length ?? 0}`}
             </button>
           </div>
         </div>
