@@ -8,6 +8,7 @@ import { QuestionEditor } from '../components/QuestionEditor'
 import { QuestionList } from '../components/QuestionList'
 import { ResponseModal } from '../components/ResponseModal'
 import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '../components/SurveyHeader'
+import { TakeSurvey } from './TakeSurvey'
 import { TabBar, type Tab } from '../components/TabBar'
 import { TemplatesModal } from '../components/TemplatesModal'
 import { TemplateEditor } from '../components/TemplateEditor'
@@ -108,6 +109,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     reviewerName: string
     targetName: string
   } | null>(null)
+  const [previewOpen, setPreviewOpen] = useState(false)
   const [inviteResult, setInviteResult] = useState<{
     title: string
     variant: 'default' | 'warning' | 'danger'
@@ -557,7 +559,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   }
 
   return (
-    <div className="relative min-h-full">
+    <div className="relative h-screen flex flex-col overflow-hidden">
       <SurveyHeader
         surveyId={surveyId}
         initial={surveyHeaderInitial}
@@ -578,8 +580,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
 
       {activeTab === 'editor' && (
-        <div className="p-4 sm:p-6">
-          <div className="max-w-6xl mx-auto space-y-3">
+        <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-hidden flex flex-col">
+          <div className="max-w-6xl mx-auto flex-1 min-h-0 flex flex-col w-full gap-3">
             <div className="flex flex-wrap justify-start gap-2">
               <button
                 type="button"
@@ -600,8 +602,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-1">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+              <div className="lg:col-span-1 min-h-0 h-full">
                 <QuestionList
                   questions={questions}
                   activeQuestionId={activeQuestionId}
@@ -613,12 +615,10 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 onReorder={handleReorderQuestions}
                 onDeleteAll={() => setConfirmDeleteAll(true)}
                 deleting={deletingQuestion}
-                onPreview={() =>
-                  surveyId !== null && window.open(`${window.location.origin}/survey/${surveyId}?preview=1`, '_blank', 'noopener,noreferrer')
-                }
+                onPreview={() => setPreviewOpen(true)}
                 />
               </div>
-              <div className="lg:col-span-2">
+              <div className="lg:col-span-2 min-h-0 h-full">
                 <QuestionEditor
                   question={activeQuestion}
                   saving={savingQuestion}
@@ -632,8 +632,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       )}
 
       {activeTab === 'matrix' && (
-        <div className="p-4 sm:p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-hidden">
+          <div className="max-w-6xl mx-auto h-full overflow-hidden">
             
             <MatrixTable
               key={surveyId}
@@ -752,6 +752,33 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
           sidebarWidth={sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED}
           onClose={() => setResponseView(null)}
         />
+      )}
+
+      {previewOpen && surveyId !== null && (
+        <div
+          className="fixed top-0 right-0 bottom-0 z-40 bg-gray-100 flex flex-col border-l border-gray-200 transition-[left] duration-300 ease-out"
+          style={{ left: sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
+        >
+          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Предпросмотр анкеты</h2>
+              <p className="text-sm text-gray-500 mt-0.5">{survey?.name}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setPreviewOpen(false)}
+              className="shrink-0 p-2 text-white bg-[#FF6B00] hover:bg-[#FF8600] rounded-lg shadow-sm transition cursor-pointer"
+              aria-label="Закрыть"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="flex-1 overflow-y-auto p-6">
+            <TakeSurvey surveyId={surveyId} preview standalone={false} onBack={() => setPreviewOpen(false)} />
+          </div>
+        </div>
       )}
     </div>
   )
