@@ -79,7 +79,7 @@ export function QuestionList({
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col h-full">
+    <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col">
       <div className="flex items-center justify-between gap-2 mb-3">
         <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
           Вопросы анкеты ({questions.length})
@@ -96,7 +96,7 @@ export function QuestionList({
         )}
       </div>
 
-      <div className="space-y-2 flex-1 overflow-y-auto pr-1">
+      <div className="space-y-2 overflow-y-auto pr-1" style={{maxHeight: 'calc(100vh - 320px)'}}>
         {questions.length === 0 ? (
           <p className="text-sm text-gray-400 px-1 py-2">Вопросов пока нет</p>
         ) : (

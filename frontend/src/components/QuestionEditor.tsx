@@ -146,14 +146,14 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
 
   if (!question) {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex items-center justify-center h-full">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex items-center justify-center h-48">
         <p className="text-gray-400 text-sm">Выберите вопрос из списка</p>
       </div>
     )
   }
 
   return (
-    <form onSubmit={(e) => e.preventDefault()} className={`bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5 overflow-y-auto ${readOnly ? 'opacity-80' : ''}`}>
+    <form onSubmit={(e) => e.preventDefault()} className={`bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5 overflow-y-auto ${readOnly ? 'opacity-80' : ''}`} style={{maxHeight: 'calc(100vh - 260px)'}}>
       <div className="flex items-center justify-between">
         {readOnly ? (
           <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
