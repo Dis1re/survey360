@@ -324,7 +324,7 @@ export function MatrixTable({
             </div>
           ) : (
             <div className={`overflow-x-auto flex-1 min-h-0 ${expanded ? 'overflow-y-visible' : 'overflow-y-auto'}`}>
-              <table className="w-full text-left border-collapse min-h-full">
+              <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
                     <th className="p-4 text-xs font-bold text-gray-400 w-64 border-r border-b border-gray-200 sticky left-0 top-0 z-10 bg-gray-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
@@ -545,7 +545,7 @@ export function MatrixTable({
                           disabled={adding || allUsers.length === 0}
                           className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
                         >
-                          + Респондента
+                          + Респондент
                         </button>
                       </td>
                       {targets.map((target) => (
