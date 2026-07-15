@@ -152,7 +152,6 @@ export function MatrixTable({
         respondent.id !== undefined &&
         targets.every(
           (target) =>
-            respondent.id === target.id ||
             (assignments[String(respondent.id)]?.[String(target.id)] ?? false),
         ),
     )
@@ -163,7 +162,6 @@ export function MatrixTable({
         const rKey = String(respondent.id)
         next[rKey] = { ...next[rKey] }
         for (const target of targets) {
-          if (respondent.id === target.id) continue
           next[rKey][String(target.id)] = value
         }
       }
@@ -271,8 +269,8 @@ export function MatrixTable({
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm">
+      <form onSubmit={handleSubmit} className="h-full flex flex-col">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex-1 min-h-0 flex flex-col">
           <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
@@ -323,7 +321,7 @@ export function MatrixTable({
               Сначала добавьте пользователей через кнопку «Добавить пользователя» в шапке опроса
             </div>
           ) : (
-            <div className={`overflow-x-auto ${expanded ? 'overflow-y-visible' : 'overflow-y-auto max-h-[600px]'}`}>
+            <div className={`overflow-x-auto flex-1 min-h-0 ${expanded ? 'overflow-y-visible' : 'overflow-y-auto'}`}>
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 bg-gray-50/50">
@@ -375,7 +373,7 @@ export function MatrixTable({
                       </th>
                     ))}
                     {!readOnly && (
-                      <th className="p-4 text-center min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 border-b border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
+                      <th className="p-4 text-center min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
@@ -390,12 +388,12 @@ export function MatrixTable({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100 text-sm">
-                  {respondents.map((respondent) => {
+                  {respondents.map((respondent, ri) => {
                     const invite = linkByReviewerId[respondent.id]
                     const inviteLink = invite ? buildRespondentInviteLink(invite.token) : null
 
                     return (
-                      <tr key={respondent.id} className="hover:bg-blue-50/30 transition">
+                      <tr key={respondent.id} className={`transition border-b border-gray-100 hover:brightness-95 ${ri % 3 === 0 ? 'bg-pink-50/50' : ri % 3 === 1 ? 'bg-sky-50/50' : 'bg-amber-50/50'}`}>
                         <td className="p-4 font-medium text-gray-900 border-r border-gray-200 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                           <div className="flex items-center gap-2">
                             <div className="relative inline-flex">
@@ -472,9 +470,9 @@ export function MatrixTable({
                           const targetKey = String(target.id)
                           const assigned = isChecked(reviewerKey, targetKey)
                           const completed = assigned && isCompleted(reviewerKey, targetKey)
-
                           const isSelf = respondent.id === target.id
-                          const cellDisabled = readOnly || isSelf
+
+                          const cellDisabled = readOnly
                           return (
                             <td
                               key={target.id}
@@ -483,14 +481,7 @@ export function MatrixTable({
                                 if ((e.target as HTMLElement).closest('button')) return
                                 toggle(reviewerKey, targetKey)
                               }}
-                              className={`p-4 text-center border-r border-gray-200 last:border-r-0 ${
-                                isSelf
-                                  ? 'bg-gray-100 text-gray-300 cursor-not-allowed'
-                                  : cellDisabled
-                                    ? ''
-                                    : 'cursor-pointer hover:bg-orange-50/40'
-                              }`}
-                              title={isSelf ? 'Нельзя выбрать самого себя' : undefined}
+                              className={`p-4 text-center border-r border-gray-200 ${isSelf ? 'bg-purple-100/80' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40'}`}
                             >
                               <div className="flex flex-col items-center gap-1.5">
                                 <span
@@ -498,7 +489,9 @@ export function MatrixTable({
                                     assigned
                                       ? completed
                                         ? 'bg-green-500'
-                                        : 'bg-[#FF8600]'
+                                        : isSelf
+                                          ? 'bg-purple-500'
+                                          : 'bg-[#FF8600]'
                                       : 'border-2 border-gray-300 bg-transparent'
                                   }`}
                                 >
@@ -514,6 +507,9 @@ export function MatrixTable({
                                     </svg>
                                   )}
                                 </span>
+                                {isSelf && (
+                                  <span className="text-[9px] font-medium text-purple-400 leading-none">себя</span>
+                                )}
                                 {completed && (
                                   <button
                                     type="button"
@@ -545,22 +541,21 @@ export function MatrixTable({
                   })}
 
                   {!readOnly && (
-                    <tr className="hover:bg-blue-50/30 transition">
-                      <td className="p-4 border-r border-gray-200 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                    <tr className="hover:bg-blue-50/30 transition border-b border-gray-200">
+                      <td className="p-4 border-r-2 border-gray-300 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
                           disabled={adding || allUsers.length === 0}
                           className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
-                          title="Добавить респондента (строку слева)"
                         >
-                          + Респондента
+                          + Респондент
                         </button>
                       </td>
                       {targets.map((target) => (
-                        <td key={target.id} className="p-4" />
+                        <td key={target.id} className="p-4 border-r border-b border-gray-200 min-w-[120px]" />
                       ))}
-                      {!readOnly && <td className="p-4" />}
+                      {!readOnly && <td className="p-4 border-b border-gray-200" />}
                     </tr>
                   )}
 

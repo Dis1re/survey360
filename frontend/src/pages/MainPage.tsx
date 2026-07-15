@@ -559,7 +559,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   }
 
   return (
-    <div className="relative min-h-full">
+    <div className="relative h-screen flex flex-col overflow-hidden">
       <SurveyHeader
         surveyId={surveyId}
         initial={surveyHeaderInitial}
@@ -632,8 +632,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       )}
 
       {activeTab === 'matrix' && (
-        <div className="p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
+        <div className="flex-1 min-h-0 p-6 overflow-hidden">
+          <div className="max-w-6xl mx-auto h-full overflow-hidden">
             
             <MatrixTable
               key={surveyId}
