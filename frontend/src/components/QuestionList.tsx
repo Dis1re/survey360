@@ -96,7 +96,7 @@ export function QuestionList({
         )}
       </div>
 
-      <div className="space-y-2 flex-1 overflow-y-auto pr-1">
+      <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1">
         {questions.length === 0 ? (
           <p className="text-sm text-gray-400 px-1 py-2">Вопросов пока нет</p>
         ) : (
