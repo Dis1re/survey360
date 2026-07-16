@@ -200,7 +200,7 @@ export const templateApi = {
 
   get: (id: number) => sendRequest<ApiSurveyTemplateDetails>(`${API}/survey-template/${id}`),
 
-  update: (id: number, data: { name: string; description: string }) =>
+  update: (id: number, data: { name: string; description: string; props: string }) =>
     sendRequest<void>(`${API}/survey-template/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
