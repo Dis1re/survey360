@@ -463,6 +463,18 @@ export function TakeSurvey({
       return
     }
 
+    const underMinSelect = questions.filter((q) => {
+      if (q.type !== 'checkboxes') return false
+      const minSel = Number(q.props?.minSelect ?? 0)
+      if (minSel <= 0) return false
+      const selected = (answers[q.id] ?? '').split(',').filter(Boolean).length
+      return selected < minSel
+    })
+    if (underMinSelect.length > 0) {
+      setError(`Выберите минимум вариантов в вопросе: «${underMinSelect[0].text}»`)
+      return
+    }
+
     setSubmitting(true)
     setError(null)
     try {

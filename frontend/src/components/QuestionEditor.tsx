@@ -33,6 +33,8 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
   const [max, setMax] = useState<number | ''>('')
   const [step, setStep] = useState<number | ''>('')
   const [maxStars, setMaxStars] = useState<number>(5)
+  const [minSelect, setMinSelect] = useState<number | ''>('')
+  const [maxSelect, setMaxSelect] = useState<number | ''>('')
   const dirtyRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onSaveRef = useRef(onSave)
@@ -49,8 +51,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
     max: '' as number | '',
     step: '' as number | '',
     maxStars: 5,
+    minSelect: '' as number | '',
+    maxSelect: '' as number | '',
   })
-  fieldsRef.current = { text, type, isRequired, options, min, max, step, maxStars }
+  fieldsRef.current = { text, type, isRequired, options, min, max, step, maxStars, minSelect, maxSelect }
 
   const markDirty = () => {
     dirtyRef.current = true
@@ -67,10 +71,12 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
         setStep(parseStep(q.props?.step))
         setOptions([])
         setMaxStars(5)
+        setMinSelect('')
+        setMaxSelect('')
       } else if (q.type === 'radio' || q.type === 'checkboxes' || q.type === 'dropdown') {
         setOptions(
           Object.entries(q.props ?? {})
-            .filter(([k]) => !['min', 'max', 'step', 'maxStars'].includes(k))
+            .filter(([k]) => !['min', 'max', 'step', 'maxStars', 'minSelect', 'maxSelect'].includes(k))
             .map(([k, v]) => ({ value: Number(k), label: String(v) }))
             .sort((a, b) => a.value - b.value),
         )
@@ -78,19 +84,36 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
         setMax('')
         setStep('')
         setMaxStars(5)
+        setMinSelect(q.type === 'checkboxes' && q.props?.minSelect != null ? Number(q.props.minSelect) : '')
+        setMaxSelect(q.type === 'checkboxes' && q.props?.maxSelect != null ? Number(q.props.maxSelect) : '')
       } else if (q.type === 'stars') {
         setMaxStars(Number(q.props?.maxStars ?? q.props?.max ?? 5))
         setMin('')
         setMax('')
         setStep('')
         setOptions([])
+        setMinSelect('')
+        setMaxSelect('')
       } else {
         setMin('')
         setMax('')
         setStep('')
         setOptions([])
         setMaxStars(5)
+        setMinSelect('')
+        setMaxSelect('')
       }
+    } else {
+      setText('')
+      setType('scale')
+      setIsRequired(false)
+      setMin('')
+      setMax('')
+      setStep('')
+      setOptions([])
+      setMaxStars(5)
+      setMinSelect('')
+      setMaxSelect('')
     }
   }
 
@@ -118,6 +141,10 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
       f.options.forEach((o, i) => {
         optionProps[String(i + 1)] = o.label.trim()
       })
+      if (f.type === 'checkboxes') {
+        if (f.minSelect !== '') optionProps['minSelect'] = Number(f.minSelect)
+        if (f.maxSelect !== '' && Number(f.maxSelect) > 0) optionProps['maxSelect'] = Number(f.maxSelect)
+      }
       props = optionProps
     } else if (f.type === 'stars') {
       props = { maxStars: f.maxStars }
@@ -143,7 +170,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
         timerRef.current = null
       }
     }
-  }, [text, type, isRequired, options, min, max, step, maxStars, question, readOnly])
+  }, [text, type, isRequired, options, min, max, step, maxStars, minSelect, maxSelect, question, readOnly])
 
   useEffect(() => {
     return () => {
@@ -337,6 +364,47 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
               Добавить вариант
             </button>
           )}
+        </div>
+      )}
+
+      {type === 'checkboxes' && (
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
+              Мин. выборов
+            </label>
+            <input
+              type="number"
+              min={0}
+              className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] dark:text-gray-200 disabled:bg-gray-50 dark:disabled:bg-[#2b323f] dark:disabled:text-gray-400 disabled:cursor-default"
+              value={minSelect}
+              onChange={(e) => {
+                setMinSelect(e.target.value === '' ? '' : Math.max(0, Math.round(Number(e.target.value))))
+                markDirty()
+              }}
+              readOnly={readOnly}
+              disabled={readOnly}
+              placeholder="0"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
+              Макс. выборов
+            </label>
+            <input
+              type="number"
+              min={0}
+              className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] dark:text-gray-200 disabled:bg-gray-50 dark:disabled:bg-[#2b323f] dark:disabled:text-gray-400 disabled:cursor-default"
+              value={maxSelect}
+              onChange={(e) => {
+                setMaxSelect(e.target.value === '' ? '' : Math.max(0, Math.round(Number(e.target.value))))
+                markDirty()
+              }}
+              readOnly={readOnly}
+              disabled={readOnly}
+              placeholder="все"
+            />
+          </div>
         </div>
       )}
 

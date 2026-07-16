@@ -137,12 +137,17 @@ export function QuestionInput({
   if (question.type === 'checkboxes') {
     const options = getRadioOptions(question.props)
     const selected = value ? value.split(',').filter(Boolean) : []
+    const minSel = Number(question.props?.minSelect ?? 0)
+    const maxSel = Number(question.props?.maxSelect ?? 0)
+    const atMax = maxSel > 0 && selected.length >= maxSel
     const toggle = (val: string) => {
       if (readOnly) return
-      const next = selected.includes(val)
-        ? selected.filter((v) => v !== val)
-        : [...selected, val]
-      onChange(next.join(','))
+      if (selected.includes(val)) {
+        onChange(selected.filter((v) => v !== val).join(','))
+      } else {
+        if (atMax) return
+        onChange([...selected, val].join(','))
+      }
     }
     if (options.length === 0) {
       return (
@@ -160,31 +165,43 @@ export function QuestionInput({
       )
     }
     return (
-      <div className="space-y-2">
-        {options.map((opt) => {
-          const checked = selected.includes(String(opt.value))
-          return (
-            <label
-              key={opt.value}
-              className={`soft-lift flex items-start gap-3 p-3 rounded-xl border ${
-                readOnly ? 'cursor-default' : 'cursor-pointer'
-              } ${
-                checked ? 'border-[#FF8600] bg-orange-50' : 'border-gray-100 hover:bg-gray-50'
-              } ${readOnly ? 'opacity-80' : ''}`}
-            >
-              <input
-                type="checkbox"
-                checked={checked}
-                disabled={readOnly}
-                onChange={() => toggle(String(opt.value))}
-                className="w-4 h-4 text-[#FF8600] mt-0.5 shrink-0 rounded"
-              />
-              <span className="text-sm text-gray-800 min-w-0 flex-1 break-words">
-                {opt.label || String(opt.value)}
-              </span>
-            </label>
-          )
-        })}
+      <div>
+        <div className="space-y-2">
+          {options.map((opt) => {
+            const checked = selected.includes(String(opt.value))
+            return (
+              <label
+                key={opt.value}
+                className={`soft-lift flex items-start gap-3 p-3 rounded-xl border ${
+                  readOnly ? 'cursor-default' : 'cursor-pointer'
+                } ${
+                  checked ? 'border-[#FF8600] bg-orange-50' : atMax && !checked ? 'border-gray-100 opacity-50' : 'border-gray-100 hover:bg-gray-50'
+                } ${readOnly ? 'opacity-80' : ''}`}
+              >
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  disabled={readOnly || (atMax && !checked)}
+                  onChange={() => toggle(String(opt.value))}
+                  className="w-4 h-4 text-[#FF8600] mt-0.5 shrink-0 rounded"
+                />
+                <span className="text-sm text-gray-800 min-w-0 flex-1 break-words">
+                  {opt.label || String(opt.value)}
+                </span>
+              </label>
+            )
+          })}
+        </div>
+        {(minSel > 0 || maxSel > 0) && (
+          <p className="text-[10px] text-gray-400 mt-1.5">
+            {minSel > 0 && maxSel > 0
+              ? `Выберите от ${minSel} до ${maxSel} вариантов`
+              : minSel > 0
+                ? `Выберите минимум ${minSel} вариантов`
+                : `Можно выбрать не более ${maxSel}`}
+            {` · выбрано ${selected.length}`}
+          </p>
+        )}
       </div>
     )
   }

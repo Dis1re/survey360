@@ -21,7 +21,7 @@ function getNameMap(users: ApiUser[]): Record<number, string> {
 function getRadioOptions(props?: QuestionProps): { value: string; label: string }[] {
   if (!props) return []
   return Object.entries(props)
-    .filter(([k]) => !['min', 'max', 'step', 'maxStars'].includes(k))
+    .filter(([k]) => !['min', 'max', 'step', 'maxStars', 'minSelect', 'maxSelect'].includes(k))
     .sort((a, b) => Number(a[0]) - Number(b[0]))
     .map(([k, v]) => ({ value: k, label: String(v) }))
 }
