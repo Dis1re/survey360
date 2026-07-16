@@ -416,19 +416,6 @@ export function MatrixTable({
                             </div>
                             <div className="min-w-0">
                               <div>{respondent.name}</div>
-                              {surveyActive && (() => {
-                                const assignedTargets = targets.filter(
-                                  (t) =>
-                                    respondent.id !== t.id &&
-                                    (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
-                                )
-                                if (assignedTargets.length === 0) return null
-                                return (
-                                  <div className="text-[11px] text-gray-500 mt-0.5">
-                                    Объект: {assignedTargets.map((t) => t.name).join(', ')}
-                                  </div>
-                                )
-                              })()}
                               {!readOnly && targets.length > 0 && (() => {
                                 const rowActive = targets.every(
                                   (t) => respondent.id === t.id || (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
