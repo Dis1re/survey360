@@ -105,10 +105,10 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [exportingReport, setExportingReport] = useState(false)
   const [sendingInvites, setSendingInvites] = useState(false)
   const [responseView, setResponseView] = useState<{
-    reviewerId: number
-    targetId: number
-    reviewerName: string
-    targetName: string
+    reviewerId?: number
+    targetId?: number
+    reviewerName?: string
+    targetName?: string
   } | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [inviteResult, setInviteResult] = useState<{
@@ -661,6 +661,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               onExportCsv={handleExportCsv}
               onSendInvites={handleSendInvites}
               onViewResponse={(info) => setResponseView(info)}
+              onViewTargetResponses={(info) => setResponseView({ ...info })}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
               onSave={handleSaveMatrix}
@@ -696,6 +697,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                   onAddParticipant={handleAddMatrixParticipant}
                   onRemoveParticipant={handleRemoveMatrixParticipant}
                   onSave={handleSaveMatrix}
+              onViewTargetResponses={(info) => setResponseView({ ...info })}
+              onViewReviewerResponses={(info) => setResponseView({ ...info })}
                   expanded
                 />
               </Modal>
