@@ -564,7 +564,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   }
 
   return (
-    <div className="relative h-screen flex flex-col overflow-hidden">
+    <div className="relative h-full flex flex-col overflow-hidden">
       <SurveyHeader
         surveyId={surveyId}
         initial={surveyHeaderInitial}

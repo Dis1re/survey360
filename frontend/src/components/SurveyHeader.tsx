@@ -275,7 +275,7 @@ export function SurveyHeader({
         <div className="max-w-6xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-3">
           <div className="flex-1 min-w-0 space-y-1.5">
             <div className="flex items-end gap-2.5 flex-wrap">
-              <div className="flex-1 min-w-[200px]">
+              <div className="flex-1 min-w-0 sm:min-w-[200px]">
                 <label className="block text-[10px] font-semibold uppercase tracking-wider text-white/70 mb-1">
                   Название
                 </label>

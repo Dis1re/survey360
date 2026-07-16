@@ -232,6 +232,37 @@ select {
     box-shadow var(--dur-fast) ease;
 }
 
+/* ——— Mobile / small-screen safety ——— */
+/* Prevent any element from forcing the page wider than the viewport
+   (the usual cause of text sliding out of bounds on narrow phones). */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Make the flex app shell fill the viewport on mobile too. */
+#root {
+  min-height: 100dvh;
+}
+
+/* iOS Safari + older Android: use the real visible viewport height. */
+@supports (-webkit-touch-callout: none) {
+  .h-screen {
+    height: -webkit-fill-available;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
 /* ——— Reduced motion ——— */
 
 @media (prefers-reduced-motion: reduce) {

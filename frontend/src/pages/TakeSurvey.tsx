@@ -594,7 +594,7 @@ export function TakeSurvey({
 
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
+    <div className="max-w-2xl mx-auto p-4 sm:p-6">
       {!preview && hideUserSwitch && !standalone && lockedUserId !== null && targetId !== null && (
         <div className="flex justify-end mb-4">
           <button
@@ -608,7 +608,7 @@ export function TakeSurvey({
       )}
 
       {!preview && !standalone && onBack && (
-        <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-2 mb-4">
             <button
               type="button"
               onClick={onBack}
