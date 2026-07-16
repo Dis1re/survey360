@@ -1,7 +1,9 @@
-import { useMemo } from 'react'
-import type { ApiAnswer, ApiUser, Participant, Question, QuestionProps, SurveyReportInfo } from '../types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { aiSummaryApi } from '../api'
+import type { AiSummary, ApiAnswer, ApiUser, Participant, Question, QuestionProps, SurveyReportInfo } from '../types'
 
 interface AnalyticsTabProps {
+  surveyId: number | null
   questions: Question[]
   answers: ApiAnswer[]
   targets: Participant[]
@@ -283,6 +285,7 @@ function QuestionCard({ index, question, qAnswers, nameMap }: { index: number; q
 /* ─── Main Component ─── */
 
 export function AnalyticsTab({
+  surveyId,
   questions,
   answers,
   targets,
@@ -293,6 +296,36 @@ export function AnalyticsTab({
   allUsers,
 }: AnalyticsTabProps) {
   const nameMap = useMemo(() => getNameMap(allUsers), [allUsers])
+
+  const [overallSummary, setOverallSummary] = useState<AiSummary | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [summaryError, setSummaryError] = useState('')
+
+  const loadSummary = useCallback(async () => {
+    if (surveyId == null) return
+    try {
+      const s = await aiSummaryApi.get(surveyId)
+      setOverallSummary(s)
+    } catch {
+      setOverallSummary(null)
+    }
+  }, [surveyId])
+
+  useEffect(() => { loadSummary() }, [loadSummary])
+
+  const generateSummary = async () => {
+    if (surveyId == null) return
+    setSummaryLoading(true)
+    setSummaryError('')
+    try {
+      const s = await aiSummaryApi.generate(surveyId)
+      setOverallSummary(s)
+    } catch {
+      setSummaryError('Не удалось сгенерировать саммари. Проверьте настройки AI.')
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
 
   const totalAssigned = Object.values(assignments).reduce(
     (sum, row) => sum + Object.values(row).filter(Boolean).length, 0,
@@ -328,6 +361,56 @@ export function AnalyticsTab({
         <Card label="Прогресс" value={`${completionPct}%`} sub={`${totalCompleted} из ${totalAssigned}`} />
         <Card label="Оцениваемых" value={String(targets.length)} />
         <Card label="Респондентов" value={String(respondents.length)} />
+      </div>
+
+      <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-xl p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <svg className="w-4 h-4 text-[#FF8600]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            AI-саммари
+          </h3>
+          {surveyId != null && (
+            <div className="flex items-center gap-2">
+              {overallSummary && (
+                <span className="text-[10px] text-gray-400">
+                  {new Date(overallSummary.updatedAt).toLocaleString('ru-RU')}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={generateSummary}
+                disabled={summaryLoading}
+                className="text-xs font-medium text-[#FF8600] hover:text-[#FF6B00] disabled:opacity-50 cursor-pointer"
+              >
+                {summaryLoading ? 'Генерация…' : overallSummary ? 'Обновить' : 'Сгенерировать'}
+              </button>
+            </div>
+          )}
+        </div>
+        {summaryError && (
+          <p className="text-xs text-red-500 mb-2">{summaryError}</p>
+        )}
+        {summaryLoading && !overallSummary && (
+          <div className="flex items-center gap-2 py-6 text-gray-400 text-sm">
+            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            AI анализирует результаты опроса…
+          </div>
+        )}
+        {overallSummary && !summaryLoading && (
+          <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed text-sm">
+            {overallSummary.content}
+          </div>
+        )}
+        {!overallSummary && !summaryLoading && !summaryError && (
+          <p className="text-sm text-gray-400 py-4">
+            Нажмите «Сгенерировать», чтобы AI проанализировал результаты опроса.
+          </p>
+        )}
       </div>
 
       <div className="space-y-4">
