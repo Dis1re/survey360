@@ -110,13 +110,14 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [deletingQuestion, setDeletingQuestion] = useState(false)
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
-  const [exportingReport, setExportingReport] = useState(false)
+  const [exportFormat, setExportFormat] = useState<null | 'menu' | 'docx' | 'docx-question' | 'csv' | 'xlsx'>(null)
+  const [exporting, setExporting] = useState(false)
   const [sendingInvites, setSendingInvites] = useState(false)
   const [responseView, setResponseView] = useState<{
-    reviewerId: number
-    targetId: number
-    reviewerName: string
-    targetName: string
+    reviewerId?: number
+    targetId?: number
+    reviewerName?: string
+    targetName?: string
   } | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [inviteResult, setInviteResult] = useState<{
@@ -127,7 +128,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
   const [deletingAll, setDeletingAll] = useState(false)
   const [reportInfo, setReportInfo] = useState<SurveyReportInfo | null>(null)
-  const [exportingCsv, setExportingCsv] = useState(false)
   const [respondentLinks, setRespondentLinks] = useState<RespondentLink[]>([])
   const [loadError, setLoadError] = useState<string | null>(null)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
@@ -189,6 +189,24 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     setResponseView(null)
     clearAdminResponseViewParams()
   }, [])
+
+  const openTargetResponseView = useCallback(
+    (info: { targetId: number; targetName: string }) => {
+      setResponseView({ targetId: info.targetId, targetName: info.targetName })
+      setActiveTab('matrix')
+      setMainPageTabState(surveyId, 'matrix')
+    },
+    [surveyId],
+  )
+
+  const openReviewerResponseView = useCallback(
+    (info: { reviewerId: number; reviewerName: string }) => {
+      setResponseView({ reviewerId: info.reviewerId, reviewerName: info.reviewerName })
+      setActiveTab('matrix')
+      setMainPageTabState(surveyId, 'matrix')
+    },
+    [surveyId],
+  )
 
   const loadUsers = useCallback(async () => {
     const users = await userApi.list()
@@ -540,34 +558,30 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     await onSurveyDeleted?.()
   }
 
-  const handleExportReport = async () => {
+  const handleExport = async (format: 'docx' | 'docx-question' | 'csv' | 'xlsx') => {
     if (surveyId === null) return
-    setExportingReport(true)
+    setExporting(true)
     try {
       const info = await surveyApi.getReportInfo(surveyId)
       if (info.answerCount === 0) {
         alert('Нет ответов для формирования отчёта.')
         return
       }
-      await surveyApi.downloadReport(surveyId)
+      if (format === 'docx') {
+        await surveyApi.downloadReport(surveyId)
+      } else if (format === 'docx-question') {
+        await surveyApi.downloadReportByQuestion(surveyId)
+      } else if (format === 'csv') {
+        await surveyApi.downloadCsv(surveyId)
+      } else if (format === 'xlsx') {
+        await surveyApi.downloadXlsx(surveyId)
+      }
     } catch (err) {
       console.error(err)
       alert('Не удалось сформировать отчёт')
     } finally {
-      setExportingReport(false)
-    }
-  }
-
-  const handleExportCsv = async () => {
-    if (surveyId === null) return
-    setExportingCsv(true)
-    try {
-      await surveyApi.downloadCsv(surveyId)
-    } catch (err) {
-      console.error(err)
-      alert('Не удалось сформировать CSV')
-    } finally {
-      setExportingCsv(false)
+      setExporting(false)
+      setExportFormat(null)
     }
   }
 
@@ -626,6 +640,28 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       </div>
     )
   }
+
+  const ExportOption = ({
+    label,
+    hint,
+    disabled,
+    onClick,
+  }: {
+    label: string
+    hint: string
+    disabled?: boolean
+    onClick: () => void
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className="text-left p-4 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:border-[#FF8600] hover:bg-orange-50/60 dark:hover:bg-[#FF8600]/10 transition cursor-pointer disabled:opacity-50 disabled:cursor-default"
+    >
+      <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{label}</div>
+      <div className="text-xs text-gray-500 dark:text-gray-300 mt-1">{hint}</div>
+    </button>
+  )
 
   return (
     <div className="relative h-full flex flex-col overflow-hidden">
@@ -713,18 +749,17 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               completedAssignments={completedAssignments}
               saving={savingMatrix}
               adding={addingMatrixParticipant}
-              exporting={exportingReport}
-              exportingCsv={exportingCsv}
               canExport={canExport}
               sendingInvites={sendingInvites}
               readOnly={!surveyEditable}
               surveyActive={surveyStatus === 'active'}
               surveyName={survey?.name ?? ''}
               respondentLinks={respondentLinks}
-              onExportReport={handleExportReport}
-              onExportCsv={handleExportCsv}
+              onOpenExport={() => setExportFormat('menu')}
               onSendInvites={handleSendInvites}
               onViewResponse={openResponseView}
+              onViewTargetResponses={openTargetResponseView}
+              onViewReviewerResponses={openReviewerResponseView}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
               onSave={handleSaveMatrix}
@@ -749,18 +784,17 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                   completedAssignments={completedAssignments}
                   saving={savingMatrix}
                   adding={addingMatrixParticipant}
-                  exporting={exportingReport}
-                  exportingCsv={exportingCsv}
                   canExport={canExport}
                   sendingInvites={sendingInvites}
                   readOnly={!surveyEditable}
                   surveyActive={surveyStatus === 'active'}
                   surveyName={survey?.name ?? ''}
                   respondentLinks={respondentLinks}
-                  onExportReport={handleExportReport}
-                  onExportCsv={handleExportCsv}
+                  onOpenExport={() => setExportFormat('menu')}
                   onSendInvites={handleSendInvites}
                   onViewResponse={openResponseView}
+                  onViewTargetResponses={openTargetResponseView}
+                  onViewReviewerResponses={openReviewerResponseView}
                   onAddParticipant={handleAddMatrixParticipant}
                   onRemoveParticipant={handleRemoveMatrixParticipant}
                   onSave={handleSaveMatrix}
@@ -829,6 +863,44 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
           onCancel={() => !deletingAll && setConfirmDeleteAll(false)}
           message="Все вопросы анкеты и связанные с ними ответы будут безвозвратно удалены. Действие нельзя отменить."
         />
+      )}
+
+      {exportFormat && surveyId !== null && (
+        <Modal
+          title="Сформировать результаты"
+          description="Выберите формат выгрузки"
+          onClose={() => !exporting && setExportFormat(null)}
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <ExportOption
+              label="Word (.docx)"
+              hint="Сводный отчёт по объектам"
+              disabled={exporting}
+              onClick={() => handleExport('docx')}
+            />
+            <ExportOption
+              label="Word (.docx) по вопросам"
+              hint="Отчёт, сгруппированный по вопросам"
+              disabled={exporting}
+              onClick={() => handleExport('docx-question')}
+            />
+            <ExportOption
+              label="Excel (.xlsx)"
+              hint="Таблица с ответами"
+              disabled={exporting}
+              onClick={() => handleExport('xlsx')}
+            />
+            <ExportOption
+              label="CSV (.csv)"
+              hint="Таблица с ответами"
+              disabled={exporting}
+              onClick={() => handleExport('csv')}
+            />
+          </div>
+          {exporting && (
+            <p className="text-xs text-gray-400 mt-3 text-center">Формирование…</p>
+          )}
+        </Modal>
       )}
 
       {responseView && surveyId !== null && (

@@ -12,16 +12,13 @@ interface MatrixTableProps {
   completedAssignments?: Record<string, Record<string, boolean>>
   saving?: boolean
   adding?: boolean
-  exporting?: boolean
-  exportingCsv?: boolean
   canExport?: boolean
   sendingInvites?: boolean
   readOnly?: boolean
   surveyActive?: boolean
   surveyName?: string
   respondentLinks?: RespondentLink[]
-  onExportReport?: () => void | Promise<void>
-  onExportCsv?: () => void | Promise<void>
+  onOpenExport?: () => void
   onSendInvites?: (reviewerId?: number) => void | Promise<void>
   onAddParticipant: (userIds: number[], role: 'target' | 'respondent') => Promise<void>
   onRemoveParticipant: (userId: number, role: 'target' | 'respondent') => Promise<void>
@@ -31,6 +28,14 @@ interface MatrixTableProps {
     targetId: number
     reviewerName: string
     targetName: string
+  }) => void
+  onViewTargetResponses?: (info: {
+    targetId: number
+    targetName: string
+  }) => void
+  onViewReviewerResponses?: (info: {
+    reviewerId: number
+    reviewerName: string
   }) => void
   onExpand?: () => void
   expanded?: boolean
@@ -62,21 +67,20 @@ export function MatrixTable({
   completedAssignments = {},
   saving = false,
   adding = false,
-  exporting = false,
   sendingInvites = false,
   readOnly = false,
   surveyActive = false,
   surveyName: _surveyName = '',
   respondentLinks = [],
-  onExportReport,
+  onOpenExport,
   onSendInvites,
   onAddParticipant,
   onRemoveParticipant,
   onSave,
   onViewResponse,
+  onViewTargetResponses,
+  onViewReviewerResponses,
   onExpand,
-  onExportCsv,
-  exportingCsv = false,
   canExport = false,
   expanded = false,
 }: MatrixTableProps) {
@@ -328,7 +332,7 @@ export function MatrixTable({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-[#3a4250] bg-gray-50/50 dark:bg-[#161a22]/50">
-                      <th className="p-4 text-xs font-bold text-gray-400 dark:text-gray-400 min-w-[120px] border-r border-b border-gray-200 dark:border-[#3a4250] sticky left-0 top-0 z-10 bg-gray-50 dark:bg-[#161a22] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                      <th className="p-4 text-xs font-bold text-gray-400 dark:text-gray-400 min-w-[120px] border-r border-b border-gray-200 dark:border-[#3a4250] sticky left-0 top-0 z-30 bg-gray-50 dark:bg-[#161a22] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                         <span>Респондент \ Объект</span>
                       </th>
                     {targets.map((target) => (
@@ -371,6 +375,16 @@ export function MatrixTable({
                             </button>
                               )
                             })()
+                          )}
+                          {onViewTargetResponses && (
+                            <button
+                              type="button"
+                              onClick={() => onViewTargetResponses({ targetId: target.id, targetName: target.name })}
+                              className="mt-1 text-[10px] font-medium border border-orange-200 dark:border-[#FF8600]/40 text-[#FF8600] hover:text-[#FF6B00] hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
+                              title="Посмотреть ответы всех респондентов на этого объекта"
+                            >
+                              ответы
+                            </button>
                           )}
                         </div>
                       </th>
@@ -416,19 +430,6 @@ export function MatrixTable({
                             </div>
                             <div className="min-w-0">
                               <div>{respondent.name}</div>
-                              {surveyActive && (() => {
-                                const assignedTargets = targets.filter(
-                                  (t) =>
-                                    respondent.id !== t.id &&
-                                    (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
-                                )
-                                if (assignedTargets.length === 0) return null
-                                return (
-                                  <div className="text-[11px] text-gray-500 mt-0.5">
-                                    Объект: {assignedTargets.map((t) => t.name).join(', ')}
-                                  </div>
-                                )
-                              })()}
                               {!readOnly && targets.length > 0 && (() => {
                                 const rowActive = targets.every(
                                   (t) => respondent.id === t.id || (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
@@ -449,6 +450,16 @@ export function MatrixTable({
                                   </button>
                                 )
                               })()}
+                              {onViewReviewerResponses && (
+                                <button
+                                  type="button"
+                                  onClick={() => onViewReviewerResponses({ reviewerId: respondent.id, reviewerName: respondent.name })}
+                                  className="mt-1.5 text-[10px] font-medium border border-orange-200 dark:border-[#FF8600]/40 text-[#FF8600] hover:text-[#FF6B00] hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
+                                  title="Посмотреть все ответы этого респондента по всем объектам"
+                                >
+                                  ответы
+                                </button>
+                              )}
                               {surveyActive && inviteLink && (
                                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
                                   <button
@@ -598,24 +609,13 @@ export function MatrixTable({
           {!readOnly && !saving && (
             <span className="text-xs text-gray-400 dark:text-gray-400 text-center sm:text-right sm:mr-auto">Изменения сохраняются автоматически</span>
           )}
-          {onExportReport && canExport && (
+          {onOpenExport && canExport && (
             <button
               type="button"
-              onClick={() => onExportReport()}
-              disabled={exporting}
-              className="w-full sm:w-auto px-5 py-2 text-sm font-medium text-[#FF8600] bg-white dark:bg-[#1e222e] border border-[#FF8600]/40 hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 disabled:opacity-50 rounded-xl soft-press cursor-pointer"
+              onClick={() => onOpenExport()}
+              className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white dark:bg-[#1e222e] border border-[#FF8600]/40 hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 rounded-xl soft-press cursor-pointer"
             >
-              {exporting ? 'Формирование…' : 'Сформировать результаты (.docx)'}
-            </button>
-          )}
-          {onExportCsv && canExport && (
-            <button
-              type="button"
-              onClick={() => onExportCsv()}
-              disabled={exportingCsv}
-              className="w-full sm:w-auto px-5 py-2 text-sm font-medium text-[#FF8600] bg-white dark:bg-[#1e222e] border border-[#FF8600]/40 hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 disabled:opacity-50 rounded-xl transition cursor-pointer"
-            >
-              {exportingCsv ? 'Формирование…' : 'Сформировать результаты (.csv)'}
+              Сформировать результаты
             </button>
           )}
         </div>

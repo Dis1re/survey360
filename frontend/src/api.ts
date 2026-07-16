@@ -121,6 +121,20 @@ export const surveyApi = {
   getResponses: (id: number, reviewerId: number, targetId: number) =>
     sendRequest<Array<{ questionText: string; answerText: string }>>(`${API}/survey/${id}/responses/${reviewerId}/${targetId}`),
 
+  getTargetResponses: (id: number, targetId: number) =>
+    sendRequest<Array<{
+      questionOrder: number
+      questionText: string
+      answers: Array<{ reviewerId: number; reviewerName: string; answerText: string }>
+    }>>(`${API}/survey/${id}/responses/target/${targetId}`),
+
+  getReviewerResponses: (id: number, reviewerId: number) =>
+    sendRequest<Array<{
+      targetId: number
+      targetName: string
+      questions: Array<{ questionOrder: number; questionText: string; answerText: string }>
+    }>>(`${API}/survey/${id}/responses/reviewer/${reviewerId}`),
+
   getMatrix: (id: number) => sendRequest<ApiSurveyMatrix>(`${API}/survey/${id}/matrix`),
 
   addParticipant: (id: number, data: AddSurveyParticipantRequest) =>
@@ -184,12 +198,16 @@ export const surveyApi = {
 
   downloadReport: async (id: number) => {
     await downloadSurveyFile(`/survey/${id}/report.docx`, `survey-${id}-результаты.docx`)
-    await new Promise((resolve) => setTimeout(resolve, 300))
+  },
+  downloadReportByQuestion: async (id: number) => {
     await downloadSurveyFile(`/survey/${id}/report-by-question.docx`, `survey-${id}-результаты-по-вопросам.docx`)
   },
 
   downloadCsv: async (id: number) => {
     await downloadSurveyFile(`/survey/${id}/report.csv`, `survey-${id}-результаты.csv`)
+  },
+  downloadXlsx: async (id: number) => {
+    await downloadSurveyFile(`/survey/${id}/report.xlsx`, `survey-${id}-результаты.xlsx`)
   },
   saveAsTemplate: (id: number, data: SaveAsTemplateRequest) =>
     sendRequest<number>(`${API}/survey/${id}/save-as-template`, {
