@@ -644,7 +644,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
         onSave={handleSaveSurvey}
         onStartSurvey={handleStartSurvey}
         onStopSurvey={handleStopSurvey}
-        onUserCreated={loadUsers}
         onDelete={handleDeleteSurvey}
       />
       <TabBar activeTab={activeTab} onTabChange={handleTabChange} />

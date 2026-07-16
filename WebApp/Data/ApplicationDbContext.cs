@@ -97,6 +97,12 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
         modelBuilder.Entity<SurveyRespondentLink>()
             .HasIndex(l => new { l.SurveyId, l.ReviewerId })
             .IsUnique();
+
+        modelBuilder.Entity<UserGroup>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(g => g.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     // Тут указываются все сущности БД, с которыми нужно уметь работать
@@ -109,4 +115,5 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<SurveyTemplate> SurveyTemplates { get; set; }
     public DbSet<QuestionTemplate> QuestionTemplates { get; set; }
     public DbSet<SurveyRespondentLink> SurveyRespondentLinks => Set<SurveyRespondentLink>();
+    public DbSet<UserGroup> UserGroups { get; set; }
 }

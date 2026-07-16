@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { buildRespondentInviteLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
 import { ConfirmModal } from './ConfirmModal'
-import { Modal } from './Modal'
+import { UserPickerModal } from './UserPickerModal'
 
 interface MatrixTableProps {
   targets: Participant[]
@@ -83,8 +83,6 @@ export function MatrixTable({
   const [assignments, setAssignments] =
     useState<Record<string, Record<string, boolean>>>(initialAssignments)
   const [pickerRole, setPickerRole] = useState<'target' | 'respondent' | null>(null)
-  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
-  const [search, setSearch] = useState('')
   const [copiedReviewerId, setCopiedReviewerId] = useState<number | null>(null)
   const [sendingReviewerId, setSendingReviewerId] = useState<number | null>(null)
   const [confirmSendAll, setConfirmSendAll] = useState(false)
@@ -247,22 +245,6 @@ export function MatrixTable({
     }
   }, [readOnly])
 
-  const availableUsers = pickerRole
-    ? allUsers.filter((user) => {
-        const ids = pickerRole === 'target' ? targets.map((t) => t.id) : respondents.map((r) => r.id)
-        return !ids.includes(user.id)
-      })
-    : []
-
-  const filteredUsers = availableUsers.filter((user) => {
-    const q = search.trim().toLowerCase()
-    if (!q) return true
-    return (
-      user.name.toLowerCase().includes(q) ||
-      user.email.toLowerCase().includes(q)
-    )
-  })
-
   const allSelectedActive =
     respondents.length > 0 &&
     targets.length > 0 &&
@@ -379,7 +361,7 @@ export function MatrixTable({
                       <th className="p-4 text-center min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 dark:bg-[#161a22] border-b border-r border-gray-200 dark:border-[#3a4250] shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
-                          onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
+                          onClick={() => { setPickerRole('target') }}
                           disabled={adding || allUsers.length === 0}
                           className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 dark:bg-[#FF8600]/12 border border-orange-200 dark:border-[#FF8600]/40 hover:bg-orange-100 dark:hover:bg-[#FF8600]/18 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
                           title="Добавить объект (столбец сверху)"
@@ -416,6 +398,19 @@ export function MatrixTable({
                             </div>
                             <div className="min-w-0">
                               <div>{respondent.name}</div>
+                              {surveyActive && (() => {
+                                const assignedTargets = targets.filter(
+                                  (t) =>
+                                    respondent.id !== t.id &&
+                                    (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
+                                )
+                                if (assignedTargets.length === 0) return null
+                                return (
+                                  <div className="text-[11px] text-gray-500 mt-0.5">
+                                    Объект: {assignedTargets.map((t) => t.name).join(', ')}
+                                  </div>
+                                )
+                              })()}
                               {!readOnly && targets.length > 0 && (() => {
                                 const rowActive = targets.every(
                                   (t) => respondent.id === t.id || (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
@@ -548,7 +543,7 @@ export function MatrixTable({
                       <td className="p-4 border-r-2 border-gray-300 dark:border-[#3a4250] sticky left-0 bg-white dark:bg-[#1e222e] z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
-                          onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
+                          onClick={() => { setPickerRole('respondent') }}
                           disabled={adding || allUsers.length === 0}
                           className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 dark:bg-[#FF8600]/12 border border-orange-200 dark:border-[#FF8600]/40 hover:bg-orange-100 dark:hover:bg-[#FF8600]/18 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
                         >
@@ -609,96 +604,16 @@ export function MatrixTable({
       </form>
 
       {pickerRole && (
-        <Modal
+        <UserPickerModal
           title={pickerRole === 'target' ? 'Добавить объекты оценки' : 'Добавить респондентов'}
-          size="md"
-          onClose={() => { setPickerRole(null); setSelectedUserIds([]) }}
-          preventClose={adding}
-        >
-          {availableUsers.length > 0 && (
-            <div className="flex justify-end mb-2">
-              <button
-                type="button"
-                onClick={() =>
-                  setSelectedUserIds(
-                    selectedUserIds.length === availableUsers.length
-                      ? []
-                      : availableUsers.map((u) => u.id),
-                  )
-                }
-                className="text-xs font-medium text-[#FF8600] hover:text-[#FF6B00] cursor-pointer"
-              >
-                {selectedUserIds.length === availableUsers.length ? 'Снять все' : 'Выбрать все'}
-              </button>
-            </div>
-          )}
-          {availableUsers.length === 0 ? (
-            <p className="text-sm text-gray-500 dark:text-gray-300 py-4">Все пользователи уже добавлены</p>
-          ) : (
-            <>
-              <input
-                type="text"
-                placeholder="Поиск по имени или email…"
-                className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600] shadow-sm mb-3"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                autoFocus
-              />
-              {filteredUsers.length === 0 ? (
-                <p className="text-sm text-gray-500 dark:text-gray-300 py-4">Ничего не найдено</p>
-              ) : (
-                <div className="overflow-y-auto space-y-1 max-h-[50vh]">
-                  {filteredUsers.map((user) => {
-                    const checked = selectedUserIds.includes(user.id)
-                    return (
-                      <label
-                        key={user.id}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#262d3a] border border-gray-100 dark:border-[#303a48] cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() =>
-                            setSelectedUserIds((prev) =>
-                              checked ? prev.filter((id) => id !== user.id) : [...prev, user.id],
-                            )
-                          }
-                          className="w-4 h-4 text-[#FF8600] rounded focus:ring-[#FF8600]"
-                        />
-                        <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</div>
-                          <div className="text-xs text-gray-400 dark:text-gray-400 truncate">{user.email}</div>
-                        </div>
-                      </label>
-                    )
-                  })}
-                </div>
-              )}
-            </>
-          )}
-          <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-[#303a48]">
-            <button
-              type="button"
-              onClick={() => { setPickerRole(null); setSelectedUserIds([]) }}
-              disabled={adding}
-              className="text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer disabled:opacity-50"
-            >
-              Отмена
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                onAddParticipant(selectedUserIds, pickerRole)
-                  .then(() => { setPickerRole(null); setSelectedUserIds([]); setSearch('') })
-                  .catch(console.error)
-              }
-              disabled={adding || selectedUserIds.length === 0}
-              className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl soft-press shadow-sm cursor-pointer"
-            >
-              {adding ? 'Добавление…' : `Добавить выбранных (${selectedUserIds.length})`}
-            </button>
-          </div>
-        </Modal>
+          allUsers={allUsers}
+          existingIds={pickerRole === 'target' ? targets.map((t) => t.id) : respondents.map((r) => r.id)}
+          initialSelectedIds={pickerRole === 'target' ? targets.map((t) => t.id) : respondents.map((r) => r.id)}
+          adding={adding}
+          onClose={() => setPickerRole(null)}
+          onAdd={(userIds) => onAddParticipant(userIds, pickerRole)}
+          onRemove={(userIds) => Promise.all(userIds.map((id) => onRemoveParticipant(id, pickerRole))).then(() => {})}
+        />
       )}
 
       {confirmSendAll && (

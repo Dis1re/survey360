@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from 'react'
-import { userApi } from '../api'
 import type { Survey } from '../types'
 import { ConfirmModal } from './ConfirmModal'
 import { Modal } from './Modal'
@@ -28,7 +27,6 @@ interface SurveyHeaderProps {
   onSave: (data: SurveyHeaderForm) => Promise<void>
   onStartSurvey: (data: StartSurveyPayload) => Promise<void>
   onStopSurvey: (data: SurveyHeaderForm) => Promise<void>
-  onUserCreated?: () => void | Promise<void>
   onDelete?: () => Promise<void>
 }
 
@@ -75,7 +73,6 @@ export function SurveyHeader({
   onSave,
   onStartSurvey,
   onStopSurvey,
-  onUserCreated,
   onDelete,
 }: SurveyHeaderProps) {
   const [form, setForm] = useState(initial)
@@ -90,16 +87,11 @@ export function SurveyHeader({
   const [descOpen, setDescOpen] = useState(false)
   const descAreaRef = useRef<HTMLDivElement>(null)
   const descTextareaRef = useRef<HTMLTextAreaElement>(null)
-  const [userModalOpen, setUserModalOpen] = useState(false)
   const [startModalOpen, setStartModalOpen] = useState(false)
   const [startDates, setStartDates] = useState({ startDate: '', endDate: '' })
   const [showEndDate, setShowEndDate] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
   const [modalLinkCopied, setModalLinkCopied] = useState(false)
-  const [userName, setUserName] = useState('')
-  const [userEmail, setUserEmail] = useState('')
-  const [userPassword, setUserPassword] = useState('')
-  const [userSaving, setUserSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<'delete' | 'stop' | null>(null)
 
@@ -186,28 +178,6 @@ export function SurveyHeader({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-  }
-
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const name = userName.trim()
-    const email = userEmail.trim()
-    const password = userPassword.trim()
-    if (!name || !email || !password) return
-
-    setUserSaving(true)
-    try {
-      await userApi.create({ name, email, password })
-      setUserModalOpen(false)
-      setUserName('')
-      setUserEmail('')
-      setUserPassword('')
-      await onUserCreated?.()
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setUserSaving(false)
-    }
   }
 
   const handleCopyLink = async (link: string, target: 'header' | 'modal') => {
@@ -458,19 +428,6 @@ export function SurveyHeader({
 
             {(!readOnly || (onDelete && status === 'closed')) && (
               <div className="flex gap-2">
-                {!readOnly && (
-                  <button
-                    type="button"
-                    onClick={() => setUserModalOpen(true)}
-                    className="flex-1 px-2.5 py-1.5 text-xs font-medium text-white border rounded-lg transition cursor-pointer hover:bg-white/10"
-                    style={{
-                      backgroundColor: 'rgba(255,255,255,0.12)',
-                      borderColor: 'rgba(255,255,255,0.25)',
-                    }}
-                  >
-                    + Пользователь
-                  </button>
-                )}
                 {onDelete && (status === 'draft' || status === 'closed') && (
                   <button
                     type="button"
@@ -587,61 +544,6 @@ export function SurveyHeader({
               )}
             </div>
           </div>
-        </Modal>
-      )}
-
-      {userModalOpen && (
-        <Modal
-          title="Новый пользователь"
-          size="sm"
-          onClose={() => setUserModalOpen(false)}
-          preventClose={userSaving}
-          scrollable={false}
-        >
-          <form onSubmit={handleCreateUser} className="space-y-4">
-            <div>
-              <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">Имя</label>
-              <input
-                type="text"
-                  className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]"
-                value={userName}
-                onChange={(e) => setUserName(e.target.value)}
-                placeholder="Иван Иванов"
-                autoFocus
-                disabled={userSaving}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">Email</label>
-              <input
-                type="email"
-                  className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]"
-                value={userEmail}
-                onChange={(e) => setUserEmail(e.target.value)}
-                placeholder="ivan@example.com"
-                disabled={userSaving}
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">Пароль</label>
-              <input
-                type="password"
-                className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]"
-                value={userPassword}
-                onChange={(e) => setUserPassword(e.target.value)}
-                placeholder="Пароль для входа"
-                autoComplete="new-password"
-                disabled={userSaving}
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={userSaving || !userName.trim() || !userEmail.trim() || !userPassword.trim()}
-              className="w-full py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl soft-press cursor-pointer"
-            >
-              {userSaving ? 'Добавление…' : 'Добавить'}
-            </button>
-          </form>
         </Modal>
       )}
 
