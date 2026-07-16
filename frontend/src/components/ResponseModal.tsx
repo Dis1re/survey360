@@ -5,6 +5,16 @@ import type { Question } from '../types'
 import { Modal } from './Modal'
 import { QuestionInput } from './QuestionInput'
 
+function useIsMobile(): boolean {
+  const [mobile, setMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768)
+  useEffect(() => {
+    const onResize = () => setMobile(window.innerWidth < 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+  return mobile
+}
+
 interface ResponseModalProps {
   surveyId: number
   reviewerId?: number
@@ -38,6 +48,7 @@ export function ResponseModal({
   fullscreen = false,
   sidebarWidth = 320,
 }: ResponseModalProps) {
+  const isMobile = useIsMobile()
   const mode: 'single' | 'target' | 'reviewer' =
     reviewerId === undefined ? 'target' : targetId === undefined ? 'reviewer' : 'single'
   const [loading, setLoading] = useState(true)
@@ -211,7 +222,7 @@ export function ResponseModal({
     return (
       <div
         className="fixed top-0 right-0 bottom-0 z-40 bg-gray-100 dark:bg-[#303a48] flex flex-col border-l border-gray-200 dark:border-[#3a4250] transition-[left] duration-300 ease-out"
-        style={{ left: sidebarWidth }}
+        style={{ left: isMobile ? 0 : sidebarWidth }}
       >
         <div className="bg-white dark:bg-[#1e222e] border-b border-gray-200 dark:border-[#3a4250] px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
           <div>

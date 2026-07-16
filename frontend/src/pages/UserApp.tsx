@@ -88,6 +88,7 @@ export function UserApp() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const isMobile = useIsMobile()
@@ -179,6 +180,9 @@ export function UserApp() {
       setSelectedSurveyId(id)
       setSidebarScope('mine')
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Неизвестная ошибка'
+      setCreateError(msg)
+      setTimeout(() => setCreateError(null), 5000)
       console.error(err)
     } finally {
       setCreating(false)
@@ -280,6 +284,12 @@ export function UserApp() {
           />
         )}
       </main>
+
+      {createError && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-red-600 text-white text-sm rounded-xl shadow-lg">
+          {createError}
+        </div>
+      )}
 
       {deletingId !== null && (
         <ConfirmModal

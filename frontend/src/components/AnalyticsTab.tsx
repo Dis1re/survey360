@@ -141,8 +141,8 @@ function RadioDistribution({ question, qAnswers }: { question: Question; qAnswer
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2">
-        <span className="text-sm font-medium text-gray-900">{question.text}</span>
-        <span className="text-xs text-gray-400">{qAnswers.length} ответов</span>
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{question.text}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-400">{qAnswers.length} ответов</span>
       </div>
       <div className="space-y-1.5">
         {options.map((opt, i) => {
@@ -169,8 +169,8 @@ function TextResponses({ question, qAnswers, nameMap }: { question: Question; qA
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2">
-        <span className="text-sm font-medium text-gray-900">{question.text}</span>
-        <span className="text-xs text-gray-400">{qAnswers.length} ответов</span>
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{question.text}</span>
+        <span className="text-xs text-gray-400 dark:text-gray-400">{qAnswers.length} ответов</span>
       </div>
       <div className="space-y-1">
         {qAnswers.length === 0 && (

@@ -234,7 +234,7 @@ export function UserPickerModal({
 
   return (
     <Modal title={title} size="xl" onClose={onClose} preventClose={adding}>
-      <div className="flex gap-4 min-h-[400px]">
+      <div className="flex flex-col md:flex-row gap-4 min-h-0 md:min-h-[400px]">
         <div className="flex-1 min-w-0 flex flex-col">
           <div className="flex gap-1 mb-3 border-b border-gray-100 dark:border-[#303a48]">
             <button
@@ -499,7 +499,7 @@ export function UserPickerModal({
           )}
         </div>
 
-        <div className="w-60 shrink-0 border-l border-gray-100 dark:border-[#303a48] pl-4 flex flex-col">
+        <div className="w-full md:w-60 shrink-0 md:border-l md:pl-4 border-t md:border-t-0 pt-4 md:pt-0 border-gray-100 dark:border-[#303a48] flex flex-col">
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
               Выбрано ({selectedUserIds.length + selectedIndividuals.filter((u) => existingIds.includes(u.id)).length})

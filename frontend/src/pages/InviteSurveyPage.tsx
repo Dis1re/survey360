@@ -46,7 +46,7 @@ export function InviteSurveyPage({ token }: { token: string }) {
     )
   }
 
-  const recipientLabel = invite.reviewerName.trim() || invite.reviewerEmail
+  const recipientLabel = (invite.reviewerName ?? '').trim() || invite.reviewerEmail
 
   if (!user || switching) {
     return (

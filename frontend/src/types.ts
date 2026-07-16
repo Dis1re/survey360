@@ -240,7 +240,7 @@ export interface InviteInfo {
   surveyId: number
   reviewerId: number
   reviewerEmail: string
-  reviewerName: string
+  reviewerName: string | null
 }
 
 export interface SendInviteItemResult {

@@ -218,6 +218,38 @@ namespace WebApp.Migrations
                     b.ToTable("SurveyParticipants");
                 });
 
+            modelBuilder.Entity("WebApp.Models.SurveyRespondentLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ReviewerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SurveyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewerId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("SurveyId", "ReviewerId")
+                        .IsUnique();
+
+                    b.ToTable("SurveyRespondentLinks");
+                });
+
             modelBuilder.Entity("WebApp.Models.SurveyTemplate", b =>
                 {
                     b.Property<int>("Id")
@@ -358,14 +390,6 @@ namespace WebApp.Migrations
                     b.Navigation("CreatedByUser");
                 });
 
-            modelBuilder.Entity("WebApp.Models.Survey", b =>
-                {
-                    b.HasOne("WebApp.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-                });
-
             modelBuilder.Entity("WebApp.Models.SurveyAssignment", b =>
                 {
                     b.HasOne("WebApp.Models.User", "Reviewer")
@@ -412,6 +436,30 @@ namespace WebApp.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("WebApp.Models.SurveyRespondentLink", b =>
+                {
+                    b.HasOne("WebApp.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("WebApp.Models.Survey", null)
+                        .WithMany()
+                        .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WebApp.Models.UserGroup", b =>
+                {
+                    b.HasOne("WebApp.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("WebApp.Models.Question", b =>
                 {
                     b.Navigation("Answers");
@@ -444,15 +492,6 @@ namespace WebApp.Migrations
                     b.Navigation("TargetAnswers");
 
                     b.Navigation("TargetAssignments");
-                });
-
-            modelBuilder.Entity("WebApp.Models.UserGroup", b =>
-                {
-                    b.HasOne("WebApp.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }
