@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   isMySurvey,
   isParticipationDone,
@@ -7,10 +8,11 @@ import {
 } from '../mappers'
 import type { Survey } from '../types'
 import { UserBar } from './UserBar'
+import { ThemeToggle } from './ThemeToggle'
 
-type SurveyStatusFilter = Survey['status']
+type SurveyStatusFilter = Survey['status'] | null
 type SurveyScope = 'mine' | 'participation'
-type ParticipationFilter = 'pending' | 'done'
+type ParticipationFilter = 'pending' | 'done' | null
 
 const mineStatusFilters: { id: SurveyStatusFilter; label: string }[] = [
   { id: 'draft', label: 'Черновик' },
@@ -39,6 +41,8 @@ interface SidebarProps {
   onSearch: (query: string) => void
   onOpenDev?: () => void
   onOpenDetails?: () => void
+  onDuplicate?: (id: number) => void
+  onDelete?: (id: number) => void
   collapsed: boolean
   onToggleCollapsed: () => void
 }
@@ -52,9 +56,9 @@ const statusConfig = {
   },
   draft: {
     label: 'Черновик',
-    dotClass: 'bg-gray-400',
-    bgClass: 'bg-gray-100',
-    textClass: 'text-gray-600',
+    dotClass: 'bg-gray-400 dark:bg-[#3a4250]',
+    bgClass: 'bg-gray-100 dark:bg-[#303a48]',
+    textClass: 'text-gray-600 dark:text-gray-400',
   },
   closed: {
     label: 'Завершен',
@@ -78,18 +82,28 @@ function SurveyCard({
   survey,
   isSelected,
   onSelect,
+  onDuplicate,
+  onDelete,
   showProgress = false,
   highlightPending = false,
+  completedAll = false,
 }: {
   survey: Survey
   isSelected: boolean
   onSelect: () => void
+  onDuplicate?: () => void
+  onDelete?: () => void
   showProgress?: boolean
   highlightPending?: boolean
+  completedAll?: boolean
 }) {
-  const cfg = statusConfig[survey.status]
+  const cfg = completedAll && survey.status === 'active'
+    ? { label: 'Активен', dotClass: 'bg-amber-400', bgClass: 'bg-amber-50', textClass: 'text-amber-700' }
+    : statusConfig[survey.status]
   const assigned = survey.myAssignedCount ?? 0
   const completed = survey.myCompletedCount ?? 0
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
 
   return (
     <div
@@ -102,12 +116,12 @@ function SurveyCard({
           onSelect()
         }
       }}
-      className={`sidebar-card p-3 rounded-xl cursor-pointer border ${
+      className={`sidebar-card relative p-3 rounded-xl cursor-pointer border ${
         isSelected
-          ? 'bg-white border-l-4 border-l-[#FF8600] border-gray-200 shadow-sm'
+          ? 'bg-white dark:bg-[#1e222e] border-l-4 border-l-[#FF8600] border-gray-200 dark:border-[#3a4250] shadow-sm'
           : highlightPending
-            ? 'bg-white border-l-4 border-l-amber-400 border-gray-200 hover:bg-gray-50 hover:border-gray-300'
-            : 'bg-white border-gray-200 hover:bg-gray-50 hover:border-gray-300'
+            ? 'bg-white dark:bg-[#1e222e] border-l-4 border-l-amber-400 border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] hover:border-gray-300 dark:hover:border-[#3a4250]'
+            : 'bg-white dark:bg-[#1e222e] border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] hover:border-gray-300 dark:hover:border-[#3a4250]'
       }`}
     >
       <div className="flex items-center justify-between mb-1">
@@ -117,22 +131,88 @@ function SurveyCard({
           <span className={`w-1.5 h-1.5 rounded-full ${cfg.dotClass}`} />
           {cfg.label}
         </span>
-        <span className="text-xs text-gray-400">{survey.date}</span>
+          <span className="text-xs text-gray-400 dark:text-gray-400">{survey.date}</span>
       </div>
-      <h4
-        className={`font-medium text-sm truncate ${
-          isSelected ? 'text-gray-900' : 'text-gray-700'
-        }`}
-      >
-        {survey.title}
-      </h4>
-      {showProgress && assigned > 0 ? (
-        <p className="text-xs text-gray-500 truncate mt-0.5">
-          {completed} из {assigned} оценок
-        </p>
-      ) : (
-        <p className="text-xs text-gray-500 truncate mt-0.5">{survey.description}</p>
-      )}
+      <div className="flex items-end justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h4
+            className={`font-medium text-sm truncate ${
+              isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            {survey.title}
+          </h4>
+          {showProgress && assigned > 0 ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+              {completed} из {assigned} оценок
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{survey.description}</p>
+          )}
+        </div>
+        {(onDuplicate || onDelete) && (
+          <div className="shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (menuOpen) {
+                  setMenuOpen(false)
+                } else {
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                  setMenuPos({ top: rect.bottom + 4, left: rect.right - 140 })
+                  setMenuOpen(true)
+                }
+              }}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition cursor-pointer"
+              aria-label="Ещё"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
+                <circle cx="8" cy="3" r="1.5" />
+                <circle cx="8" cy="8" r="1.5" />
+                <circle cx="8" cy="13" r="1.5" />
+              </svg>
+            </button>
+          </div>
+        )}
+        {menuOpen && createPortal(
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+            <div
+              className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[140px]"
+              style={{ top: menuPos.top, left: menuPos.left }}
+            >
+              {onDuplicate && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                    onDuplicate()
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                >
+                  Дублировать
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                    onDelete()
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+                >
+                  Удалить
+                </button>
+              )}
+            </div>
+          </>,
+          document.body,
+        )}
+      </div>
     </div>
   )
 }
@@ -142,13 +222,17 @@ function SurveyMiniCard({
   isSelected,
   onSelect,
   showProgress = false,
+  completedAll = false,
 }: {
   survey: Survey
   isSelected: boolean
   onSelect: () => void
   showProgress?: boolean
+  completedAll?: boolean
 }) {
-  const cfg = statusConfig[survey.status]
+  const cfg = completedAll && survey.status === 'active'
+    ? { label: 'Активен', dotClass: 'bg-amber-400', bgClass: 'bg-amber-50', textClass: 'text-amber-700' }
+    : statusConfig[survey.status]
   const initial = getSurveyInitial(survey.title)
   const assigned = survey.myAssignedCount ?? 0
   const completed = survey.myCompletedCount ?? 0
@@ -164,8 +248,8 @@ function SurveyMiniCard({
       aria-current={isSelected ? 'true' : undefined}
       className={`sidebar-card relative w-full aspect-square rounded-xl flex items-center justify-center cursor-pointer ${
         isSelected
-          ? 'bg-white border-2 border-[#FF8600] text-orange-700 shadow-sm'
-          : 'hover:bg-gray-50 border border-gray-200 text-gray-600'
+          ? 'bg-white dark:bg-[#1e222e] border-2 border-[#FF8600] text-orange-700 dark:text-orange-400 shadow-sm'
+          : 'hover:bg-gray-50 dark:hover:bg-[#262d3a] border border-gray-200 dark:border-[#3a4250] text-gray-600 dark:text-gray-300'
       }`}
     >
       <span
@@ -194,7 +278,7 @@ function FilterButton({
       className={`soft-press flex-1 py-1.5 text-xs font-medium rounded-lg cursor-pointer ${
         active
           ? 'bg-[#FF8600] text-white shadow-sm'
-          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          : 'bg-gray-100 dark:bg-[#303a48] text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-[#454f60]'
       }`}
     >
       {children}
@@ -215,13 +299,15 @@ export function Sidebar({
   onSearch,
   onOpenDev,
   onOpenDetails,
+  onDuplicate,
+  onDelete,
   collapsed,
   onToggleCollapsed,
 }: SidebarProps) {
   const [query, setQuery] = useState('')
   const [internalScope, setInternalScope] = useState<SurveyScope>('mine')
-  const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>('active')
-  const [participationFilter, setParticipationFilter] = useState<ParticipationFilter>('pending')
+  const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>(null)
+  const [participationFilter, setParticipationFilter] = useState<ParticipationFilter>(null)
   const initialDefaultApplied = useRef(false)
 
   const hasUserScope = currentUserId != null
@@ -247,11 +333,12 @@ export function Sidebar({
 
   const filteredSurveys = useMemo(() => {
     if (!hasUserScope) {
-      return scopedSurveys.filter((s) => s.status === statusFilter)
+      return statusFilter === null ? scopedSurveys : scopedSurveys.filter((s) => s.status === statusFilter)
     }
     if (scope === 'mine') {
-      return scopedSurveys.filter((s) => s.status === statusFilter)
+      return statusFilter === null ? scopedSurveys : scopedSurveys.filter((s) => s.status === statusFilter)
     }
+    if (participationFilter === null) return scopedSurveys
     return scopedSurveys.filter((s) =>
       participationFilter === 'pending' ? isParticipationPending(s) : isParticipationDone(s),
     )
@@ -259,35 +346,18 @@ export function Sidebar({
 
   useEffect(() => {
     if (!hasUserScope || loading || initialDefaultApplied.current) return
-    if (surveys.length === 0) {
-      initialDefaultApplied.current = true
-      return
-    }
-
     const pending = surveys.filter((s) => isParticipationSurvey(s) && isParticipationPending(s))
 
     if (pending.length > 0) {
       setScope('participation')
-      setParticipationFilter('pending')
     } else {
       setScope('mine')
-      setStatusFilter('active')
     }
+    setStatusFilter(null)
+    setParticipationFilter(null)
 
     initialDefaultApplied.current = true
   }, [loading, surveys, currentUserId, hasUserScope])
-
-  useEffect(() => {
-    if (!hasUserScope || activeSurveyId === null) return
-    const selected = surveys.find((s) => s.id === activeSurveyId)
-    if (!selected) return
-
-    if (scope === 'participation' && isParticipationSurvey(selected)) {
-      setParticipationFilter(isParticipationDone(selected) ? 'done' : 'pending')
-    } else if (scope === 'mine' && isMySurvey(selected, currentUserId!)) {
-      setStatusFilter(selected.status)
-    }
-  }, [activeSurveyId, surveys, currentUserId, hasUserScope, scope])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -307,16 +377,16 @@ export function Sidebar({
   const showProgress = hasUserScope && scope === 'participation'
 
   return (
-    <aside className={`flex flex-col flex-shrink-0 h-screen bg-white transition-[width] duration-300 ease-out ${collapsed ? 'w-20' : 'w-80'}`}>
+    <aside className={`flex flex-col flex-shrink-0 h-screen bg-white dark:bg-[#1e222e] transition-[width] duration-300 ease-out ${collapsed ? 'w-20' : 'w-80'}`}>
       <div
-        className={`flex bg-white border-b border-gray-100 ${
+        className={`flex bg-white dark:bg-[#1e222e] border-b border-gray-100 dark:border-[#303a48] ${
           collapsed ? 'flex-col items-center gap-2 p-3' : 'items-center justify-between gap-3 p-4'
         }`}
       >
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="shrink-0 rounded-xl border border-gray-200 bg-gray-100 text-gray-700 transition p-2 cursor-pointer hover:bg-gray-200"
+          className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-gray-100 dark:bg-[#303a48] text-gray-700 dark:text-gray-200 transition p-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-[#454f60]"
           aria-label={collapsed ? 'Показать боковую панель' : 'Скрыть боковую панель'}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -336,10 +406,10 @@ export function Sidebar({
                 alt=""
                 className="w-12 h-12 object-contain shrink-0"
               />
-              <div className="text-base font-semibold text-gray-900 truncate">Опросы 360</div>
             </div>
 
             <div className="flex items-center gap-1 ml-auto">
+              <ThemeToggle />
               <UserBar compact />
               {onOpenDetails && (
                 <button
@@ -347,7 +417,7 @@ export function Sidebar({
                   onClick={onOpenDetails}
                   title="Детали опроса"
                   aria-label="Детали опроса"
-                  className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+                  className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:bg-gray-50 dark:hover:bg-[#262d3a] text-gray-600 dark:text-gray-300 transition p-1.5 cursor-pointer"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -360,7 +430,7 @@ export function Sidebar({
                   onClick={onOpenDev}
                   title="База данных"
                   aria-label="База данных"
-                  className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-1.5 cursor-pointer"
+                  className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:bg-gray-50 dark:hover:bg-[#262d3a] text-gray-600 dark:text-gray-300 transition p-1.5 cursor-pointer"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -372,13 +442,14 @@ export function Sidebar({
         ) : (
           <>
             <UserBar stacked />
+            <ThemeToggle />
             {onOpenDev && (
               <button
                 type="button"
                 onClick={onOpenDev}
                 title="База данных"
                 aria-label="База данных"
-                className="shrink-0 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-600 transition p-2 cursor-pointer"
+                  className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:bg-gray-50 dark:hover:bg-[#262d3a] text-gray-600 dark:text-gray-300 transition p-2 cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -390,17 +461,17 @@ export function Sidebar({
       </div>
 
       {!collapsed && (
-        <div className="p-4 border-b border-gray-100 space-y-3">
+          <div className="p-4 border-b border-gray-100 dark:border-[#303a48] space-y-3">
           {hasUserScope && (
-            <div className="flex gap-1 p-0.5 bg-gray-100 rounded-lg">
+              <div className="flex gap-1 p-0.5 bg-gray-100 dark:bg-[#303a48] rounded-lg">
               <button
                 type="button"
                 onClick={() => setScope('mine')}
                 aria-pressed={scope === 'mine'}
                 className={`flex-1 py-2 text-xs font-semibold rounded-md transition cursor-pointer ${
                   scope === 'mine'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-[#1e222e] text-gray-900 dark:text-gray-100 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
               >
                 Мои опросы
@@ -411,8 +482,8 @@ export function Sidebar({
                 aria-pressed={scope === 'participation'}
                 className={`flex-1 py-2 text-xs font-semibold rounded-md transition cursor-pointer ${
                   scope === 'participation'
-                    ? 'bg-white text-gray-900 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                    ? 'bg-white dark:bg-[#1e222e] text-gray-900 dark:text-gray-100 shadow-sm'
+                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100'
                 }`}
               >
                 Участие
@@ -439,9 +510,9 @@ export function Sidebar({
                 }
                 onClick={() => {
                   if (hasUserScope && scope === 'participation') {
-                    setParticipationFilter(id as ParticipationFilter)
+                    setParticipationFilter(participationFilter === id ? null : (id as ParticipationFilter))
                   } else {
-                    setStatusFilter(id as SurveyStatusFilter)
+                    setStatusFilter(statusFilter === id ? null : (id as SurveyStatusFilter))
                   }
                 }}
               >
@@ -454,7 +525,7 @@ export function Sidebar({
             <input
               type="text"
               placeholder="Поиск опроса..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-lg pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:border-blue-500"
+              className="w-full bg-gray-50 dark:bg-[#161a22] border border-gray-200 dark:border-[#3a4250] rounded-lg pl-9 pr-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] dark:text-gray-200"
               value={query}
               onChange={(e) => {
                 setQuery(e.target.value)
@@ -462,7 +533,7 @@ export function Sidebar({
               }}
             />
             <svg
-              className="w-4 h-4 text-gray-400 absolute left-3 top-2.5"
+              className="w-4 h-4 text-gray-400 dark:text-gray-400 absolute left-3 top-2.5"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -488,42 +559,56 @@ export function Sidebar({
           className="space-y-1 view-fade"
         >
           {loading ? (
-            <p className={`py-2 text-sm text-gray-400 ${collapsed ? 'text-center' : 'px-3'}`}>
+            <p className={`py-2 text-sm text-gray-400 dark:text-gray-500 ${collapsed ? 'text-center' : 'px-3'}`}>
               {collapsed ? '…' : 'Загрузка…'}
             </p>
           ) : filteredSurveys.length === 0 ? (
-            !collapsed && <p className="px-3 py-2 text-sm text-gray-400">{emptyMessage}</p>
+            !collapsed &&             <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-400">{emptyMessage}</p>
           ) : collapsed ? (
-            filteredSurveys.map((survey) => (
+            filteredSurveys.map((survey) => {
+              const allDone = showProgress && survey.status === 'active'
+                && (survey.myCompletedCount ?? 0) >= (survey.myAssignedCount ?? 0)
+                && (survey.myAssignedCount ?? 0) > 0
+              return (
               <SurveyMiniCard
                 key={survey.id}
                 survey={survey}
                 isSelected={survey.id === activeSurveyId}
                 onSelect={() => onSurveySelect(survey.id, scope)}
                 showProgress={showProgress}
+                completedAll={allDone}
               />
-            ))
+              )
+            })
           ) : (
-            filteredSurveys.map((survey) => (
+            filteredSurveys.map((survey) => {
+              const allDone = showProgress && survey.status === 'active'
+                && (survey.myCompletedCount ?? 0) >= (survey.myAssignedCount ?? 0)
+                && (survey.myAssignedCount ?? 0) > 0
+              return (
               <SurveyCard
                 key={survey.id}
                 survey={survey}
                 isSelected={survey.id === activeSurveyId}
                 onSelect={() => onSurveySelect(survey.id, scope)}
+                onDuplicate={onDuplicate && scope === 'mine' ? () => onDuplicate(survey.id) : undefined}
+                onDelete={onDelete && scope === 'mine' ? () => onDelete(survey.id) : undefined}
                 showProgress={showProgress}
+                completedAll={allDone}
                 highlightPending={
                   showProgress &&
                   participationFilter === 'pending' &&
                   isParticipationPending(survey)
                 }
               />
-            ))
+              )
+            })
           )}
         </div>
       </div>
 
       {showCreateButton && !collapsed && (
-        <div className="p-4 border-t border-gray-100">
+          <div className="p-4 border-t border-gray-100 dark:border-[#303a48]">
           <button
             onClick={onCreateClick}
             disabled={creating}
@@ -538,7 +623,7 @@ export function Sidebar({
       )}
 
       {showCreateButton && collapsed && (
-        <div className="p-3 border-t border-gray-100">
+          <div className="p-3 border-t border-gray-100 dark:border-[#303a48]">
           <button
             onClick={onCreateClick}
             disabled={creating}

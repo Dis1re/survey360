@@ -40,12 +40,12 @@ export function DevRoutePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 p-6 gap-4">
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 dark:bg-[#161a22] p-6 gap-4">
         <p className="text-sm text-red-500 text-center max-w-md">{error}</p>
         <button
           type="button"
           onClick={closeDevPage}
-          className="text-sm text-gray-600 hover:text-gray-900 cursor-pointer"
+          className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 cursor-pointer"
         >
           Назад
         </button>
@@ -55,14 +55,14 @@ export function DevRoutePage() {
 
   if (loading || !ready || !user?.isAdmin) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p className="text-sm text-gray-500">Подключение к базе данных…</p>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-[#161a22]">
+        <p className="text-sm text-gray-500 dark:text-gray-300">Подключение к базе данных…</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#161a22]">
       <EntitiesPage onBack={closeDevPage} onOpenSurvey={() => closeDevPage()} />
     </div>
   )

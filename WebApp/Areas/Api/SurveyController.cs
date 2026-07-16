@@ -502,6 +502,83 @@ public class SurveyController(
     }
 
     [Authorize]
+    [HttpPost("{id:int}/duplicate")]
+    public async Task<ActionResult<int>> Duplicate(int id, CancellationToken ct)
+    {
+        var source = await context.Surveys.FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(source);
+        if (accessError is not null)
+            return accessError;
+
+        var userId = User.GetUserId();
+
+        var newSurvey = new Survey
+        {
+            Name = source!.Name + " (копия)",
+            Description = source.Description,
+            Status = "Черновик",
+            CreatedAt = DateTime.UtcNow,
+            StartedAt = default,
+            ClosedAt = default,
+            CreatedByUserId = userId,
+        };
+        await context.Surveys.AddAsync(newSurvey, ct);
+        await context.SaveChangesAsync(ct);
+
+        var questions = await context.Questions
+            .Where(q => q.SurveyId == id)
+            .OrderBy(q => q.Order)
+            .ToListAsync(ct);
+
+        foreach (var q in questions)
+        {
+            context.Questions.Add(new Question
+            {
+                SurveyId = newSurvey.Id,
+                Text = q.Text,
+                Type = q.Type,
+                IsRequired = q.IsRequired,
+                Props = q.Props,
+                Order = q.Order,
+            });
+        }
+
+        var participants = await context.SurveyParticipants
+            .Where(p => p.SurveyId == id)
+            .ToListAsync(ct);
+
+        foreach (var p in participants)
+        {
+            context.SurveyParticipants.Add(new SurveyParticipant
+            {
+                SurveyId = newSurvey.Id,
+                UserId = p.UserId,
+                IsTarget = p.IsTarget,
+                IsRespondent = p.IsRespondent,
+            });
+        }
+
+        var assignments = await context.SurveyAssignments
+            .Where(a => a.SurveyId == id)
+            .ToListAsync(ct);
+
+        foreach (var a in assignments)
+        {
+            context.SurveyAssignments.Add(new SurveyAssignment
+            {
+                SurveyId = newSurvey.Id,
+                ReviewerId = a.ReviewerId,
+                TargetId = a.TargetId,
+                IsAssigned = a.IsAssigned,
+                IsCompleted = false,
+            });
+        }
+
+        await context.SaveChangesAsync(ct);
+        return newSurvey.Id;
+    }
+
+    [Authorize]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(int id, CancellationToken ct)
     {

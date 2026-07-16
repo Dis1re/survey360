@@ -60,7 +60,7 @@ export function clearAdminResponseViewParams(): void {
   window.history.replaceState(null, '', url)
 }
 
-export type MainPageTab = 'editor' | 'matrix'
+export type MainPageTab = 'editor' | 'matrix' | 'analytics'
 
 const mainPageTabStorageKey = (surveyId: number) => `survey360.mainTab.${surveyId}`
 
@@ -68,7 +68,7 @@ export function readStoredMainPageTab(surveyId: number | null): MainPageTab | nu
   if (surveyId === null) return null
   try {
     const raw = sessionStorage.getItem(mainPageTabStorageKey(surveyId))
-    return raw === 'matrix' || raw === 'editor' ? raw : null
+    return raw === 'matrix' || raw === 'editor' || raw === 'analytics' ? raw : null
   } catch {
     return null
   }
@@ -85,7 +85,7 @@ export function storeMainPageTab(surveyId: number, tab: MainPageTab): void {
 export function resolveInitialMainPageTab(surveyId: number | null): MainPageTab {
   const params = new URLSearchParams(window.location.search)
   const urlTab = params.get('tab')
-  if (urlTab === 'matrix' || urlTab === 'editor') return urlTab
+  if (urlTab === 'matrix' || urlTab === 'editor' || urlTab === 'analytics') return urlTab
 
   const stored = readStoredMainPageTab(surveyId)
   if (stored) return stored

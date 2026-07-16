@@ -12,7 +12,7 @@ const typeLabels: Record<string, string> = {
 }
 
 const inputClass =
-  'w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]'
+  'w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]'
 
 function parseRadioOptions(props: string | null): string[] {
   if (!props) return []
@@ -88,7 +88,7 @@ function SaveTemplate({
           </button>
         }
       >
-        <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+        <p className="text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/40 rounded-xl px-4 py-3">
           Шаблон «{name}» сохранён и доступен в списке шаблонов.
         </p>
       </Modal>
@@ -109,7 +109,7 @@ function SaveTemplate({
             type="button"
             onClick={onClose}
             disabled={saving}
-            className="soft-press flex-1 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl cursor-pointer"
+            className="soft-press flex-1 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] disabled:opacity-50 rounded-xl cursor-pointer"
           >
             Отмена
           </button>
@@ -126,12 +126,12 @@ function SaveTemplate({
     >
       <form id="save-template-form" onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+          <p className="text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 rounded-xl px-4 py-3">
             {error}
           </p>
         )}
         <div>
-          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+          <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
             Название шаблона
           </label>
           <input
@@ -144,7 +144,7 @@ function SaveTemplate({
           />
         </div>
         <div>
-          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+          <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
             Описание
           </label>
           <input
@@ -268,7 +268,7 @@ function LoadTemplate({
           </button>
         }
       >
-        <p className="text-sm text-green-700 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+        <p className="text-sm text-green-700 dark:text-green-400 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/40 rounded-xl px-4 py-3">
           Вопросы из шаблона «{selectedTemplate?.name}»{' '}
           {applyMode === 'replace' ? 'заменили существующие вопросы' : 'добавлены в опрос'}.
         </p>
@@ -291,7 +291,7 @@ function LoadTemplate({
               type="button"
               onClick={onClose}
               disabled={applying}
-              className="soft-press px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl cursor-pointer"
+              className="soft-press px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] disabled:opacity-50 rounded-xl cursor-pointer"
             >
               Отмена
             </button>
@@ -317,15 +317,15 @@ function LoadTemplate({
       >
         <div className="space-y-4">
           {error && (
-            <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            <p className="text-sm text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/40 rounded-xl px-4 py-3">
               {error}
             </p>
           )}
 
           {loading ? (
-            <p className="text-sm text-gray-400 py-4 text-center">Загрузка шаблонов…</p>
+            <p className="text-sm text-gray-400 dark:text-gray-400 py-4 text-center">Загрузка шаблонов…</p>
           ) : templates.length === 0 ? (
-            <p className="text-sm text-gray-400 py-4 text-center">Нет сохранённых шаблонов</p>
+            <p className="text-sm text-gray-400 dark:text-gray-400 py-4 text-center">Нет сохранённых шаблонов</p>
           ) : (
             <div className="space-y-2 max-h-60 overflow-y-auto">
               {templates.map((t) => (
@@ -333,8 +333,8 @@ function LoadTemplate({
                   key={t.id}
                   className={`relative group p-4 rounded-xl border transition ${
                     selectedId === t.id
-                      ? 'bg-orange-50 border-orange-300'
-                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                      ? 'bg-orange-50 dark:bg-[#FF8600]/12 border-orange-300 dark:border-[#FF8600]/45'
+                      : 'bg-white dark:bg-[#1e222e] border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a]'
                   }`}
                 >
                   <button
@@ -343,7 +343,7 @@ function LoadTemplate({
                       e.stopPropagation()
                       setDeletingId(t.id)
                     }}
-                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 transition cursor-pointer p-1.5"
+                    className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-400 hover:text-red-500 transition cursor-pointer p-1.5"
                     title="Удалить шаблон"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -357,7 +357,7 @@ function LoadTemplate({
                         e.stopPropagation()
                         onEditTemplate(t.id)
                       }}
-                      className="absolute top-3 right-10 opacity-0 group-hover:opacity-100 text-gray-400 hover:text-gray-600 transition cursor-pointer p-1.5"
+                      className="absolute top-3 right-10 opacity-0 group-hover:opacity-100 text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition cursor-pointer p-1.5"
                       title="Редактировать шаблон"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -370,9 +370,9 @@ function LoadTemplate({
                     onClick={() => handleSelect(t.id)}
                     className="w-full text-left cursor-pointer pr-10"
                   >
-                    <div className="font-medium text-sm text-gray-900">{t.name}</div>
+                    <div className="font-medium text-sm text-gray-900 dark:text-gray-100">{t.name}</div>
                     {t.description && (
-                      <div className="text-xs text-gray-500 mt-0.5">{t.description}</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-300 mt-0.5">{t.description}</div>
                     )}
                   </button>
                 </div>
@@ -381,25 +381,25 @@ function LoadTemplate({
           )}
 
           {selectedId !== null && (
-            <div className="border-t border-gray-100 pt-3">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <div className="border-t border-gray-100 dark:border-[#3a4250] pt-3">
+              <p className="text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
                 Вопросы шаблона
               </p>
               {loadingPreview ? (
-                <p className="text-sm text-gray-400">Загрузка…</p>
+                <p className="text-sm text-gray-400 dark:text-gray-400">Загрузка…</p>
               ) : preview && preview.length > 0 ? (
                 <ul className="space-y-3">
                   {preview.map((q, i) => (
-                    <li key={q.id} className="text-sm text-gray-700">
+                    <li key={q.id} className="text-sm text-gray-700 dark:text-gray-200">
                       <div className="flex items-start gap-2">
-                        <span className="text-xs text-gray-400 mt-0.5 shrink-0">{i + 1}.</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-400 mt-0.5 shrink-0">{i + 1}.</span>
                         <div className="min-w-0">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="font-medium">{q.text}</span>
                             {q.isRequired && (
                               <span className="text-red-500" title="Обязательный вопрос">*</span>
                             )}
-                            <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded shrink-0">
+                            <span className="text-xs text-gray-400 dark:text-gray-400 bg-gray-100 dark:bg-[#303a48] px-2 py-0.5 rounded shrink-0">
                               {typeLabels[q.type] ?? q.type}
                             </span>
                           </div>
@@ -408,8 +408,8 @@ function LoadTemplate({
                             return options.length > 0 && (
                               <ul className="mt-1.5 ml-1 space-y-1">
                                 {options.map((opt, j) => (
-                                  <li key={j} className="text-xs text-gray-500 flex items-center gap-1.5">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
+                                  <li key={j} className="text-xs text-gray-500 dark:text-gray-300 flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-[#3a4250] shrink-0" />
                                     {opt}
                                   </li>
                                 ))}
@@ -422,7 +422,7 @@ function LoadTemplate({
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-gray-400">Нет вопросов</p>
+                <p className="text-sm text-gray-400 dark:text-gray-400">Нет вопросов</p>
               )}
             </div>
           )}
@@ -438,7 +438,7 @@ function LoadTemplate({
           onCancel={() => setDeletingId(null)}
           message={
             <>
-              Шаблон <span className="font-semibold text-gray-900">«{deletingTemplate?.name}»</span> будет удалён безвозвратно.
+              Шаблон <span className="font-semibold text-gray-900 dark:text-gray-100">«{deletingTemplate?.name}»</span> будет удалён безвозвратно.
             </>
           }
         />

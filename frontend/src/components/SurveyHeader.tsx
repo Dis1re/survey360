@@ -42,7 +42,7 @@ const inputClass =
   'w-full bg-white/20 backdrop-blur-sm border border-white/40 rounded-lg px-3 py-1.5 text-sm text-white placeholder:text-white/60 focus:outline-none focus:border-white/70 focus:bg-white/25'
 
 const modalDateClass =
-  'w-full border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 focus:outline-none focus:border-[#FF8600]'
+  'w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-3 py-2 text-sm text-gray-800 dark:text-gray-200 focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]'
 
 function todayInputDate() {
   const now = new Date()
@@ -513,7 +513,7 @@ export function SurveyHeader({
         >
           <div className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
                 Ссылка на опрос
               </label>
               <div className="flex items-center gap-2">
@@ -521,7 +521,7 @@ export function SurveyHeader({
                   type="text"
                   readOnly
                   value={publicLink}
-                  className="flex-1 min-w-0 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-800 bg-gray-50 truncate"
+                  className="flex-1 min-w-0 border border-gray-200 dark:border-[#3a4250] rounded-xl px-3 py-2 text-sm text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-[#161a22] truncate"
                 />
                 <button
                   type="button"
@@ -534,7 +534,7 @@ export function SurveyHeader({
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+              <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
                 Дата начала
               </label>
               <input
@@ -548,7 +548,7 @@ export function SurveyHeader({
               {showEndDate ? (
                 <div className="mt-3">
                   <div className="flex items-baseline justify-between gap-2 mb-2">
-                    <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                    <label className="text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">
                       Дата окончания
                     </label>
                     <button
@@ -558,7 +558,7 @@ export function SurveyHeader({
                         setStartDates((prev) => ({ ...prev, endDate: '' }))
                       }}
                       disabled={starting}
-                      className="text-[11px] text-gray-400 hover:text-gray-600 transition cursor-pointer disabled:opacity-50"
+                      className="text-[11px] text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition cursor-pointer disabled:opacity-50"
                     >
                       Убрать
                     </button>
@@ -597,10 +597,10 @@ export function SurveyHeader({
         >
           <form onSubmit={handleCreateUser} className="space-y-4">
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Имя</label>
+              <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">Имя</label>
               <input
                 type="text"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
+                  className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]"
                 value={userName}
                 onChange={(e) => setUserName(e.target.value)}
                 placeholder="Иван Иванов"
@@ -609,10 +609,10 @@ export function SurveyHeader({
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Email</label>
+              <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">Email</label>
               <input
                 type="email"
-                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
+                  className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]"
                 value={userEmail}
                 onChange={(e) => setUserEmail(e.target.value)}
                 placeholder="ivan@example.com"
@@ -641,7 +641,7 @@ export function SurveyHeader({
           onCancel={() => !deleting && setConfirmDialog(null)}
           message={
             <>
-              Опрос <span className="font-semibold text-gray-900">«{surveyTitle}»</span> будет удалён безвозвратно вместе со всеми данными.
+              Опрос <span className="font-semibold text-gray-900 dark:text-gray-100">«{surveyTitle}»</span> будет удалён безвозвратно вместе со всеми данными.
             </>
           }
         />
@@ -658,7 +658,7 @@ export function SurveyHeader({
           onCancel={() => !stopping && setConfirmDialog(null)}
           message={
             <>
-              Опрос <span className="font-semibold text-gray-900">«{surveyTitle}»</span> будет закрыт. Респонденты больше не смогут его заполнять.
+              Опрос <span className="font-semibold text-gray-900 dark:text-gray-100">«{surveyTitle}»</span> будет закрыт. Респонденты больше не смогут его заполнять.
             </>
           }
         />
