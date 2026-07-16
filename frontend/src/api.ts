@@ -125,6 +125,9 @@ export const surveyApi = {
   delete: (id: number) =>
     sendRequest<void>(`${API}/survey/${id}`, { method: 'DELETE' }),
 
+  duplicate: (id: number) =>
+    sendRequest<number>(`${API}/survey/${id}/duplicate`, { method: 'POST' }),
+
   reorderQuestions: (id: number, orderedIds: number[]) =>
     sendRequest<void>(`${API}/survey/${id}/questions/order`, {
       method: 'PUT',
