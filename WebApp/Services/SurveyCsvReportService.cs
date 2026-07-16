@@ -84,7 +84,9 @@ public class SurveyCsvReportService(ApplicationDbContext context)
                         a => a.QuestionId == question.Id &&
                              a.UserId == reviewerId &&
                              a.TargetId == targetId);
-                    var answerText = answer?.Text ?? "";
+                    var answerText = answer is null
+                        ? ""
+                        : SurveyAnswerFormatter.FormatPlain(question, answer.Text);
 
                     lines.Add($"{Escape(targetName)};{Escape(reviewerName)};{Escape(question.Text)};{Escape(answerText)}");
                 }

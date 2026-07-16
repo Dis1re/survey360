@@ -711,7 +711,30 @@ public class SurveyController(
         }
 
         const string contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        return File(result.Value.Stream, contentType, result.Value.FileName);
+        return File(result.Value.Bytes, contentType, result.Value.FileName);
+    }
+
+    [Authorize]
+    [HttpGet("{id:int}/report-by-question.docx")]
+    public async Task<IActionResult> DownloadReportByQuestion(int id, CancellationToken ct)
+    {
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
+
+        var result = await reportService.BuildReportByQuestionAsync(id, ct);
+        if (result is null)
+        {
+            var exists = await context.Surveys.AnyAsync(s => s.Id == id, ct);
+            if (!exists)
+                return NotFound();
+
+            return BadRequest("Нет ответов для формирования отчёта");
+        }
+
+        const string contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        return File(result.Value.Bytes, contentType, result.Value.FileName);
     }
 
     [HttpGet("{id:int}/report.csv")]
