@@ -83,9 +83,9 @@ export function UserApp() {
           type="button"
           onClick={() => setMobileNavOpen(true)}
           aria-label="Открыть меню"
-          className="fixed top-3 left-3 z-50 rounded-xl bg-white text-[#FF8600] border border-[#FF8600]/20 shadow-lg ring-1 ring-black/5 p-2 cursor-pointer transition hover:bg-orange-50"
+          className="fixed top-3 left-3 z-50 rounded-xl border border-[#FF8600]/40 bg-[#FF8600]/10 text-[#FF8600] p-2 cursor-pointer transition hover:bg-[#FF8600]/20"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
