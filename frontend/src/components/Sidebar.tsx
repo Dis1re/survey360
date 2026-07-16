@@ -87,6 +87,7 @@ function SurveyCard({
   showProgress = false,
   highlightPending = false,
   completedAll = false,
+  participationView = false,
 }: {
   survey: Survey
   isSelected: boolean
@@ -96,9 +97,12 @@ function SurveyCard({
   showProgress?: boolean
   highlightPending?: boolean
   completedAll?: boolean
+  participationView?: boolean
 }) {
-  const cfg = completedAll && survey.status === 'active'
-    ? { label: 'Активен', dotClass: 'bg-amber-400', bgClass: 'bg-amber-50', textClass: 'text-amber-700' }
+  const cfg = participationView && survey.status === 'active'
+    ? completedAll
+      ? { label: 'Пройден', dotClass: 'bg-green-500', bgClass: 'bg-green-50', textClass: 'text-green-700' }
+      : { label: 'Пройти', dotClass: 'bg-amber-400', bgClass: 'bg-amber-50', textClass: 'text-amber-700' }
     : statusConfig[survey.status]
   const assigned = survey.myAssignedCount ?? 0
   const completed = survey.myCompletedCount ?? 0
@@ -223,15 +227,19 @@ function SurveyMiniCard({
   onSelect,
   showProgress = false,
   completedAll = false,
+  participationView = false,
 }: {
   survey: Survey
   isSelected: boolean
   onSelect: () => void
   showProgress?: boolean
   completedAll?: boolean
+  participationView?: boolean
 }) {
-  const cfg = completedAll && survey.status === 'active'
-    ? { label: 'Активен', dotClass: 'bg-amber-400', bgClass: 'bg-amber-50', textClass: 'text-amber-700' }
+  const cfg = participationView && survey.status === 'active'
+    ? completedAll
+      ? { label: 'Пройден', dotClass: 'bg-green-500', bgClass: 'bg-green-50', textClass: 'text-green-700' }
+      : { label: 'Пройти', dotClass: 'bg-amber-400', bgClass: 'bg-amber-50', textClass: 'text-amber-700' }
     : statusConfig[survey.status]
   const initial = getSurveyInitial(survey.title)
   const assigned = survey.myAssignedCount ?? 0
@@ -577,6 +585,7 @@ export function Sidebar({
                 onSelect={() => onSurveySelect(survey.id, scope)}
                 showProgress={showProgress}
                 completedAll={allDone}
+                participationView={hasUserScope && scope === 'participation'}
               />
               )
             })
@@ -595,6 +604,7 @@ export function Sidebar({
                 onDelete={onDelete && scope === 'mine' ? () => onDelete(survey.id) : undefined}
                 showProgress={showProgress}
                 completedAll={allDone}
+                participationView={hasUserScope && scope === 'participation'}
                 highlightPending={
                   showProgress &&
                   participationFilter === 'pending' &&
