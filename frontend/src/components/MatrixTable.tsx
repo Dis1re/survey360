@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { buildRespondentInviteLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
+import { ConfirmModal } from './ConfirmModal'
 import { Modal } from './Modal'
 
 interface MatrixTableProps {
@@ -96,6 +97,7 @@ export function MatrixTable({
   const [search, setSearch] = useState('')
   const [copiedReviewerId, setCopiedReviewerId] = useState<number | null>(null)
   const [sendingReviewerId, setSendingReviewerId] = useState<number | null>(null)
+  const [confirmSendAll, setConfirmSendAll] = useState(false)
 
   const dirtyRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -110,7 +112,8 @@ export function MatrixTable({
     respondentLinks.map((l) => [l.reviewerId, l]),
   ) as Record<number, RespondentLink>
 
-  const hasInviteEmails = respondentLinks.some((l) => l.reviewerEmail?.trim())
+  const inviteEmailCount = respondentLinks.filter((l) => l.reviewerEmail?.trim()).length
+  const hasInviteEmails = inviteEmailCount > 0
 
   const handleCopyInviteLink = async (reviewerId: number, token: string) => {
     try {
@@ -280,10 +283,10 @@ export function MatrixTable({
   return (
     <>
       <form onSubmit={handleSubmit} className="h-full flex flex-col">
-        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm flex-1 min-h-0 flex flex-col">
-          <div className="p-4 border-b border-gray-100 bg-gray-50/50 flex flex-wrap items-center justify-between gap-3">
+        <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl shadow-sm flex-1 min-h-0 flex flex-col">
+          <div className="p-4 border-b border-gray-100 dark:border-[#303a48] bg-gray-50/50 dark:bg-[#161a22]/50 flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+              <span className="text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">
                 Матрица оценки
               </span>
               {!readOnly && (
@@ -293,8 +296,8 @@ export function MatrixTable({
                   disabled={adding || respondents.length === 0 || targets.length === 0}
                   className={`px-3 py-1.5 text-xs font-medium border rounded-lg transition cursor-pointer disabled:opacity-50 ${
                     allSelectedActive
-                      ? 'bg-orange-100 text-[#FF6B00] border-orange-300'
-                      : 'text-gray-700 bg-white border-gray-200 hover:border-[#FF8600] hover:bg-orange-50'
+                      ? 'bg-orange-100 dark:bg-[#FF8600]/18 text-[#FF6B00] border-orange-300 dark:border-[#FF8600]/45'
+                      : 'text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border-gray-200 dark:border-[#3a4250] hover:border-[#FF8600] hover:bg-orange-50 dark:hover:bg-[#FF8600]/12'
                   }`}
                 >
                   {allSelectedActive ? 'Снять всех' : 'Выбрать всех'}
@@ -304,7 +307,7 @@ export function MatrixTable({
                 <button
                   type="button"
                   onClick={onExpand}
-                  className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 hover:border-[#FF8600] hover:text-[#FF8600] hover:bg-orange-50 rounded-lg transition cursor-pointer"
+                  className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:border-[#FF8600] hover:text-[#FF8600] hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 rounded-lg transition cursor-pointer"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 9V5a1 1 0 011-1h4M20 9V5a1 1 0 00-1-1h-4M4 15v4a1 1 0 001 1h4M20 15v4a1 1 0 01-1 1h-4" />
@@ -316,7 +319,7 @@ export function MatrixTable({
             {surveyActive && onSendInvites && respondentLinks.length > 0 && (
               <button
                 type="button"
-                onClick={() => handleSendInvite()}
+                onClick={() => setConfirmSendAll(true)}
                 disabled={sendingInvites || !hasInviteEmails}
                 className="px-3 py-1.5 text-xs font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-lg transition cursor-pointer"
                 title={!hasInviteEmails ? 'У респондентов нет email' : 'Отправить приглашения всем респондентам'}
@@ -327,19 +330,19 @@ export function MatrixTable({
           </div>
 
           {allUsers.length === 0 ? (
-            <div className="p-8 text-center text-sm text-gray-500">
+            <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-300">
               Сначала добавьте пользователей через кнопку «Добавить пользователя» в шапке опроса
             </div>
           ) : (
             <div className={`overflow-x-auto flex-1 min-h-0 ${expanded ? 'overflow-y-visible' : 'overflow-y-auto'}`}>
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-gray-200 bg-gray-50/50">
-                      <th className="p-4 text-xs font-bold text-gray-400 min-w-[120px] border-r border-b border-gray-200 sticky left-0 top-0 z-30 bg-gray-50 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                  <tr className="border-b border-gray-200 dark:border-[#3a4250] bg-gray-50/50 dark:bg-[#161a22]/50">
+                      <th className="p-4 text-xs font-bold text-gray-400 dark:text-gray-400 min-w-[120px] border-r border-b border-gray-200 dark:border-[#3a4250] sticky left-0 top-0 z-30 bg-gray-50 dark:bg-[#161a22] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                         <span>Респондент \ Объект</span>
                       </th>
                     {targets.map((target) => (
-                      <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 text-center min-w-[120px] sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
+                      <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 dark:text-gray-200 text-center min-w-[120px] sticky top-0 z-10 bg-gray-50 dark:bg-[#161a22] border-b border-r border-gray-200 dark:border-[#3a4250] shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <div className="flex flex-col items-center gap-1">
                           <div className="relative inline-flex">
                             <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
@@ -349,7 +352,7 @@ export function MatrixTable({
                               <button
                                 type="button"
                                 onClick={() => onRemoveParticipant(target.id, 'target')}
-                                className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                                className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white dark:bg-[#1e222e] text-red-500 border border-red-200 dark:border-red-500/40 hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer"
                                 title="Удалить объект"
                               >
                                 ✕
@@ -369,8 +372,8 @@ export function MatrixTable({
                               disabled={respondents.length === 0}
                               className={`mt-1 text-[10px] font-medium border rounded px-2 py-0.5 transition cursor-pointer disabled:opacity-40 disabled:cursor-default whitespace-nowrap ${
                                 colActive
-                                  ? 'bg-orange-100 text-[#FF6B00] border-orange-300'
-                                  : 'text-[#FF8600] hover:text-[#FF6B00] border-orange-200 hover:bg-orange-50'
+                                  ? 'bg-orange-100 dark:bg-[#FF8600]/18 text-[#FF6B00] border-orange-300 dark:border-[#FF8600]/45'
+                                  : 'text-[#FF8600] hover:text-[#FF6B00] border-orange-200 dark:border-[#FF8600]/40 hover:bg-orange-50 dark:hover:bg-[#FF8600]/12'
                               }`}
                               title={colActive ? 'Снять выбор столбца' : 'Выбрать весь столбец'}
                             >
@@ -393,12 +396,12 @@ export function MatrixTable({
                       </th>
                     ))}
                     {!readOnly && (
-                      <th className="p-4 text-center min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 border-b border-r border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
+                      <th className="p-4 text-center min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 dark:bg-[#161a22] border-b border-r border-gray-200 dark:border-[#3a4250] shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('target') }}
                           disabled={adding || allUsers.length === 0}
-                          className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
+                          className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 dark:bg-[#FF8600]/12 border border-orange-200 dark:border-[#FF8600]/40 hover:bg-orange-100 dark:hover:bg-[#FF8600]/18 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
                           title="Добавить объект (столбец сверху)"
                         >
                           + Объект
@@ -407,14 +410,14 @@ export function MatrixTable({
                     )}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100 text-sm">
+                <tbody className="divide-y divide-gray-100 dark:divide-[#303a48] text-sm">
                   {respondents.map((respondent, ri) => {
                     const invite = linkByReviewerId[respondent.id]
                     const inviteLink = invite ? buildRespondentInviteLink(invite.token) : null
 
                     return (
-                      <tr key={respondent.id} className={`transition border-b border-gray-100 hover:brightness-95 ${ri % 3 === 0 ? 'bg-pink-50/50' : ri % 3 === 1 ? 'bg-sky-50/50' : 'bg-amber-50/50'}`}>
-                        <td className="p-4 font-medium text-gray-900 border-r border-gray-200 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                      <tr key={respondent.id} className={`transition border-b border-gray-100 dark:border-[#303a48] hover:brightness-95 ${ri % 2 === 1 ? 'bg-gray-50 dark:bg-[#161a22]' : ''}`}>
+                        <td className="p-4 font-medium text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-[#3a4250] sticky left-0 bg-white dark:bg-[#1e222e] z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                           <div className="flex items-center gap-2">
                             <div className="relative inline-flex">
                               <div className={`w-6 h-6 rounded-full ${respondent.color} flex items-center justify-center text-xs font-bold shrink-0`}>
@@ -424,7 +427,7 @@ export function MatrixTable({
                                 <button
                                   type="button"
                                   onClick={() => onRemoveParticipant(respondent.id, 'respondent')}
-                                  className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white text-red-500 border border-red-200 hover:bg-red-50 transition cursor-pointer"
+                                  className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white dark:bg-[#1e222e] text-red-500 border border-red-200 dark:border-red-500/40 hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer"
                                   title="Удалить респондента"
                                 >
                                   ✕
@@ -433,6 +436,19 @@ export function MatrixTable({
                             </div>
                             <div className="min-w-0">
                               <div>{respondent.name}</div>
+                              {surveyActive && (() => {
+                                const assignedTargets = targets.filter(
+                                  (t) =>
+                                    respondent.id !== t.id &&
+                                    (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
+                                )
+                                if (assignedTargets.length === 0) return null
+                                return (
+                                  <div className="text-[11px] text-gray-500 mt-0.5">
+                                    Объект: {assignedTargets.map((t) => t.name).join(', ')}
+                                  </div>
+                                )
+                              })()}
                               {!readOnly && targets.length > 0 && (() => {
                                 const rowActive = targets.every(
                                   (t) => respondent.id === t.id || (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
@@ -444,8 +460,8 @@ export function MatrixTable({
                                     disabled={targets.length === 0}
                                     className={`mt-1.5 text-[10px] font-medium border rounded px-2 py-0.5 transition cursor-pointer disabled:opacity-40 disabled:cursor-default whitespace-nowrap ${
                                       rowActive
-                                        ? 'bg-orange-100 text-[#FF6B00] border-orange-300'
-                                        : 'text-[#FF8600] hover:text-[#FF6B00] border-orange-200 hover:bg-orange-50'
+                                        ? 'bg-orange-100 dark:bg-[#FF8600]/18 text-[#FF6B00] border-orange-300 dark:border-[#FF8600]/45'
+                                        : 'text-[#FF8600] hover:text-[#FF6B00] border-orange-200 dark:border-[#FF8600]/40 hover:bg-orange-50 dark:hover:bg-[#FF8600]/12'
                                     }`}
                                     title={rowActive ? 'Снять выбор ряда' : 'Выбрать весь ряд'}
                                   >
@@ -481,7 +497,7 @@ export function MatrixTable({
                                       type="button"
                                       onClick={() => handleSendInvite(respondent.id)}
                                       disabled={sendingInvites}
-                                      className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 hover:text-gray-700 disabled:opacity-50 cursor-pointer"
+                                      className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50 cursor-pointer"
                                       title="Отправить приглашение по email"
                                     >
                                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -511,18 +527,18 @@ export function MatrixTable({
                                 if ((e.target as HTMLElement).closest('button')) return
                                 toggle(reviewerKey, targetKey)
                               }}
-                              className={`p-4 text-center border-r border-gray-200 ${isSelf ? 'bg-purple-100/80' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40'}`}
+                              className={`p-4 text-center border-r border-gray-200 ${isSelf ? 'bg-purple-100/80 dark:bg-purple-500/20' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40 dark:hover:bg-[#FF8600]/12'}`}
                             >
                               <div className="flex flex-col items-center gap-1.5">
                                 <span
                                   className={`w-5 h-5 rounded-full flex items-center justify-center transition ${
                                     assigned
                                       ? completed
-                                        ? 'bg-green-500'
+                                        ? 'bg-green-500 dark:bg-green-400'
                                         : isSelf
-                                          ? 'bg-purple-500'
+                                          ? 'bg-purple-500 dark:bg-purple-400'
                                           : 'bg-[#FF8600]'
-                                      : 'border-2 border-gray-300 bg-transparent'
+                                      : 'border-2 border-gray-300 dark:border-[#3a4250] bg-transparent'
                                   }`}
                                 >
                                   {assigned && completed && (
@@ -571,27 +587,27 @@ export function MatrixTable({
                   })}
 
                   {!readOnly && (
-                    <tr className="hover:bg-blue-50/30 transition border-b border-gray-200">
-                      <td className="p-4 border-r-2 border-gray-300 sticky left-0 bg-white z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                    <tr className="hover:bg-blue-50/30 dark:hover:bg-blue-500/10 transition border-b border-gray-200">
+                      <td className="p-4 border-r-2 border-gray-300 dark:border-[#3a4250] sticky left-0 bg-white dark:bg-[#1e222e] z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
                           onClick={() => { setSelectedUserIds([]); setPickerRole('respondent') }}
                           disabled={adding || allUsers.length === 0}
-                          className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 border border-orange-200 hover:bg-orange-100 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
+                          className="px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-orange-50 dark:bg-[#FF8600]/12 border border-orange-200 dark:border-[#FF8600]/40 hover:bg-orange-100 dark:hover:bg-[#FF8600]/18 disabled:opacity-50 rounded-lg transition cursor-pointer whitespace-nowrap"
                         >
                           + Респондент
                         </button>
                       </td>
                       {targets.map((target) => (
-                        <td key={target.id} className="p-4 border-r border-b border-gray-200 min-w-[120px]" />
+                        <td key={target.id} className="p-4 border-r border-b border-gray-200 dark:border-[#3a4250] min-w-[120px]" />
                       ))}
-                      {!readOnly && <td className="p-4 border-b border-gray-200" />}
+                      {!readOnly && <td className="p-4 border-b border-gray-200 dark:border-[#3a4250]" />}
                     </tr>
                   )}
 
                   {readOnly && respondents.length === 0 && (
                     <tr>
-                      <td colSpan={targets.length + 1} className="p-8 text-center text-sm text-gray-400">
+                      <td colSpan={targets.length + 1} className="p-8 text-center text-sm text-gray-400 dark:text-gray-400">
                         Нет добавленных респондентов и объектов
                       </td>
                     </tr>
@@ -604,20 +620,20 @@ export function MatrixTable({
 
         <div className="flex flex-wrap items-center justify-end gap-3 mt-4">
           {!readOnly && saving && (
-            <span className="text-xs text-gray-400 flex items-center gap-1.5">
-              <span className="w-3 h-3 border-2 border-gray-300 border-t-[#FF8600] rounded-full animate-spin" />
+            <span className="text-xs text-gray-400 dark:text-gray-400 flex items-center gap-1.5">
+              <span className="w-3 h-3 border-2 border-gray-300 dark:border-[#3a4250] border-t-[#FF8600] rounded-full animate-spin" />
               Сохранение…
             </span>
           )}
           {!readOnly && (
-            <span className="text-xs text-gray-400">Изменения сохраняются автоматически</span>
+            <span className="text-xs text-gray-400 dark:text-gray-400">Изменения сохраняются автоматически</span>
           )}
           {onExportReport && canExport && (
             <button
               type="button"
               onClick={() => onExportReport()}
               disabled={exporting}
-              className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl soft-press cursor-pointer"
+              className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white dark:bg-[#1e222e] border border-[#FF8600]/40 hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 disabled:opacity-50 rounded-xl soft-press cursor-pointer"
             >
               {exporting ? 'Формирование…' : 'Сформировать результаты (.docx)'}
             </button>
@@ -627,7 +643,7 @@ export function MatrixTable({
               type="button"
               onClick={() => onExportCsv()}
               disabled={exportingCsv}
-              className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white border border-[#FF8600]/40 hover:bg-orange-50 disabled:opacity-50 rounded-xl transition cursor-pointer"
+              className="px-5 py-2 text-sm font-medium text-[#FF8600] bg-white dark:bg-[#1e222e] border border-[#FF8600]/40 hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 disabled:opacity-50 rounded-xl transition cursor-pointer"
             >
               {exportingCsv ? 'Формирование…' : 'Сформировать результаты (.csv)'}
             </button>
@@ -660,19 +676,19 @@ export function MatrixTable({
             </div>
           )}
           {availableUsers.length === 0 ? (
-            <p className="text-sm text-gray-500 py-4">Все пользователи уже добавлены</p>
+            <p className="text-sm text-gray-500 dark:text-gray-300 py-4">Все пользователи уже добавлены</p>
           ) : (
             <>
               <input
                 type="text"
                 placeholder="Поиск по имени или email…"
-                className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#FF8600] shadow-sm mb-3"
+                className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600] shadow-sm mb-3"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 autoFocus
               />
               {filteredUsers.length === 0 ? (
-                <p className="text-sm text-gray-500 py-4">Ничего не найдено</p>
+                <p className="text-sm text-gray-500 dark:text-gray-300 py-4">Ничего не найдено</p>
               ) : (
                 <div className="overflow-y-auto space-y-1 max-h-[50vh]">
                   {filteredUsers.map((user) => {
@@ -680,7 +696,7 @@ export function MatrixTable({
                     return (
                       <label
                         key={user.id}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 border border-gray-100 cursor-pointer"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#262d3a] border border-gray-100 dark:border-[#303a48] cursor-pointer"
                       >
                         <input
                           type="checkbox"
@@ -693,8 +709,8 @@ export function MatrixTable({
                           className="w-4 h-4 text-[#FF8600] rounded focus:ring-[#FF8600]"
                         />
                         <div className="min-w-0">
-                          <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
-                          <div className="text-xs text-gray-400 truncate">{user.email}</div>
+                          <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</div>
+                          <div className="text-xs text-gray-400 dark:text-gray-400 truncate">{user.email}</div>
                         </div>
                       </label>
                     )
@@ -703,12 +719,12 @@ export function MatrixTable({
               )}
             </>
           )}
-          <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-gray-100">
+          <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-gray-100 dark:border-[#303a48]">
             <button
               type="button"
               onClick={() => { setPickerRole(null); setSelectedUserIds([]) }}
               disabled={adding}
-              className="text-sm text-gray-500 hover:text-gray-700 cursor-pointer disabled:opacity-50"
+              className="text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer disabled:opacity-50"
             >
               Отмена
             </button>
@@ -726,6 +742,30 @@ export function MatrixTable({
             </button>
           </div>
         </Modal>
+      )}
+
+      {confirmSendAll && (
+        <ConfirmModal
+          title="Разослать приглашения?"
+          variant="default"
+          confirmLabel="Разослать"
+          loadingLabel="Отправка…"
+          loading={sendingInvites && sendingReviewerId === -1}
+          onConfirm={async () => {
+            await handleSendInvite()
+            setConfirmSendAll(false)
+          }}
+          onCancel={() => {
+            if (!sendingInvites) setConfirmSendAll(false)
+          }}
+          message={
+            <>
+              Приглашения будут отправлены всем респондентам с указанным email{' '}
+              <span className="font-semibold text-gray-900">({inviteEmailCount})</span>.
+              Продолжить?
+            </>
+          }
+        />
       )}
     </>
   )

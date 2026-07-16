@@ -36,6 +36,76 @@ export function parseSurveyResponseParams(): { reviewerId: number | null; target
   }
 }
 
+export function parseAdminResponseViewParams(): { reviewerId: number; targetId: number } | null {
+  const params = new URLSearchParams(window.location.search)
+  const reviewerId = Number(params.get('viewReviewer'))
+  const targetId = Number(params.get('viewTarget'))
+  if (!Number.isFinite(reviewerId) || reviewerId <= 0) return null
+  if (!Number.isFinite(targetId) || targetId <= 0) return null
+  return { reviewerId, targetId }
+}
+
+export function setAdminResponseViewParams(reviewerId: number, targetId: number): void {
+  const url = new URL(window.location.href)
+  url.searchParams.set('viewReviewer', String(reviewerId))
+  url.searchParams.set('viewTarget', String(targetId))
+  url.searchParams.set('tab', 'matrix')
+  window.history.replaceState(null, '', url)
+}
+
+export function clearAdminResponseViewParams(): void {
+  const url = new URL(window.location.href)
+  url.searchParams.delete('viewReviewer')
+  url.searchParams.delete('viewTarget')
+  window.history.replaceState(null, '', url)
+}
+
+export type MainPageTab = 'editor' | 'matrix' | 'analytics'
+
+const mainPageTabStorageKey = (surveyId: number) => `survey360.mainTab.${surveyId}`
+
+export function readStoredMainPageTab(surveyId: number | null): MainPageTab | null {
+  if (surveyId === null) return null
+  try {
+    const raw = sessionStorage.getItem(mainPageTabStorageKey(surveyId))
+    return raw === 'matrix' || raw === 'editor' || raw === 'analytics' ? raw : null
+  } catch {
+    return null
+  }
+}
+
+export function storeMainPageTab(surveyId: number, tab: MainPageTab): void {
+  try {
+    sessionStorage.setItem(mainPageTabStorageKey(surveyId), tab)
+  } catch {
+    // sessionStorage unavailable
+  }
+}
+
+export function resolveInitialMainPageTab(surveyId: number | null): MainPageTab {
+  const params = new URLSearchParams(window.location.search)
+  const urlTab = params.get('tab')
+  if (urlTab === 'matrix' || urlTab === 'editor' || urlTab === 'analytics') return urlTab
+
+  const stored = readStoredMainPageTab(surveyId)
+  if (stored) return stored
+
+  if (parseAdminResponseViewParams()) return 'matrix'
+  return 'editor'
+}
+
+export function setMainPageTabState(surveyId: number | null, tab: MainPageTab): void {
+  const url = new URL(window.location.href)
+  if (tab === 'editor') {
+    url.searchParams.delete('tab')
+  } else {
+    url.searchParams.set('tab', tab)
+  }
+  window.history.replaceState(null, '', url)
+
+  if (surveyId !== null) storeMainPageTab(surveyId, tab)
+}
+
 export function isPreviewMode(): boolean {
   return new URLSearchParams(window.location.search).get('preview') === '1'
 }

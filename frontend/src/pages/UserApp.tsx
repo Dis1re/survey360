@@ -12,11 +12,34 @@ import type { Survey } from '../types'
 
 type SidebarScope = 'mine' | 'participation'
 
+const SELECTED_SURVEY_STORAGE_KEY = 'survey360.selectedSurveyId'
+const SIDEBAR_SCOPE_STORAGE_KEY = 'survey360.sidebarScope'
+
+function readStoredSurveyId(): number | null {
+  try {
+    const raw = sessionStorage.getItem(SELECTED_SURVEY_STORAGE_KEY)
+    if (!raw) return null
+    const id = Number(raw)
+    return Number.isFinite(id) && id > 0 ? id : null
+  } catch {
+    return null
+  }
+}
+
+function readStoredSidebarScope(): SidebarScope {
+  try {
+    const raw = sessionStorage.getItem(SIDEBAR_SCOPE_STORAGE_KEY)
+    return raw === 'participation' ? 'participation' : 'mine'
+  } catch {
+    return 'mine'
+  }
+}
+
 export function UserApp() {
   const { user } = useAuth()
   const [surveys, setSurveys] = useState<Survey[]>([])
-  const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(null)
-  const [sidebarScope, setSidebarScope] = useState<SidebarScope>('mine')
+  const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(() => readStoredSurveyId())
+  const [sidebarScope, setSidebarScope] = useState<SidebarScope>(() => readStoredSidebarScope())
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -29,6 +52,13 @@ export function UserApp() {
     setSurveys(mapped)
     setSelectedSurveyId((prev) => {
       if (prev !== null && mapped.some((s) => s.id === prev)) return prev
+      if (prev !== null && !mapped.some((s) => s.id === prev)) {
+        try {
+          sessionStorage.removeItem(SELECTED_SURVEY_STORAGE_KEY)
+        } catch {
+          // sessionStorage unavailable
+        }
+      }
       return mapped[0]?.id ?? null
     })
   }, [])
@@ -36,6 +66,26 @@ export function UserApp() {
   useEffect(() => {
     loadSurveys().catch(console.error).finally(() => setLoading(false))
   }, [loadSurveys])
+
+  useEffect(() => {
+    try {
+      if (selectedSurveyId !== null) {
+        sessionStorage.setItem(SELECTED_SURVEY_STORAGE_KEY, String(selectedSurveyId))
+      } else {
+        sessionStorage.removeItem(SELECTED_SURVEY_STORAGE_KEY)
+      }
+    } catch {
+      // sessionStorage unavailable
+    }
+  }, [selectedSurveyId])
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(SIDEBAR_SCOPE_STORAGE_KEY, sidebarScope)
+    } catch {
+      // sessionStorage unavailable
+    }
+  }, [sidebarScope])
 
   // One place: live event → refresh survey list (sidebar status/progress).
   useSurveyLive(() => {
@@ -98,7 +148,7 @@ export function UserApp() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden dark:bg-[#161a22]">
       <Sidebar
         surveys={filteredSurveys}
         activeSurveyId={selectedSurveyId}
@@ -123,7 +173,7 @@ export function UserApp() {
         {selectedSurveyId === null ? (
           <div className="flex items-center justify-center h-full p-6">
             <div className="text-center max-w-md">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-300">
                 {loading
                   ? 'Загрузка…'
                   : surveys.length === 0

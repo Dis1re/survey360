@@ -1,11 +1,14 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { surveyApi } from '../api'
+import { apiQuestionToQuestion } from '../mappers'
+import type { Question } from '../types'
 import { Modal } from './Modal'
+import { QuestionInput } from './QuestionInput'
 
 interface ResponseModalProps {
   surveyId: number
   reviewerId?: number
-  targetId: number
+  targetId?: number
   reviewerName?: string
   targetName?: string
   onClose: () => void
@@ -38,47 +41,76 @@ export function ResponseModal({
   const mode: 'single' | 'target' | 'reviewer' =
     reviewerId === undefined ? 'target' : targetId === undefined ? 'reviewer' : 'single'
   const [loading, setLoading] = useState(true)
-  const [items, setItems] = useState<{ questionText: string; answerText: string }[]>([])
+  const [questions, setQuestions] = useState<Question[]>([])
+  const [answers, setAnswers] = useState<Record<number, string>>({})
   const [groups, setGroups] = useState<TargetResponseGroup[]>([])
   const [reviewerGroups, setReviewerGroups] = useState<ReviewerResponseGroup[]>([])
 
   useEffect(() => {
     setLoading(true)
+    setQuestions([])
+    setAnswers({})
+
     const request =
       mode === 'target'
         ? surveyApi.getTargetResponses(surveyId, targetId!)
         : mode === 'reviewer'
           ? surveyApi.getReviewerResponses(surveyId, reviewerId!)
-          : surveyApi.getResponses(surveyId, reviewerId!, targetId!)
+          : surveyApi.get(surveyId)
+
     request
       .then((data) => {
-        if (mode === 'target') setGroups(data as TargetResponseGroup[])
-        else if (mode === 'reviewer') setReviewerGroups(data as ReviewerResponseGroup[])
-        else setItems(data as { questionText: string; answerText: string }[])
+        if (mode === 'target') {
+          setGroups(data as TargetResponseGroup[])
+        } else if (mode === 'reviewer') {
+          setReviewerGroups(data as ReviewerResponseGroup[])
+        } else {
+          const details = data as { questions: Parameters<typeof apiQuestionToQuestion>[0][]; answers: { userId: number; targetId: number; questionId: number; text: string }[] }
+          setQuestions(details.questions.map(apiQuestionToQuestion))
+          const saved: Record<number, string> = {}
+          for (const answer of details.answers) {
+            if (answer.userId === reviewerId && answer.targetId === targetId) {
+              saved[answer.questionId] = answer.text
+            }
+          }
+          setAnswers(saved)
+        }
       })
       .catch(console.error)
       .finally(() => setLoading(false))
   }, [surveyId, reviewerId, targetId, mode])
 
+  const answeredCount = useMemo(
+    () => questions.filter((q) => (answers[q.id] ?? '').trim()).length,
+    [questions, answers],
+  )
+
   const singleContent = loading ? (
-    <p className="text-sm text-gray-400 py-4 text-center">Загрузка…</p>
-  ) : items.length === 0 ? (
-    <p className="text-sm text-gray-400 py-4 text-center">Нет ответов</p>
+    <p className="text-sm text-gray-400 dark:text-gray-400 py-4 text-center">Загрузка…</p>
+  ) : questions.length === 0 ? (
+    <p className="text-sm text-gray-400 dark:text-gray-400 py-4 text-center">В этом опросе нет вопросов</p>
+  ) : answeredCount === 0 ? (
+    <p className="text-sm text-gray-400 dark:text-gray-400 py-4 text-center">Нет ответов</p>
   ) : (
-    <div className="space-y-3">
-      {items.map((item, index) => (
-        <div key={index} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-          <div className="text-sm font-medium text-gray-900 mb-2">
-            <span className="text-gray-400 mr-1.5">{index + 1}.</span>
-            {item.questionText}
-          </div>
-          <div className="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
-            {item.answerText?.trim() ? (
-              item.answerText
-            ) : (
-              <span className="text-gray-400">— нет ответа —</span>
+    <div className="space-y-4">
+      {questions.map((question, index) => (
+        <div
+          key={question.id}
+          className="soft-lift bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-5 shadow-sm"
+        >
+          <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+            <span className="text-gray-400 dark:text-gray-400 mr-1.5">{index + 1}.</span>
+            {question.text}
+            {question.isRequired && (
+              <span className="ml-1.5 text-red-500" title="Обязательный вопрос">*</span>
             )}
-          </div>
+          </label>
+          <QuestionInput
+            question={question}
+            value={answers[question.id] ?? ''}
+            onChange={() => {}}
+            readOnly
+          />
         </div>
       ))}
     </div>
@@ -160,31 +192,31 @@ export function ResponseModal({
   const content =
     mode === 'reviewer' ? reviewerContent : mode === 'target' ? targetContent : singleContent
 
+  const subtitle = (() => {
+    if (mode === 'reviewer') {
+      return <>Респондент: <span className="font-medium text-gray-700 dark:text-gray-200">{reviewerName ?? 'респондент'}</span></>
+    }
+    if (mode === 'target') {
+      return <>Объект: <span className="font-medium text-gray-700 dark:text-gray-200">{targetName ?? 'объект'}</span></>
+    }
+    return (
+      <>
+        <span className="font-medium text-gray-700 dark:text-gray-200">{reviewerName ?? 'Респондент'}</span> оценивает{' '}
+        <span className="font-medium text-gray-700 dark:text-gray-200">{targetName ?? 'объект'}</span>
+      </>
+    )
+  })()
+
   if (fullscreen) {
     return (
       <div
-        className="fixed top-0 right-0 bottom-0 z-40 bg-gray-100 flex flex-col border-l border-gray-200 transition-[left] duration-300 ease-out"
+        className="fixed top-0 right-0 bottom-0 z-40 bg-gray-100 dark:bg-[#303a48] flex flex-col border-l border-gray-200 dark:border-[#3a4250] transition-[left] duration-300 ease-out"
         style={{ left: sidebarWidth }}
       >
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
+        <div className="bg-white dark:bg-[#1e222e] border-b border-gray-200 dark:border-[#3a4250] px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Ответы</h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              {mode === 'reviewer' ? (
-                <>
-                  Респондент: <span className="font-medium text-gray-700">{reviewerName ?? 'респондент'}</span>
-                </>
-              ) : mode === 'target' ? (
-                <>
-                  Объект: <span className="font-medium text-gray-700">{targetName ?? 'объект'}</span>
-                </>
-              ) : (
-                <>
-                  <span className="font-medium text-gray-700">{reviewerName ?? 'Респондент'}</span> оценивает{' '}
-                  <span className="font-medium text-gray-700">{targetName ?? 'объект'}</span>
-                </>
-              )}
-            </p>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Ответы</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-300 mt-0.5">{subtitle}</p>
           </div>
           <button
             type="button"
@@ -205,20 +237,7 @@ export function ResponseModal({
   return (
     <Modal
       title="Ответы"
-      description={
-        <span className="text-sm">
-          {mode === 'reviewer' ? (
-            <>Респондент: <span className="font-semibold text-gray-700">{reviewerName ?? 'респондент'}</span></>
-          ) : mode === 'target' ? (
-            <>Объект: <span className="font-semibold text-gray-700">{targetName ?? 'объект'}</span></>
-          ) : (
-            <>
-              <span className="font-semibold text-gray-700">{reviewerName ?? 'Респондент'}</span> оценивает{' '}
-              <span className="font-semibold text-gray-700">{targetName ?? 'объект'}</span>
-            </>
-          )}
-        </span>
-      }
+      description={<span className="text-sm">{subtitle}</span>}
       onClose={onClose}
     >
       {content}

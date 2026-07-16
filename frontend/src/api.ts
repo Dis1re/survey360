@@ -24,6 +24,8 @@ import type {
   UpdateSurveyRequest,
 } from './types'
 
+const API = '/api'
+
 async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
   // credentials: 'include' sends auth cookies on all requests, including public invite/survey routes.
   const response = await fetch(url, {
@@ -60,7 +62,35 @@ async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T
   return (text ? JSON.parse(text) : null) as T
 }
 
-const API = '/api'
+async function downloadFileResponse(response: Response, fallbackName: string) {
+  const blob = await response.blob()
+  const disposition = response.headers.get('Content-Disposition') ?? ''
+  const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i)
+  const plainMatch = disposition.match(/filename="?([^";]+)"?/i)
+  const fileName = utfMatch
+    ? decodeURIComponent(utfMatch[1])
+    : plainMatch?.[1] ?? fallbackName
+
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = fileName
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+
+async function downloadSurveyFile(path: string, fallbackName: string) {
+  const response = await fetch(`${API}${path}`, { credentials: 'include' })
+  if (!response.ok) {
+    const errorText = await response.text()
+    console.error(`API ${path} [${response.status}]:`, errorText || response.statusText)
+    throw new Error(errorText || `Ошибка API [${response.status}]`)
+  }
+
+  await downloadFileResponse(response, fallbackName)
+}
 
 export const authApi = {
   login: (email: string) =>
@@ -167,51 +197,13 @@ export const surveyApi = {
     sendRequest<InviteInfo>(`${API}/survey/invite/${token}`),
 
   downloadReport: async (id: number) => {
-    const response = await fetch(`${API}/survey/${id}/report.docx`)
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error(`API /survey/${id}/report.docx [${response.status}]:`, errorText || response.statusText)
-      throw new Error(errorText || `Ошибка API [${response.status}]`)
-    }
-
-    const blob = await response.blob()
-    const disposition = response.headers.get('Content-Disposition') ?? ''
-    const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i)
-    const plainMatch = disposition.match(/filename="?([^";]+)"?/i)
-    const fileName = utfMatch
-      ? decodeURIComponent(utfMatch[1])
-      : plainMatch?.[1] ?? `survey-${id}-результаты.docx`
-
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = fileName
-    link.click()
-    URL.revokeObjectURL(url)
+    await downloadSurveyFile(`/survey/${id}/report.docx`, `survey-${id}-результаты.docx`)
+    await new Promise((resolve) => setTimeout(resolve, 300))
+    await downloadSurveyFile(`/survey/${id}/report-by-question.docx`, `survey-${id}-результаты-по-вопросам.docx`)
   },
 
   downloadCsv: async (id: number) => {
-    const response = await fetch(`${API}/survey/${id}/report.csv`)
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error(`API /survey/${id}/report.csv [${response.status}]:`, errorText || response.statusText)
-      throw new Error(errorText || `Ошибка API [${response.status}]`)
-    }
-
-    const blob = await response.blob()
-    const disposition = response.headers.get('Content-Disposition') ?? ''
-    const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i)
-    const plainMatch = disposition.match(/filename="?([^";]+)"?/i)
-    const fileName = utfMatch
-      ? decodeURIComponent(utfMatch[1])
-      : plainMatch?.[1] ?? `survey-${id}-результаты.csv`
-
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    link.download = fileName
-    link.click()
-    URL.revokeObjectURL(url)
+    await downloadSurveyFile(`/survey/${id}/report.csv`, `survey-${id}-результаты.csv`)
   },
   saveAsTemplate: (id: number, data: SaveAsTemplateRequest) =>
     sendRequest<number>(`${API}/survey/${id}/save-as-template`, {
