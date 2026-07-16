@@ -22,6 +22,7 @@ public class EmailService(
         string toName,
         string subject,
         string textBody,
+        string? htmlBody = null,
         CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_settings.ApiToken) || _settings.SandboxId <= 0)
@@ -29,31 +30,52 @@ public class EmailService(
                 "Email не настроен для HTTPS API: укажите Email:ApiToken и Email:SandboxId " +
                 "(Mailtrap → Settings → API Tokens и ID sandbox из URL).");
 
-        httpClient.DefaultRequestHeaders.Authorization =
-            new AuthenticationHeaderValue("Bearer", _settings.ApiToken);
-
         var url = $"https://sandbox.api.mailtrap.io/api/send/{_settings.SandboxId}";
-        var payload = new
-        {
-            from = new { email = _settings.From, name = _settings.FromName },
-            to = new[]
+        object payload = string.IsNullOrWhiteSpace(htmlBody)
+            ? new
             {
-                new
+                from = new { email = _settings.From, name = _settings.FromName },
+                to = new[]
                 {
-                    email = toEmail,
-                    name = string.IsNullOrWhiteSpace(toName) ? toEmail : toName,
+                    new
+                    {
+                        email = toEmail,
+                        name = string.IsNullOrWhiteSpace(toName) ? toEmail : toName,
+                    },
                 },
-            },
-            subject,
-            text = textBody,
-        };
+                subject,
+                text = textBody,
+            }
+            : new
+            {
+                from = new { email = _settings.From, name = _settings.FromName },
+                to = new[]
+                {
+                    new
+                    {
+                        email = toEmail,
+                        name = string.IsNullOrWhiteSpace(toName) ? toEmail : toName,
+                    },
+                },
+                subject,
+                text = textBody,
+                html = htmlBody,
+            };
 
         const int maxAttempts = 4;
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             ct.ThrowIfCancellationRequested();
 
-            using var response = await httpClient.PostAsJsonAsync(url, payload, ct);
+            using var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Headers =
+                {
+                    Authorization = new AuthenticationHeaderValue("Bearer", _settings.ApiToken),
+                },
+                Content = JsonContent.Create(payload),
+            };
+            using var response = await httpClient.SendAsync(request, ct);
             var body = await response.Content.ReadAsStringAsync(ct);
 
             if (response.IsSuccessStatusCode)

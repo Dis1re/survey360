@@ -4,10 +4,11 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
 using WebApp.Models;
+using WebApp.Services;
 
 namespace WebApp.Areas.Api;
 
-public record CreateUserRequest(string Name, string Email);
+public record CreateUserRequest(string Name, string Email, string? Password = null);
 
 public record ImportResult(int Imported, int Updated, int Skipped, List<string> Errors);
 
@@ -17,13 +18,23 @@ public record ImportResult(int Imported, int Updated, int Skipped, List<string> 
 public class UserController(ApplicationDbContext context) : Controller
 {
     [HttpPost]
-    public async Task<int> Create([FromBody] CreateUserRequest request, CancellationToken ct)
+    public async Task<ActionResult<int>> Create([FromBody] CreateUserRequest request, CancellationToken ct)
     {
+        var name = request.Name?.Trim() ?? "";
+        var email = request.Email?.Trim() ?? "";
+        if (string.IsNullOrEmpty(name) || string.IsNullOrEmpty(email))
+            return BadRequest("Имя и email обязательны");
+
+        var password = request.Password?.Trim() ?? "";
+        if (string.IsNullOrEmpty(password))
+            return BadRequest("Пароль обязателен");
+
         var now = DateTime.UtcNow;
         var user = new User
         {
-            Name = request.Name,
-            Email = request.Email,
+            Name = name,
+            Email = email,
+            PasswordHash = PasswordHelper.Hash(password),
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -137,6 +148,7 @@ public class UserController(ApplicationDbContext context) : Controller
                 {
                     Name = name,
                     Email = email,
+                    PasswordHash = PasswordHelper.HashDefault(),
                     CreatedAt = now,
                     UpdatedAt = now,
                 });

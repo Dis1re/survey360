@@ -308,7 +308,7 @@ export function Sidebar({
   const [internalScope, setInternalScope] = useState<SurveyScope>('mine')
   const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>(null)
   const [participationFilter, setParticipationFilter] = useState<ParticipationFilter>(null)
-  const initialDefaultApplied = useRef(false)
+  const filtersSyncedFor = useRef<string | null>(null)
 
   const hasUserScope = currentUserId != null
   const scope = scopeProp ?? internalScope
@@ -344,20 +344,44 @@ export function Sidebar({
     )
   }, [scopedSurveys, scope, statusFilter, participationFilter, hasUserScope])
 
+  // Keep sidebar filters aligned with the open survey (and sensible defaults).
   useEffect(() => {
-    if (!hasUserScope || loading || initialDefaultApplied.current) return
-    const pending = surveys.filter((s) => isParticipationSurvey(s) && isParticipationPending(s))
+    if (!hasUserScope || loading || currentUserId == null) return
 
-    if (pending.length > 0) {
-      setScope('participation')
+    // Include status + progress so draft→active / pending→done re-syncs filters.
+    const surveySig = surveys
+      .map((s) => `${s.id}:${s.status}:${s.myAssignedCount ?? 0}:${s.myCompletedCount ?? 0}`)
+      .join(',')
+    const syncKey = `${currentUserId}:${scope}:${activeSurveyId ?? 'none'}:${surveySig}`
+    if (filtersSyncedFor.current === syncKey) return
+
+    const active = activeSurveyId != null ? surveys.find((s) => s.id === activeSurveyId) : null
+
+    if (scope === 'participation') {
+      if (active && isParticipationSurvey(active)) {
+        setParticipationFilter(isParticipationPending(active) ? 'pending' : 'done')
+      } else {
+        const hasPending = surveys.some((s) => isParticipationSurvey(s) && isParticipationPending(s))
+        setParticipationFilter(hasPending ? 'pending' : 'done')
+      }
+      setStatusFilter(null)
     } else {
-      setScope('mine')
+      if (active && isMySurvey(active, currentUserId)) {
+        setStatusFilter(active.status)
+      } else {
+        const hasActive = surveys.some((s) => isMySurvey(s, currentUserId) && s.status === 'active')
+        setStatusFilter(hasActive ? 'active' : null)
+      }
+      setParticipationFilter(null)
     }
-    setStatusFilter(null)
-    setParticipationFilter(null)
 
-    initialDefaultApplied.current = true
-  }, [loading, surveys, currentUserId, hasUserScope])
+    filtersSyncedFor.current = syncKey
+  }, [hasUserScope, loading, currentUserId, scope, activeSurveyId, surveys])
+
+  // Reset sync when user changes so filters re-apply for the new account.
+  useEffect(() => {
+    filtersSyncedFor.current = null
+  }, [currentUserId])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()

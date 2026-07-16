@@ -98,6 +98,7 @@ export function SurveyHeader({
   const [modalLinkCopied, setModalLinkCopied] = useState(false)
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
+  const [userPassword, setUserPassword] = useState('')
   const [userSaving, setUserSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [confirmDialog, setConfirmDialog] = useState<'delete' | 'stop' | null>(null)
@@ -191,14 +192,16 @@ export function SurveyHeader({
     e.preventDefault()
     const name = userName.trim()
     const email = userEmail.trim()
-    if (!name || !email) return
+    const password = userPassword.trim()
+    if (!name || !email || !password) return
 
     setUserSaving(true)
     try {
-      await userApi.create({ name, email })
+      await userApi.create({ name, email, password })
       setUserModalOpen(false)
       setUserName('')
       setUserEmail('')
+      setUserPassword('')
       await onUserCreated?.()
     } catch (err) {
       console.error(err)
@@ -619,9 +622,21 @@ export function SurveyHeader({
                 disabled={userSaving}
               />
             </div>
+            <div>
+              <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">Пароль</label>
+              <input
+                type="password"
+                className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]"
+                value={userPassword}
+                onChange={(e) => setUserPassword(e.target.value)}
+                placeholder="Пароль для входа"
+                autoComplete="new-password"
+                disabled={userSaving}
+              />
+            </div>
             <button
               type="submit"
-              disabled={userSaving || !userName.trim() || !userEmail.trim()}
+              disabled={userSaving || !userName.trim() || !userEmail.trim() || !userPassword.trim()}
               className="w-full py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-xl soft-press cursor-pointer"
             >
               {userSaving ? 'Добавление…' : 'Добавить'}

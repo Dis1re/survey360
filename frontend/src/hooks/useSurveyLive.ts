@@ -5,6 +5,7 @@ import {
   LogLevel,
 } from '@microsoft/signalr'
 import { useEffect, useRef } from 'react'
+import { getAuthToken } from '../authStorage'
 
 export type SurveyUpdatedEvent = {
   surveyId: number
@@ -42,7 +43,10 @@ function getConnection(): HubConnection {
   if (sharedConnection) return sharedConnection
 
   sharedConnection = new HubConnectionBuilder()
-    .withUrl('/hubs/survey', { withCredentials: true })
+    .withUrl('/hubs/survey', {
+      withCredentials: true,
+      accessTokenFactory: () => getAuthToken() ?? '',
+    })
     .withAutomaticReconnect()
     .configureLogging(LogLevel.Warning)
     .build()
