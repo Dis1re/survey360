@@ -22,6 +22,7 @@ import type {
   SendInvitesResult,
   UpdateQuestionRequest,
   UpdateSurveyRequest,
+  UserGroup,
 } from './types'
 
 const API = '/api'
@@ -329,4 +330,25 @@ export const answerApi = {
 
 export const databaseApi = {
   clearAll: () => sendRequest<void>(`${API}/database`, { method: 'DELETE' }),
+}
+
+export const userGroupApi = {
+  list: () => sendRequest<UserGroup[]>(`${API}/usergroup`),
+
+  get: (id: number) => sendRequest<UserGroup>(`${API}/usergroup/${id}`),
+
+  create: (data: { name: string; userIds: number[] }) =>
+    sendRequest<number>(`${API}/usergroup`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  update: (id: number, data: { name: string; userIds: number[] }) =>
+    sendRequest<void>(`${API}/usergroup/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  delete: (id: number) =>
+    sendRequest<void>(`${API}/usergroup/${id}`, { method: 'DELETE' }),
 }
