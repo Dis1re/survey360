@@ -66,6 +66,7 @@ public class SurveyController(
     SurveyCsvReportService csvReportService,
     SurveyRespondentLinkService linkService,
     SurveyInviteEmailService inviteEmailService,
+    AiSummaryService aiSummaryService,
     IHubContext<SurveyHub> surveyHub) : Controller
 {
     private Task NotifySurveyUpdatedAsync(int surveyId, string? status, CancellationToken ct) =>
@@ -904,4 +905,73 @@ public class SurveyController(
         var info = await linkService.ResolveTokenAsync(token, ct);
         return info is null ? NotFound() : info;
     }
+
+    [Authorize]
+    [HttpGet("{id:int}/ai-summary")]
+    public async Task<ActionResult<AiSummaryDto>> GetAiSummary(
+        int id,
+        [FromQuery] string type = "overall",
+        CancellationToken ct = default)
+    {
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
+
+        var summary = await aiSummaryService.GetAsync(id, type);
+        if (summary == null) return NotFound();
+
+        return new AiSummaryDto(summary.SummaryType, summary.Content, summary.CreatedAt, summary.UpdatedAt);
+    }
+
+    [Authorize]
+    [HttpPost("{id:int}/ai-summary/generate")]
+    public async Task<ActionResult<AiSummaryDto>> GenerateAiSummary(
+        int id,
+        [FromQuery] string type = "overall",
+        [FromQuery] int? targetId = null,
+        CancellationToken ct = default)
+    {
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
+
+        AiSummary? result;
+        if (type == "overall")
+        {
+            result = await aiSummaryService.GenerateOverallAsync(id, ct);
+        }
+        else if (type.StartsWith("target_") && targetId.HasValue)
+        {
+            result = await aiSummaryService.GenerateTargetAsync(id, targetId.Value, ct);
+        }
+        else
+        {
+            return BadRequest(new { message = "Invalid summary type or missing targetId" });
+        }
+
+        if (result == null)
+            return BadRequest(new { message = "Failed to generate summary. Check AI configuration." });
+
+        return new AiSummaryDto(result.SummaryType, result.Content, result.CreatedAt, result.UpdatedAt);
+    }
+
+    [Authorize]
+    [HttpDelete("{id:int}/ai-summary")]
+    public async Task<IActionResult> DeleteAiSummary(
+        int id,
+        [FromQuery] string type = "overall",
+        CancellationToken ct = default)
+    {
+        var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
+        var accessError = RequireManageSurvey(survey);
+        if (accessError is not null)
+            return accessError;
+
+        await aiSummaryService.DeleteAsync(id, type, ct);
+        return NoContent();
+    }
 }
+
+public record AiSummaryDto(string SummaryType, string Content, DateTime CreatedAt, DateTime UpdatedAt);
