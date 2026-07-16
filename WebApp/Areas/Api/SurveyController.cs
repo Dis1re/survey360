@@ -64,6 +64,7 @@ public class SurveyController(
     ApplicationDbContext context,
     SurveyDocxReportService reportService,
     SurveyCsvReportService csvReportService,
+    SurveyXlsxReportService xlsxReportService,
     SurveyRespondentLinkService linkService,
     SurveyInviteEmailService inviteEmailService,
     IHubContext<SurveyHub> surveyHub) : Controller
@@ -834,6 +835,22 @@ public class SurveyController(
         Array.Copy(body, 0, bytes, preamble.Length, body.Length);
 
         return File(bytes, "text/csv; charset=utf-8", result.Value.FileName);
+    }
+
+    [HttpGet("{id:int}/report.xlsx")]
+    public async Task<IActionResult> DownloadXlsxReport(int id, CancellationToken ct)
+    {
+        var result = await xlsxReportService.BuildXlsxAsync(id, ct);
+        if (result is null)
+        {
+            var exists = await context.Surveys.AnyAsync(s => s.Id == id, ct);
+            if (!exists)
+                return NotFound();
+
+            return BadRequest("Нет ответов для формирования отчёта");
+        }
+
+        return File(result.Value.Bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", result.Value.FileName);
     }
 
     public record ResponseItemDto(string QuestionText, string AnswerText);

@@ -198,12 +198,16 @@ export const surveyApi = {
 
   downloadReport: async (id: number) => {
     await downloadSurveyFile(`/survey/${id}/report.docx`, `survey-${id}-результаты.docx`)
-    await new Promise((resolve) => setTimeout(resolve, 300))
+  },
+  downloadReportByQuestion: async (id: number) => {
     await downloadSurveyFile(`/survey/${id}/report-by-question.docx`, `survey-${id}-результаты-по-вопросам.docx`)
   },
 
   downloadCsv: async (id: number) => {
     await downloadSurveyFile(`/survey/${id}/report.csv`, `survey-${id}-результаты.csv`)
+  },
+  downloadXlsx: async (id: number) => {
+    await downloadSurveyFile(`/survey/${id}/report.xlsx`, `survey-${id}-результаты.xlsx`)
   },
   saveAsTemplate: (id: number, data: SaveAsTemplateRequest) =>
     sendRequest<number>(`${API}/survey/${id}/save-as-template`, {
