@@ -32,6 +32,14 @@ interface MatrixTableProps {
     reviewerName: string
     targetName: string
   }) => void
+  onViewTargetResponses?: (info: {
+    targetId: number
+    targetName: string
+  }) => void
+  onViewReviewerResponses?: (info: {
+    reviewerId: number
+    reviewerName: string
+  }) => void
   onExpand?: () => void
   expanded?: boolean
 }
@@ -74,6 +82,8 @@ export function MatrixTable({
   onRemoveParticipant,
   onSave,
   onViewResponse,
+  onViewTargetResponses,
+  onViewReviewerResponses,
   onExpand,
   onExportCsv,
   exportingCsv = false,
@@ -328,7 +338,7 @@ export function MatrixTable({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-[#3a4250] bg-gray-50/50 dark:bg-[#161a22]/50">
-                      <th className="p-4 text-xs font-bold text-gray-400 dark:text-gray-400 min-w-[120px] border-r border-b border-gray-200 dark:border-[#3a4250] sticky left-0 top-0 z-10 bg-gray-50 dark:bg-[#161a22] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                      <th className="p-4 text-xs font-bold text-gray-400 dark:text-gray-400 min-w-[120px] border-r border-b border-gray-200 dark:border-[#3a4250] sticky left-0 top-0 z-30 bg-gray-50 dark:bg-[#161a22] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                         <span>Респондент \ Объект</span>
                       </th>
                     {targets.map((target) => (
@@ -371,6 +381,16 @@ export function MatrixTable({
                             </button>
                               )
                             })()
+                          )}
+                          {onViewTargetResponses && (
+                            <button
+                              type="button"
+                              onClick={() => onViewTargetResponses({ targetId: target.id, targetName: target.name })}
+                              className="mt-1 text-[10px] font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
+                              title="Посмотреть ответы всех респондентов на этого объекта"
+                            >
+                              ответы
+                            </button>
                           )}
                         </div>
                       </th>
@@ -449,6 +469,16 @@ export function MatrixTable({
                                   </button>
                                 )
                               })()}
+                              {onViewReviewerResponses && (
+                                <button
+                                  type="button"
+                                  onClick={() => onViewReviewerResponses({ reviewerId: respondent.id, reviewerName: respondent.name })}
+                                  className="mt-1.5 text-[10px] font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
+                                  title="Посмотреть все ответы этого респондента по всем объектам"
+                                >
+                                  ответы
+                                </button>
+                              )}
                               {surveyActive && inviteLink && (
                                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
                                   <button

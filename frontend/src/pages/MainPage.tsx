@@ -113,10 +113,10 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [exportingReport, setExportingReport] = useState(false)
   const [sendingInvites, setSendingInvites] = useState(false)
   const [responseView, setResponseView] = useState<{
-    reviewerId: number
-    targetId: number
-    reviewerName: string
-    targetName: string
+    reviewerId?: number
+    targetId?: number
+    reviewerName?: string
+    targetName?: string
   } | null>(null)
   const [previewOpen, setPreviewOpen] = useState(false)
   const [inviteResult, setInviteResult] = useState<{
@@ -189,6 +189,24 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     setResponseView(null)
     clearAdminResponseViewParams()
   }, [])
+
+  const openTargetResponseView = useCallback(
+    (info: { targetId: number; targetName: string }) => {
+      setResponseView({ targetId: info.targetId, targetName: info.targetName })
+      setActiveTab('matrix')
+      setMainPageTabState(surveyId, 'matrix')
+    },
+    [surveyId],
+  )
+
+  const openReviewerResponseView = useCallback(
+    (info: { reviewerId: number; reviewerName: string }) => {
+      setResponseView({ reviewerId: info.reviewerId, reviewerName: info.reviewerName })
+      setActiveTab('matrix')
+      setMainPageTabState(surveyId, 'matrix')
+    },
+    [surveyId],
+  )
 
   const loadUsers = useCallback(async () => {
     const users = await userApi.list()
@@ -725,6 +743,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               onExportCsv={handleExportCsv}
               onSendInvites={handleSendInvites}
               onViewResponse={openResponseView}
+              onViewTargetResponses={openTargetResponseView}
+              onViewReviewerResponses={openReviewerResponseView}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
               onSave={handleSaveMatrix}
@@ -761,6 +781,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                   onExportCsv={handleExportCsv}
                   onSendInvites={handleSendInvites}
                   onViewResponse={openResponseView}
+                  onViewTargetResponses={openTargetResponseView}
+                  onViewReviewerResponses={openReviewerResponseView}
                   onAddParticipant={handleAddMatrixParticipant}
                   onRemoveParticipant={handleRemoveMatrixParticipant}
                   onSave={handleSaveMatrix}

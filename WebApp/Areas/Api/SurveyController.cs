@@ -838,6 +838,20 @@ public class SurveyController(
 
     public record ResponseItemDto(string QuestionText, string AnswerText);
 
+    public record TargetResponseDto(
+        int QuestionOrder,
+        string QuestionText,
+        List<ReviewerAnswerDto> Answers);
+
+    public record ReviewerAnswerDto(int ReviewerId, string ReviewerName, string AnswerText);
+
+    public record RespondentResponseDto(
+        int TargetId,
+        string TargetName,
+        List<QuestionAnswerDto> Questions);
+
+    public record QuestionAnswerDto(int QuestionOrder, string QuestionText, string AnswerText);
+
     [HttpGet("{id:int}/responses/{reviewerId:int}/{targetId:int}")]
     public async Task<ActionResult<List<ResponseItemDto>>> GetResponses(
         int id, int reviewerId, int targetId, CancellationToken ct)
@@ -861,6 +875,87 @@ public class SurveyController(
             .ToListAsync(ct);
 
         return items;
+    }
+
+    [HttpGet("{id:int}/responses/target/{targetId:int}")]
+    public async Task<ActionResult<List<TargetResponseDto>>> GetTargetResponses(
+        int id, int targetId, CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        var surveyAnswers = await context.Answers.AsNoTracking()
+            .Join(
+                context.Questions.AsNoTracking(),
+                a => a.QuestionId,
+                q => q.Id,
+                (a, q) => new { a.TargetId, a.UserId, a.Text, Question = q })
+            .Where(x => x.TargetId == targetId && x.Question.SurveyId == id)
+            .ToListAsync(ct);
+
+        var respondents = await context.SurveyParticipants.AsNoTracking()
+            .Where(p => p.SurveyId == id && !p.IsTarget)
+            .Join(context.Users.AsNoTracking(), p => p.UserId, u => u.Id, (p, u) => new { u.Id, u.Name })
+            .ToListAsync(ct);
+
+        var nameById = respondents.ToDictionary(r => r.Id, r => r.Name);
+
+        var grouped = surveyAnswers
+            .GroupBy(x => new { x.Question.Order, x.Question.Text })
+            .OrderBy(g => g.Key.Order)
+            .ThenBy(g => g.Key.Text)
+            .Select(g => new TargetResponseDto(
+                g.Key.Order,
+                g.Key.Text,
+                g.Select(x => new ReviewerAnswerDto(
+                    x.UserId,
+                    nameById.GetValueOrDefault(x.UserId, $"Пользователь #{x.UserId}"),
+                    SurveyAnswerFormatter.FormatSelectedPlain(x.Question, x.Text))).ToList()))
+            .ToList();
+
+        return grouped;
+    }
+
+    [HttpGet("{id:int}/responses/reviewer/{reviewerId:int}")]
+    public async Task<ActionResult<List<RespondentResponseDto>>> GetReviewerResponses(
+        int id, int reviewerId, CancellationToken ct)
+    {
+        if (!await context.Surveys.AnyAsync(s => s.Id == id, ct))
+            return NotFound();
+
+        var surveyAnswers = await context.Answers.AsNoTracking()
+            .Join(
+                context.Questions.AsNoTracking(),
+                a => a.QuestionId,
+                q => q.Id,
+                (a, q) => new { a.TargetId, a.UserId, a.Text, Question = q })
+            .Where(x => x.UserId == reviewerId && x.Question.SurveyId == id)
+            .ToListAsync(ct);
+
+        var targets = await context.SurveyParticipants.AsNoTracking()
+            .Where(p => p.SurveyId == id && p.IsTarget)
+            .Join(context.Users.AsNoTracking(), p => p.UserId, u => u.Id, (p, u) => new { u.Id, u.Name })
+            .ToListAsync(ct);
+
+        var nameById = targets.ToDictionary(t => t.Id, t => t.Name);
+
+        var grouped = surveyAnswers
+            .GroupBy(x => x.TargetId)
+            .OrderBy(g => nameById.GetValueOrDefault(g.Key, $"Пользователь #{g.Key}"))
+            .Select(g => new RespondentResponseDto(
+                g.Key,
+                nameById.GetValueOrDefault(g.Key, $"Пользователь #{g.Key}"),
+                g.GroupBy(q => new { q.Question.Order, q.Question.Text })
+                    .OrderBy(qg => qg.Key.Order)
+                    .ThenBy(qg => qg.Key.Text)
+                    .Select(qg => new QuestionAnswerDto(
+                        qg.Key.Order,
+                        qg.Key.Text,
+                        SurveyAnswerFormatter.FormatSelectedPlain(qg.First().Question, qg.First().Text)))
+                    .ToList()))
+            .ToList();
+
+        return grouped;
     }
 
     [Authorize]
