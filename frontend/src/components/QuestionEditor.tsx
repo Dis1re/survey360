@@ -9,9 +9,13 @@ interface QuestionEditorProps {
 }
 
 const typeLabels: Record<Question['type'], string> = {
-  radio: 'Один вариант из списка (Radio)',
+  text: 'Текстовый ответ',
   scale: 'Шкала оценок',
-  text: 'Развернутый текстовый ответ',
+  radio: 'Один из списка',
+  checkboxes: 'Несколько из списка',
+  dropdown: 'Выпадающий список',
+  date: 'Дата',
+  stars: 'Оценка звёздами',
 }
 
 function parseStep(value: unknown): number | '' {
@@ -28,7 +32,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
   const [min, setMin] = useState<number | ''>('')
   const [max, setMax] = useState<number | ''>('')
   const [step, setStep] = useState<number | ''>('')
-
+  const [maxStars, setMaxStars] = useState<number>(5)
   const dirtyRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const onSaveRef = useRef(onSave)
@@ -44,8 +48,9 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
     min: '' as number | '',
     max: '' as number | '',
     step: '' as number | '',
+    maxStars: 5,
   })
-  fieldsRef.current = { text, type, isRequired, options, min, max, step }
+  fieldsRef.current = { text, type, isRequired, options, min, max, step, maxStars }
 
   const markDirty = () => {
     dirtyRef.current = true
@@ -61,20 +66,30 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
         setMax(q.props?.max != null ? Number(q.props.max) : '')
         setStep(parseStep(q.props?.step))
         setOptions([])
-      } else if (q.type === 'radio') {
+        setMaxStars(5)
+      } else if (q.type === 'radio' || q.type === 'checkboxes' || q.type === 'dropdown') {
         setOptions(
           Object.entries(q.props ?? {})
+            .filter(([k]) => !['min', 'max', 'step', 'maxStars'].includes(k))
             .map(([k, v]) => ({ value: Number(k), label: String(v) }))
             .sort((a, b) => a.value - b.value),
         )
         setMin('')
         setMax('')
         setStep('')
+        setMaxStars(5)
+      } else if (q.type === 'stars') {
+        setMaxStars(Number(q.props?.maxStars ?? q.props?.max ?? 5))
+        setMin('')
+        setMax('')
+        setStep('')
+        setOptions([])
       } else {
         setMin('')
         setMax('')
         setStep('')
         setOptions([])
+        setMaxStars(5)
       }
     }
   }
@@ -98,12 +113,14 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
       if (f.max !== '') scaleProps['max'] = Number(f.max)
       if (f.step !== '') scaleProps['step'] = Number(f.step)
       props = scaleProps
-    } else if (f.type === 'radio') {
-      const radioProps: QuestionProps = {}
+    } else if (f.type === 'radio' || f.type === 'checkboxes' || f.type === 'dropdown') {
+      const optionProps: QuestionProps = {}
       f.options.forEach((o, i) => {
-        radioProps[String(i + 1)] = o.label.trim()
+        optionProps[String(i + 1)] = o.label.trim()
       })
-      props = radioProps
+      props = optionProps
+    } else if (f.type === 'stars') {
+      props = { maxStars: f.maxStars }
     }
     return { ...q, text: f.text, type: f.type, isRequired: f.isRequired, props }
   }
@@ -126,7 +143,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
         timerRef.current = null
       }
     }
-  }, [text, type, isRequired, options, min, max, step, question, readOnly])
+  }, [text, type, isRequired, options, min, max, step, maxStars, question, readOnly])
 
   useEffect(() => {
     return () => {
@@ -262,7 +279,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
         </div>
       )}
 
-      {type === 'radio' && (
+      {(type === 'radio' || type === 'checkboxes' || type === 'dropdown') && (
         <div>
           <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
             Варианты ответов
@@ -320,6 +337,27 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
               Добавить вариант
             </button>
           )}
+        </div>
+      )}
+
+      {type === 'stars' && (
+        <div>
+          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            Количество звёзд
+          </label>
+          <select
+            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-blue-500 text-sm shadow-sm disabled:bg-gray-50 disabled:cursor-default"
+            value={maxStars}
+            onChange={(e) => {
+              setMaxStars(Number(e.target.value))
+              markDirty()
+            }}
+            disabled={readOnly}
+          >
+            {[3, 4, 5, 7, 10].map((n) => (
+              <option key={n} value={n}>{n}</option>
+            ))}
+          </select>
         </div>
       )}
 

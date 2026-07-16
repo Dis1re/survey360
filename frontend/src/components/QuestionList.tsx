@@ -28,8 +28,6 @@ export function QuestionList({
   onDeleteAll,
   onPreview,
 }: QuestionListProps) {
-  const [newQuestionText, setNewQuestionText] = useState('')
-  const [showInput, setShowInput] = useState(false)
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [overIndex, setOverIndex] = useState<number | null>(null)
 
@@ -64,19 +62,6 @@ export function QuestionList({
     setOverIndex(null)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const text = newQuestionText.trim()
-    if (!text) return
-
-    try {
-      await onQuestionCreate(text)
-      setNewQuestionText('')
-      setShowInput(false)
-    } catch (err) {
-      console.error(err)
-    }
-  }
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col h-full">
@@ -165,47 +150,22 @@ export function QuestionList({
         <p className="mt-4 text-xs text-gray-400 text-center px-2">
           Редактирование недоступно — опрос уже запущен или завершён
         </p>
-      ) : showInput ? (
-        <form onSubmit={handleSubmit} className="mt-4 space-y-2">
-          <input
-            type="text"
-            placeholder="Введите текст вопроса"
-            className="w-full border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500"
-            value={newQuestionText}
-            onChange={(e) => setNewQuestionText(e.target.value)}
-            autoFocus
-            disabled={creating}
-          />
-          <div className="flex gap-2">
-            <button
-              type="submit"
-              disabled={creating || !newQuestionText.trim()}
-              className="px-3 py-1.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-lg transition cursor-pointer"
-            >
-              {creating ? 'Добавление…' : 'Добавить'}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setShowInput(false)
-                setNewQuestionText('')
-              }}
-              disabled={creating}
-              className="px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-lg transition cursor-pointer"
-            >
-              Отмена
-            </button>
-          </div>
-        </form>
       ) : (
         <button
-          onClick={() => setShowInput(true)}
-          className="mt-4 w-full py-2 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 text-sm font-medium rounded-xl soft-press flex items-center justify-center gap-1 cursor-pointer"
+          onClick={() => onQuestionCreate('')}
+          disabled={creating}
+          className="mt-4 w-full py-2 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 text-sm font-medium rounded-xl soft-press flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-          </svg>
-          Добавить вопрос
+          {creating ? (
+            'Добавление…'
+          ) : (
+            <>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+              </svg>
+              Добавить вопрос
+            </>
+          )}
         </button>
       )}
 

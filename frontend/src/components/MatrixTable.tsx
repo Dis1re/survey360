@@ -306,7 +306,10 @@ export function MatrixTable({
             {surveyActive && onSendInvites && respondentLinks.length > 0 && (
               <button
                 type="button"
-                onClick={() => handleSendInvite()}
+                onClick={() => {
+                  if (!window.confirm('Отправить приглашения всем респондентам с email?')) return
+                  handleSendInvite()
+                }}
                 disabled={sendingInvites || !hasInviteEmails}
                 className="px-3 py-1.5 text-xs font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-lg transition cursor-pointer"
                 title={!hasInviteEmails ? 'У респондентов нет email' : 'Отправить приглашения всем респондентам'}

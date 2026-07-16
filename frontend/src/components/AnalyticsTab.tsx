@@ -37,7 +37,7 @@ function ScaleRadarChart({ questions, answersByQuestion }: { questions: Question
   const avgs = questions.map((q) => {
     const qAnswers = answersByQuestion.get(q.id) ?? []
     if (qAnswers.length === 0) return 0
-    const max = Number(q.props?.max ?? 5)
+    const max = Number(q.props?.max ?? q.props?.maxStars ?? 5)
     const sum = qAnswers.reduce((s, a) => s + (Number(a.text) || 0), 0)
     return (sum / qAnswers.length) / max
   })
@@ -95,8 +95,8 @@ function ScaleRadarChart({ questions, answersByQuestion }: { questions: Question
 }
 
 function ScaleBar({ question, qAnswers }: { question: Question; qAnswers: ApiAnswer[] }) {
-  const min = Number(question.props?.min ?? 1)
-  const max = Number(question.props?.max ?? 5)
+  const min = question.type === 'stars' ? 1 : Number(question.props?.min ?? 1)
+  const max = Number(question.props?.max ?? question.props?.maxStars ?? (question.type === 'stars' ? 5 : 5))
   const range = max - min + 1
   const counts = Array.from({ length: range }, () => 0)
   for (const a of qAnswers) {
@@ -135,8 +135,24 @@ function ScaleBar({ question, qAnswers }: { question: Question; qAnswers: ApiAns
 
 function RadioDistribution({ question, qAnswers }: { question: Question; qAnswers: ApiAnswer[] }) {
   const options = getRadioOptions(question.props)
-  const counts = options.map((_, i) => qAnswers.filter((a) => a.text === String(i + 1)).length)
-  const total = qAnswers.length || 1
+  const isMulti = question.type === 'checkboxes'
+
+  let total = 0
+  const counts = options.map((_, i) => {
+    const optVal = String(i + 1)
+    let count = 0
+    for (const a of qAnswers) {
+      if (isMulti) {
+        const selected = a.text.split(',').map((s) => s.trim())
+        if (selected.includes(optVal)) count++
+      } else {
+        if (a.text === optVal) count++
+      }
+    }
+    total += count
+    return count
+  })
+  if (!isMulti) total = qAnswers.length || 1
 
   return (
     <div>
@@ -240,7 +256,7 @@ export function AnalyticsTab({
   }, [answers])
 
   const scaleQuestions = useMemo(() => {
-    const qs = questions.filter((q) => q.type === 'scale')
+    const qs = questions.filter((q) => q.type === 'scale' || q.type === 'stars')
     const withAnswers = qs.filter((q) => (answersByQuestion.get(q.id) ?? []).length > 0)
     withAnswers.sort((a, b) => {
       const aAvg = avgScale(answersByQuestion.get(a.id) ?? [])
@@ -251,12 +267,12 @@ export function AnalyticsTab({
   }, [questions, answersByQuestion])
 
   const radioQuestions = useMemo(() =>
-    questions.filter((q) => q.type === 'radio' && (answersByQuestion.get(q.id) ?? []).length > 0),
+    questions.filter((q) => (q.type === 'radio' || q.type === 'checkboxes' || q.type === 'dropdown') && (answersByQuestion.get(q.id) ?? []).length > 0),
     [questions, answersByQuestion],
   )
 
   const textQuestions = useMemo(() =>
-    questions.filter((q) => q.type === 'text'),
+    questions.filter((q) => q.type === 'text' || q.type === 'date'),
     [questions],
   )
 

@@ -35,6 +35,10 @@ export function mapSurveyStatusToApi(status: Survey['status']): string {
 export function mapQuestionTypeToApi(type: Question['type']): string {
   if (type === 'scale') return 'rating'
   if (type === 'radio') return 'radio'
+  if (type === 'checkboxes') return 'checkboxes'
+  if (type === 'dropdown') return 'dropdown'
+  if (type === 'date') return 'date'
+  if (type === 'stars') return 'stars'
   return 'text'
 }
 
@@ -102,6 +106,10 @@ export function mapQuestionType(type: string): Question['type'] {
   const normalized = type.toLowerCase()
   if (normalized === 'radio' || normalized === 'single') return 'radio'
   if (normalized === 'scale' || normalized === 'rating') return 'scale'
+  if (normalized === 'checkboxes' || normalized === 'checkbox') return 'checkboxes'
+  if (normalized === 'dropdown') return 'dropdown'
+  if (normalized === 'date') return 'date'
+  if (normalized === 'stars' || normalized === 'star') return 'stars'
   return 'text'
 }
 
@@ -121,8 +129,9 @@ export function apiQuestionToQuestion(api: ApiQuestion): Question {
     isRequired: api.isRequired ?? false,
     props: parsedProps,
     options:
-      type === 'radio'
+      type === 'radio' || type === 'checkboxes' || type === 'dropdown'
         ? Object.entries(parsedProps ?? {})
+            .filter(([k]) => !['min', 'max', 'step', 'maxStars'].includes(k))
             .map(([k, v]) => ({ value: Number(k), label: String(v) }))
             .sort((a, b) => a.value - b.value)
         : undefined,

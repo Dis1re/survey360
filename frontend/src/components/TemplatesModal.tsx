@@ -8,6 +8,10 @@ const typeLabels: Record<string, string> = {
   rating: 'Шкала оценок',
   scale: 'Шкала оценок',
   radio: 'Один из вариантов',
+  checkboxes: 'Несколько из вариантов',
+  dropdown: 'Выпадающий список',
+  date: 'Дата',
+  stars: 'Оценка звёздами',
 }
 
 function parseRadioOptions(props: string | null): string[] {
