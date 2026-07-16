@@ -197,7 +197,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
   }
 
   return (
-    <form onSubmit={(e) => e.preventDefault()} className={`bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-6 shadow-sm space-y-5 overflow-y-auto h-full ${readOnly ? 'opacity-80' : ''}`}>
+    <form onSubmit={(e) => e.preventDefault()} className={`bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-6 shadow-sm space-y-5 lg:overflow-y-auto lg:h-full ${readOnly ? 'opacity-80' : ''}`}>
       <div className="flex items-center justify-between">
         {readOnly ? (
           <p className="text-xs text-gray-500 dark:text-gray-300 bg-gray-50 dark:bg-[#161a22] border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-2">
