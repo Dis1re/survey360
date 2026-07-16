@@ -84,6 +84,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
 
   const [userName, setUserName] = useState('Иван Иванов')
   const [userEmail, setUserEmail] = useState('ivan@example.com')
+  const [userPassword, setUserPassword] = useState('123456')
   const [userGetId, setUserGetId] = useState('')
   const [userResult, setUserResult] = useState<ApiUser | null>(null)
   const [userBusy, setUserBusy] = useState(false)
@@ -204,7 +205,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
     setUserBusy(true)
     setError(null)
     try {
-      const id = await userApi.create({ name: userName, email: userEmail })
+      const id = await userApi.create({ name: userName, email: userEmail, password: userPassword })
       setUserGetId(String(id))
       setAnswerUserId(String(id))
       const user = await userApi.get(id)
@@ -563,7 +564,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
             title="Пользователи"
             endpoints={<>POST /api/user · GET /api/user/&#123;id&#125; · GET /api/user/export-csv · POST /api/user/import-csv</>}
           >
-            <form className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4" onSubmit={handleCreateUser}>
+            <form className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4" onSubmit={handleCreateUser}>
               <Field label="Имя" hint="ФИО или отображаемое имя. Поле name в POST /api/user.">
                 <input
                   className={inputClass}
@@ -580,6 +581,16 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                   placeholder="Например: ivan@company.ru"
                   value={userEmail}
                   onChange={(e) => setUserEmail(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field label="Пароль" hint="Пароль для входа. Поле password в POST /api/user.">
+                <input
+                  className={inputClass}
+                  type="password"
+                  placeholder="Пароль"
+                  value={userPassword}
+                  onChange={(e) => setUserPassword(e.target.value)}
                   required
                 />
               </Field>

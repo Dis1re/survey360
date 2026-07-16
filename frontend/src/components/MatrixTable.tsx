@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react'
 import { buildRespondentInviteLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
 import { ConfirmModal } from './ConfirmModal'
-import { Modal } from './Modal'
 import { UserPickerModal } from './UserPickerModal'
 
 interface MatrixTableProps {
@@ -399,19 +398,6 @@ export function MatrixTable({
                             </div>
                             <div className="min-w-0">
                               <div>{respondent.name}</div>
-                              {surveyActive && (() => {
-                                const assignedTargets = targets.filter(
-                                  (t) =>
-                                    respondent.id !== t.id &&
-                                    (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
-                                )
-                                if (assignedTargets.length === 0) return null
-                                return (
-                                  <div className="text-[11px] text-gray-500 mt-0.5">
-                                    Объект: {assignedTargets.map((t) => t.name).join(', ')}
-                                  </div>
-                                )
-                              })()}
                               {!readOnly && targets.length > 0 && (() => {
                                 const rowActive = targets.every(
                                   (t) => respondent.id === t.id || (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
@@ -480,7 +466,7 @@ export function MatrixTable({
                                 if ((e.target as HTMLElement).closest('button')) return
                                 toggle(reviewerKey, targetKey)
                               }}
-                              className={`p-4 text-center border-r border-gray-200 ${isSelf ? 'bg-purple-100/80 dark:bg-purple-500/20' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40 dark:hover:bg-[#FF8600]/12'}`}
+                              className={`p-4 text-center border-r border-gray-200 dark:border-[#3a4250] ${isSelf ? 'bg-purple-100/80 dark:bg-purple-500/20' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40 dark:hover:bg-[#FF8600]/12'}`}
                             >
                               <div className="flex flex-col items-center gap-1.5">
                                 <span
@@ -521,7 +507,7 @@ export function MatrixTable({
                                         targetName: target.name,
                                       })
                                     }}
-                                    className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] hover:underline cursor-pointer"
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium text-[#FF8600] bg-orange-50 dark:bg-[#FF8600]/12 border border-orange-200/80 dark:border-[#FF8600]/35 hover:bg-orange-100 dark:hover:bg-[#FF8600]/18 hover:text-[#FF6B00] cursor-pointer transition"
                                     title="Просмотреть ответы"
                                   >
                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

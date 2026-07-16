@@ -8,14 +8,14 @@ using WebApp.Services;
 
 namespace WebApp.Areas.Api;
 
-public record LoginRequest(string Email);
+public record LoginRequest(string Email, string? Password = null);
 
-public record AuthUserDto(int Id, string Name, string Email, bool IsAdmin);
+public record AuthUserDto(int Id, string Name, string Email, bool IsAdmin, string? Token = null);
 
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
-public class AuthController(ApplicationDbContext context) : Controller
+public class AuthController(ApplicationDbContext context, AuthTokenService tokens) : Controller
 {
     [HttpPost("login")]
     public async Task<ActionResult<AuthUserDto>> Login([FromBody] LoginRequest request, CancellationToken ct)
@@ -24,6 +24,9 @@ public class AuthController(ApplicationDbContext context) : Controller
         if (string.IsNullOrEmpty(email))
             return BadRequest("Email обязателен");
 
+        if (string.IsNullOrWhiteSpace(request.Password))
+            return BadRequest("Пароль обязателен");
+
         var user = await context.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Email.ToLower() == email, ct);
@@ -31,8 +34,11 @@ public class AuthController(ApplicationDbContext context) : Controller
         if (user is null)
             return NotFound("Пользователь с таким email не найден");
 
+        if (!PasswordHelper.Verify(request.Password, user.PasswordHash))
+            return Unauthorized("Неверный пароль");
+
         await SignInAsync(user);
-        return ToDto(user);
+        return ToDto(user, includeToken: true);
     }
 
     [HttpPost("admin-login")]
@@ -47,7 +53,7 @@ public class AuthController(ApplicationDbContext context) : Controller
         {
             var devAdmin = await EnsureDevAdminAsync(ct);
             await SignInAsync(devAdmin);
-            return ToDto(devAdmin);
+            return ToDto(devAdmin, includeToken: true);
         }
 
         var email = raw.ToLowerInvariant();
@@ -62,7 +68,7 @@ public class AuthController(ApplicationDbContext context) : Controller
             return Forbid();
 
         await SignInAsync(user);
-        return ToDto(user);
+        return ToDto(user, includeToken: true);
     }
 
     [Authorize]
@@ -77,7 +83,11 @@ public class AuthController(ApplicationDbContext context) : Controller
             .AsNoTracking()
             .FirstOrDefaultAsync(u => u.Id == userId, ct);
 
-        return user is null ? Unauthorized() : ToDto(user);
+        if (user is null)
+            return Unauthorized();
+
+        // Re-issue tab token so a cookie-only session can be pinned to this browser tab
+        return ToDto(user, includeToken: true);
     }
 
     [Authorize]
@@ -92,13 +102,23 @@ public class AuthController(ApplicationDbContext context) : Controller
     {
         var admin = await context.Users.FirstOrDefaultAsync(u => u.IsAdmin, ct);
         if (admin is not null)
+        {
+            if (string.IsNullOrEmpty(admin.PasswordHash))
+            {
+                admin.PasswordHash = PasswordHelper.HashDefault();
+                admin.UpdatedAt = DateTime.UtcNow;
+                await context.SaveChangesAsync(ct);
+            }
             return admin;
+        }
 
         const string devEmail = "admin@survey360.local";
         admin = await context.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == devEmail, ct);
         if (admin is not null)
         {
             admin.IsAdmin = true;
+            if (string.IsNullOrEmpty(admin.PasswordHash))
+                admin.PasswordHash = PasswordHelper.HashDefault();
             admin.UpdatedAt = DateTime.UtcNow;
             await context.SaveChangesAsync(ct);
             return admin;
@@ -110,6 +130,7 @@ public class AuthController(ApplicationDbContext context) : Controller
             Name = "Admin",
             Email = devEmail,
             IsAdmin = true,
+            PasswordHash = PasswordHelper.HashDefault(),
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -120,6 +141,8 @@ public class AuthController(ApplicationDbContext context) : Controller
 
     private async Task SignInAsync(Models.User user)
     {
+        // Cookie kept as a fallback for SignalR / first load of a brand-new tab.
+        // Tab identity is primarily the bearer token stored in sessionStorage.
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         await HttpContext.SignInAsync(
             CookieAuthenticationDefaults.AuthenticationScheme,
@@ -131,6 +154,6 @@ public class AuthController(ApplicationDbContext context) : Controller
             });
     }
 
-    private static AuthUserDto ToDto(Models.User user) =>
-        new(user.Id, user.Name, user.Email, user.IsAdmin);
+    private AuthUserDto ToDto(Models.User user, bool includeToken) =>
+        new(user.Id, user.Name, user.Email, user.IsAdmin, includeToken ? tokens.CreateToken(user) : null);
 }
