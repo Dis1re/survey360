@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { questionApi, surveyApi, userApi } from '../api'
 import { MatrixTable, matrixToEntries } from '../components/MatrixTable'
 import { SIDEBAR_WIDTH_COLLAPSED, SIDEBAR_WIDTH_EXPANDED } from '../components/Sidebar'
@@ -24,6 +24,13 @@ import {
   mapSurveyStatusToApi,
   usersToParticipants,
 } from '../mappers'
+import {
+  clearAdminResponseViewParams,
+  parseAdminResponseViewParams,
+  resolveInitialMainPageTab,
+  setAdminResponseViewParams,
+  setMainPageTabState,
+} from '../routing'
 import type { ApiSurvey, ApiUser, Participant, Question, RespondentLink, SendInvitesResult, SurveyReportInfo } from '../types'
 
 function buildInviteResultModal(result: SendInvitesResult): {
@@ -82,7 +89,8 @@ interface MainPageProps {
 }
 
 export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCollapsed = false }: MainPageProps) {
-  const [activeTab, setActiveTab] = useState<Tab>('editor')
+  const [activeTab, setActiveTab] = useState<Tab>(() => resolveInitialMainPageTab(surveyId))
+  const prevSurveyIdRef = useRef<number | null>(null)
   const [matrixExpanded, setMatrixExpanded] = useState(false)
   const [loading, setLoading] = useState(() => surveyId !== null)
   const [survey, setSurvey] = useState<ApiSurvey | null>(null)
@@ -123,6 +131,62 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [loadError, setLoadError] = useState<string | null>(null)
   const [templateModal, setTemplateModal] = useState<'save' | 'load' | null>(null)
   const [editingTemplateId, setEditingTemplateId] = useState<number | null>(null)
+
+  const handleTabChange = useCallback(
+    (tab: Tab) => {
+      setActiveTab(tab)
+      setMainPageTabState(surveyId, tab)
+    },
+    [surveyId],
+  )
+
+  useEffect(() => {
+    setMainPageTabState(surveyId, activeTab)
+  }, [surveyId, activeTab])
+
+  useEffect(() => {
+    if (prevSurveyIdRef.current !== null && prevSurveyIdRef.current !== surveyId) {
+      clearAdminResponseViewParams()
+      setResponseView(null)
+    }
+    prevSurveyIdRef.current = surveyId
+  }, [surveyId])
+
+  useEffect(() => {
+    const pending = parseAdminResponseViewParams()
+    if (!pending || surveyId === null) return
+
+    const reviewer = respondents.find((r) => r.id === pending.reviewerId)
+    const target = targets.find((t) => t.id === pending.targetId)
+    if (!reviewer || !target) return
+
+    setResponseView({
+      reviewerId: pending.reviewerId,
+      targetId: pending.targetId,
+      reviewerName: reviewer.name,
+      targetName: target.name,
+    })
+  }, [surveyId, respondents, targets])
+
+  const openResponseView = useCallback(
+    (info: {
+      reviewerId: number
+      targetId: number
+      reviewerName: string
+      targetName: string
+    }) => {
+      setResponseView(info)
+      setAdminResponseViewParams(info.reviewerId, info.targetId)
+      setActiveTab('matrix')
+      setMainPageTabState(surveyId, 'matrix')
+    },
+    [surveyId],
+  )
+
+  const closeResponseView = useCallback(() => {
+    setResponseView(null)
+    clearAdminResponseViewParams()
+  }, [])
 
   const loadUsers = useCallback(async () => {
     const users = await userApi.list()
@@ -577,7 +641,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
         onUserCreated={loadUsers}
         onDelete={handleDeleteSurvey}
       />
-      <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {activeTab === 'editor' && (
         <div className="flex-1 min-h-0 p-6 overflow-hidden flex flex-col">
@@ -655,7 +719,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               onExportReport={handleExportReport}
               onExportCsv={handleExportCsv}
               onSendInvites={handleSendInvites}
-              onViewResponse={(info) => setResponseView(info)}
+              onViewResponse={openResponseView}
               onAddParticipant={handleAddMatrixParticipant}
               onRemoveParticipant={handleRemoveMatrixParticipant}
               onSave={handleSaveMatrix}
@@ -673,7 +737,6 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               >
                 <MatrixTable
                   key={`expanded-${surveyId}`}
-                  surveyId={surveyId}
                   targets={targets}
                   respondents={respondents}
                   allUsers={allUsers}
@@ -682,13 +745,17 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                   saving={savingMatrix}
                   adding={addingMatrixParticipant}
                   exporting={exportingReport}
+                  exportingCsv={exportingCsv}
+                  canExport={canExport}
                   sendingInvites={sendingInvites}
                   readOnly={!surveyEditable}
                   surveyActive={surveyStatus === 'active'}
                   surveyName={survey?.name ?? ''}
                   respondentLinks={respondentLinks}
                   onExportReport={handleExportReport}
+                  onExportCsv={handleExportCsv}
                   onSendInvites={handleSendInvites}
+                  onViewResponse={openResponseView}
                   onAddParticipant={handleAddMatrixParticipant}
                   onRemoveParticipant={handleRemoveMatrixParticipant}
                   onSave={handleSaveMatrix}
@@ -751,7 +818,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
           targetName={responseView.targetName}
           fullscreen
           sidebarWidth={sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED}
-          onClose={() => setResponseView(null)}
+          onClose={closeResponseView}
         />
       )}
 

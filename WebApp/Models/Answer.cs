@@ -7,5 +7,4 @@ public class Answer
     public int UserId { get; set; }
     public int TargetId { get; set; }
     public string Text { get; set; } = "";
-    public string Type { get; set; } = "";
 }

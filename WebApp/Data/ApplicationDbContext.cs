@@ -37,6 +37,10 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .HasOne<User>()
             .WithMany()
             .HasForeignKey(a => a.TargetId);
+
+        modelBuilder.Entity<Answer>()
+            .HasIndex(a => new { a.QuestionId, a.UserId, a.TargetId })
+            .IsUnique();
     
         modelBuilder.Entity<SurveyAssignment>()
             .HasOne<Survey>()
@@ -67,6 +71,10 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .HasIndex(sp => new { sp.SurveyId, sp.UserId })
             .IsUnique();
 
+        modelBuilder.Entity<SurveyParticipant>()
+            .HasIndex(sp => sp.Token)
+            .IsUnique();
+
         modelBuilder.Entity<Survey>()
             .HasOne<User>()
             .WithMany()
@@ -78,25 +86,6 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .WithMany()
             .HasForeignKey(qt => qt.SurveyTemplateId)
             .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<SurveyRespondentLink>()
-            .HasOne<Survey>()
-            .WithMany()
-            .HasForeignKey(l => l.SurveyId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        modelBuilder.Entity<SurveyRespondentLink>()
-            .HasOne<User>()
-            .WithMany()
-            .HasForeignKey(l => l.ReviewerId);
-
-        modelBuilder.Entity<SurveyRespondentLink>()
-            .HasIndex(l => l.Token)
-            .IsUnique();
-
-        modelBuilder.Entity<SurveyRespondentLink>()
-            .HasIndex(l => new { l.SurveyId, l.ReviewerId })
-            .IsUnique();
     }
 
     // Тут указываются все сущности БД, с которыми нужно уметь работать
@@ -108,5 +97,4 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<SurveyParticipant> SurveyParticipants => Set<SurveyParticipant>();
     public DbSet<SurveyTemplate> SurveyTemplates { get; set; }
     public DbSet<QuestionTemplate> QuestionTemplates { get; set; }
-    public DbSet<SurveyRespondentLink> SurveyRespondentLinks => Set<SurveyRespondentLink>();
 }

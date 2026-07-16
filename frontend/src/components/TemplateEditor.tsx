@@ -50,7 +50,7 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
   const handleSaveInfo = async () => {
     setSaving(true)
     try {
-      await templateApi.update(templateId, { name, description, props: '' })
+      await templateApi.update(templateId, { name, description })
     } catch (err) {
       console.error(err)
     } finally {

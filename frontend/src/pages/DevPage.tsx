@@ -321,7 +321,6 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
         userId,
         targetId,
         text: answerText,
-        type: answerType,
       })
       setAnswerGetId(String(id))
       setAnswerResult(await answerApi.get(id))

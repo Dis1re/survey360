@@ -5,7 +5,7 @@ using WebApp.Models;
 
 namespace WebApp.Areas.Api;
 
-public record CreateAnswerRequest(int QuestionId, int UserId, int TargetId, string Text, string Type);
+public record CreateAnswerRequest(int QuestionId, int UserId, int TargetId, string Text);
 
 [Area("api")]
 [ApiController]
@@ -36,7 +36,6 @@ public class AnswerController(ApplicationDbContext context) : Controller
             UserId = request.UserId,
             TargetId = request.TargetId,
             Text = request.Text,
-            Type = request.Type,
         };
         await context.Answers.AddAsync(answer, ct);
         await context.SaveChangesAsync(ct);
