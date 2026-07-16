@@ -380,7 +380,7 @@ export function MatrixTable({
                             <button
                               type="button"
                               onClick={() => onViewTargetResponses({ targetId: target.id, targetName: target.name })}
-                              className="mt-1 text-[10px] font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
+                              className="mt-1 text-[10px] font-medium border border-orange-200 dark:border-[#FF8600]/40 text-[#FF8600] hover:text-[#FF6B00] hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
                               title="Посмотреть ответы всех респондентов на этого объекта"
                             >
                               ответы
@@ -430,19 +430,6 @@ export function MatrixTable({
                             </div>
                             <div className="min-w-0">
                               <div>{respondent.name}</div>
-                              {surveyActive && (() => {
-                                const assignedTargets = targets.filter(
-                                  (t) =>
-                                    respondent.id !== t.id &&
-                                    (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
-                                )
-                                if (assignedTargets.length === 0) return null
-                                return (
-                                  <div className="text-[11px] text-gray-500 mt-0.5">
-                                    Объект: {assignedTargets.map((t) => t.name).join(', ')}
-                                  </div>
-                                )
-                              })()}
                               {!readOnly && targets.length > 0 && (() => {
                                 const rowActive = targets.every(
                                   (t) => respondent.id === t.id || (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
@@ -467,7 +454,7 @@ export function MatrixTable({
                                 <button
                                   type="button"
                                   onClick={() => onViewReviewerResponses({ reviewerId: respondent.id, reviewerName: respondent.name })}
-                                  className="mt-1.5 text-[10px] font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
+                                  className="mt-1.5 text-[10px] font-medium border border-orange-200 dark:border-[#FF8600]/40 text-[#FF8600] hover:text-[#FF6B00] hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
                                   title="Посмотреть все ответы этого респондента по всем объектам"
                                 >
                                   ответы
