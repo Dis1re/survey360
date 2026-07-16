@@ -497,16 +497,16 @@ export function MatrixTable({
                                 if ((e.target as HTMLElement).closest('button')) return
                                 toggle(reviewerKey, targetKey)
                               }}
-                              className={`p-4 text-center border-r border-gray-200 ${isSelf ? 'bg-purple-100/80 dark:bg-purple-500/15' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40 dark:hover:bg-[#FF8600]/12'}`}
+                              className={`p-4 text-center border-r border-gray-200 ${isSelf ? 'bg-purple-100/80 dark:bg-purple-500/20' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40 dark:hover:bg-[#FF8600]/12'}`}
                             >
                               <div className="flex flex-col items-center gap-1.5">
                                 <span
                                   className={`w-5 h-5 rounded-full flex items-center justify-center transition ${
                                     assigned
                                       ? completed
-                                        ? 'bg-green-50 dark:bg-green-500'
+                                        ? 'bg-green-500 dark:bg-green-400'
                                         : isSelf
-                                          ? 'bg-purple-50 dark:bg-purple-500'
+                                          ? 'bg-purple-500 dark:bg-purple-400'
                                           : 'bg-[#FF8600]'
                                       : 'border-2 border-gray-300 dark:border-[#3a4250] bg-transparent'
                                   }`}
