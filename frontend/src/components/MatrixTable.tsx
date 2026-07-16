@@ -16,6 +16,7 @@ interface MatrixTableProps {
   sendingInvites?: boolean
   readOnly?: boolean
   surveyActive?: boolean
+  surveyDraft?: boolean
   surveyName?: string
   respondentLinks?: RespondentLink[]
   onOpenExport?: () => void
@@ -70,6 +71,7 @@ export function MatrixTable({
   sendingInvites = false,
   readOnly = false,
   surveyActive = false,
+  surveyDraft = false,
   surveyName: _surveyName = '',
   respondentLinks = [],
   onOpenExport,
@@ -320,22 +322,21 @@ export function MatrixTable({
                     {targets.map((target) => (
                       <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 dark:text-gray-200 text-center min-w-[120px] sticky top-0 z-10 bg-gray-50 dark:bg-[#161a22] border-b border-r border-gray-200 dark:border-[#3a4250] shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <div className="flex flex-col items-center gap-1">
-                          <div className="relative inline-flex">
-                            <div className={`w-7 h-7 rounded-full ${target.color} flex items-center justify-center text-xs font-bold`}>
-                              {target.initial}
-                            </div>
+                          <div className="flex items-center justify-center gap-1.5">
+                            <span>{target.name}</span>
                             {!readOnly && (
                               <button
                                 type="button"
                                 onClick={() => onRemoveParticipant(target.id, 'target')}
-                                className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white dark:bg-[#1e222e] text-red-500 border border-red-200 dark:border-red-500/40 hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer"
+                                className="shrink-0 w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer"
                                 title="Удалить объект"
                               >
-                                ✕
+                                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
                               </button>
                             )}
                           </div>
-                          <span>{target.name}</span>
                           {!readOnly && (
                             (() => {
                               const colActive = respondents.length > 0 && respondents.every(
@@ -358,13 +359,13 @@ export function MatrixTable({
                               )
                             })()
                           )}
-                          {onViewTargetResponses && Object.values(completedAssignments).some(
+                          {onViewTargetResponses && !surveyDraft && Object.values(completedAssignments).some(
                             (byTarget) => byTarget[String(target.id)],
                           ) && (
                             <button
                               type="button"
                               onClick={() => onViewTargetResponses({ targetId: target.id, targetName: target.name })}
-                              className="mt-1 text-[10px] font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
+                              className="mt-1 text-[10px] font-medium border border-orange-200 dark:border-[#FF8600]/40 text-[#FF8600] hover:text-[#FF6B00] hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
                               title="Посмотреть ответы всех респондентов на этого объекта"
                             >
                               ответы
@@ -397,23 +398,22 @@ export function MatrixTable({
                       <tr key={respondent.id} className={`transition border-b border-gray-100 dark:border-[#303a48] hover:brightness-95 ${ri % 2 === 1 ? 'bg-gray-50 dark:bg-[#161a22]' : ''}`}>
                         <td className="p-4 font-medium text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-[#3a4250] sticky left-0 bg-white dark:bg-[#1e222e] z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                           <div className="flex items-center gap-2">
-                            <div className="relative inline-flex">
-                              <div className={`w-6 h-6 rounded-full ${respondent.color} flex items-center justify-center text-xs font-bold shrink-0`}>
-                                {respondent.initial}
-                              </div>
-                              {!readOnly && (
-                                <button
-                                  type="button"
-                                  onClick={() => onRemoveParticipant(respondent.id, 'respondent')}
-                                  className="absolute -top-1.5 -right-1.5 w-4 h-4 flex items-center justify-center rounded-full bg-white dark:bg-[#1e222e] text-red-500 border border-red-200 dark:border-red-500/40 hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer"
-                                  title="Удалить респондента"
-                                >
-                                  ✕
-                                </button>
-                              )}
-                            </div>
                             <div className="min-w-0">
-                              <div>{respondent.name}</div>
+                              <div className="flex items-center gap-1.5">
+                                <span>{respondent.name}</span>
+                                {!readOnly && (
+                                  <button
+                                    type="button"
+                                    onClick={() => onRemoveParticipant(respondent.id, 'respondent')}
+                                    className="shrink-0 w-5 h-5 flex items-center justify-center rounded text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer"
+                                    title="Удалить респондента"
+                                  >
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                  </button>
+                                )}
+                              </div>
                               {!readOnly && targets.length > 0 && (() => {
                                 const rowActive = targets.every(
                                   (t) => respondent.id === t.id || (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
@@ -434,13 +434,13 @@ export function MatrixTable({
                                   </button>
                                 )
                               })()}
-                              {onViewReviewerResponses && Object.values(
+                              {onViewReviewerResponses && !surveyDraft && Object.values(
                                 completedAssignments[String(respondent.id)] ?? {},
                               ).some(Boolean) && (
                                 <button
                                   type="button"
                                   onClick={() => onViewReviewerResponses({ reviewerId: respondent.id, reviewerName: respondent.name })}
-                                  className="mt-1.5 text-[10px] font-medium border border-blue-200 text-blue-600 hover:bg-blue-50 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
+                                  className="mt-1.5 text-[10px] font-medium border border-orange-200 dark:border-[#FF8600]/40 text-[#FF8600] hover:text-[#FF6B00] hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 rounded px-2 py-0.5 transition cursor-pointer whitespace-nowrap"
                                   title="Посмотреть все ответы этого респондента по всем объектам"
                                 >
                                   ответы

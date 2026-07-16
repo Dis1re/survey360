@@ -559,7 +559,7 @@ export function TakeSurvey({
       <>
         {thanksPopupOpen && (
           <div className="fixed top-4 right-4 z-50 w-72 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl shadow-lg p-4 flex items-start gap-3">
-            <img src="/sobaka.webp" alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
+            <img src="/sobaka.webp" alt="" className="cat-glow w-12 h-12 rounded-full object-cover shrink-0" />
             <p className="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100">
               Спасибо за помощь в улучшении работы! Ты крут!
             </p>
@@ -575,7 +575,7 @@ export function TakeSurvey({
         )}
         <div className="max-w-2xl mx-auto p-6 text-center">
           <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-8 shadow-sm">
-            <div className="mx-auto w-20 h-20 rounded-full bg-green-100 dark:bg-green-500/15 flex items-center justify-center overflow-hidden">
+            <div className="cat-glow mx-auto w-20 h-20 rounded-full bg-green-100 dark:bg-green-500/15 flex items-center justify-center overflow-hidden">
               <img src="/cat_icon.webp" alt="Успешное завершение" className="w-full h-full object-cover" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-4">Спасибо!</h2>
@@ -711,6 +711,11 @@ export function TakeSurvey({
             </span>
           </div>
         )}
+        {!preview && (
+          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-red-500">*</span> — обязательный вопрос для заполнения
+          </p>
+        )}
         </div>
       )}
 
@@ -728,6 +733,22 @@ export function TakeSurvey({
                     *
                   </span>
                 )}
+                {question.type === 'checkboxes' && (() => {
+                  const minSel = Number(question.props?.minSelect ?? 0)
+                  const maxSel = Number(question.props?.maxSelect ?? 0)
+                  if (minSel <= 0 && maxSel <= 0) return null
+                  const text =
+                    minSel > 0 && maxSel > 0
+                      ? `выберите от ${minSel} до ${maxSel} вариантов`
+                      : minSel > 0
+                        ? `выберите минимум ${minSel} вариантов`
+                        : `можно выбрать не более ${maxSel}`
+                  return (
+                    <span className="ml-2 text-xs font-normal text-gray-400 dark:text-gray-400">
+                      ({text})
+                    </span>
+                  )
+                })()}
               </label>
               <QuestionInput
                 question={question}

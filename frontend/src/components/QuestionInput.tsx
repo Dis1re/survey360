@@ -2,22 +2,22 @@ import { useState } from 'react'
 import type { Question } from '../types'
 
 const inputBase =
-  'border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]'
-const inputReadOnly = `${inputBase} bg-gray-50 dark:bg-[#161a22] text-gray-600 dark:text-gray-200 cursor-default`
-const optionSelected = 'border-[#FF8600] bg-orange-50 dark:bg-[#FF8600]/12'
-const optionDefault = 'border-gray-100 dark:border-[#303a48]'
+  'border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]'
+const inputReadOnly = `${inputBase} bg-gray-50 dark:bg-[#161a22] text-gray-600 dark:text-gray-300 cursor-default`
+const optionSelected = 'border-2 border-[#FF8600] bg-transparent'
+const optionDefault = 'border-gray-200 dark:border-[#3a4250]'
 const optionHover = 'hover:bg-gray-50 dark:hover:bg-[#262d3a]'
-const optionText = 'text-sm text-gray-800 dark:text-gray-200 min-w-0 flex-1 break-words'
-const scaleSelected = 'border-[#FF8600] bg-orange-50 dark:bg-[#FF8600]/12 text-[#FF6B00] dark:text-[#FF8600]'
+const optionText = 'text-sm text-gray-800 dark:text-gray-100 min-w-0 flex-1 break-words'
+const scaleSelected = 'border-2 border-[#FF8600] bg-transparent text-[#FF6B00] dark:text-[#FF8600]'
 const scaleUnselectedReadOnly =
   'border-gray-200 dark:border-[#3a4250] text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-[#161a22]'
 const scaleUnselected =
-  'border-gray-200 dark:border-[#3a4250] text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#262d3a]'
+  'border-gray-200 dark:border-[#3a4250] text-gray-600 dark:text-gray-200 bg-transparent'
 
 function getRadioOptions(props?: Record<string, string | number>): { value: number; label: string }[] {
   if (!props) return []
   return Object.entries(props)
-    .filter(([k]) => !['min', 'max', 'step', 'maxStars'].includes(k))
+    .filter(([k]) => !['min', 'max', 'step', 'maxStars', 'minSelect', 'maxSelect'].includes(k))
     .map(([k, v]) => ({ value: Number(k), label: String(v) }))
     .sort((a, b) => a.value - b.value)
 }
@@ -93,9 +93,9 @@ export function QuestionInput({
           disabled={readOnly}
           className={`w-full ${readOnly ? inputReadOnly : `${inputBase} bg-white dark:bg-[#161a22] text-gray-800 dark:text-gray-100`}`}
         >
-          <option value="">Выберите вариант…</option>
+          <option value="" className="bg-white dark:bg-[#1e222e] text-gray-800 dark:text-gray-100">Выберите вариант…</option>
           {options.map((opt) => (
-            <option key={opt.value} value={String(opt.value)}>
+            <option key={opt.value} value={String(opt.value)} className="bg-white dark:bg-[#1e222e] text-gray-800 dark:text-gray-100">
               {opt.label || String(opt.value)}
             </option>
           ))}
@@ -210,13 +210,8 @@ export function QuestionInput({
           })}
         </div>
         {(minSel > 0 || maxSel > 0) && (
-          <p className="text-[10px] text-gray-400 dark:text-gray-500 mt-1.5">
-            {minSel > 0 && maxSel > 0
-              ? `Выберите от ${minSel} до ${maxSel} вариантов`
-              : minSel > 0
-                ? `Выберите минимум ${minSel} вариантов`
-                : `Можно выбрать не более ${maxSel}`}
-            {` · выбрано ${selected.length}`}
+          <p className="text-[10px] text-gray-400 dark:text-gray-400 mt-1.5">
+            {`Выбрано ${selected.length}`}
           </p>
         )}
       </div>

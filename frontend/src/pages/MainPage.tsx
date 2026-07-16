@@ -761,6 +761,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               sendingInvites={sendingInvites}
               readOnly={!surveyEditable}
               surveyActive={surveyStatus === 'active'}
+              surveyDraft={surveyStatus === 'draft'}
               surveyName={survey?.name ?? ''}
               respondentLinks={respondentLinks}
                   onOpenExport={() => setExportFormat({ kind: 'menu' })}
@@ -796,6 +797,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                   sendingInvites={sendingInvites}
                   readOnly={!surveyEditable}
                   surveyActive={surveyStatus === 'active'}
+                  surveyDraft={surveyStatus === 'draft'}
                   surveyName={survey?.name ?? ''}
                   respondentLinks={respondentLinks}
               onOpenExport={() => setExportFormat({ kind: 'menu' })}
