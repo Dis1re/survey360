@@ -70,6 +70,31 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .HasOne(qt => qt.SurveyTemplate).WithMany(t => t.QuestionTemplates)
             .HasForeignKey(qt => qt.SurveyTemplateId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SurveyRespondentLink>()
+            .HasOne<Survey>()
+            .WithMany()
+            .HasForeignKey(l => l.SurveyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<SurveyRespondentLink>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(l => l.ReviewerId);
+
+        modelBuilder.Entity<SurveyRespondentLink>()
+            .HasIndex(l => l.Token)
+            .IsUnique();
+
+        modelBuilder.Entity<SurveyRespondentLink>()
+            .HasIndex(l => new { l.SurveyId, l.ReviewerId })
+            .IsUnique();
+
+        modelBuilder.Entity<UserGroup>()
+            .HasOne<User>()
+            .WithMany()
+            .HasForeignKey(g => g.CreatedByUserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 
     public DbSet<User> Users { get; set; }
@@ -80,4 +105,6 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<SurveyParticipant> SurveyParticipants => Set<SurveyParticipant>();
     public DbSet<SurveyTemplate> SurveyTemplates { get; set; }
     public DbSet<QuestionTemplate> QuestionTemplates { get; set; }
+    public DbSet<SurveyRespondentLink> SurveyRespondentLinks => Set<SurveyRespondentLink>();
+    public DbSet<UserGroup> UserGroups { get; set; }
 }

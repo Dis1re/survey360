@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using WebApp.Data;
 
@@ -10,9 +11,11 @@ using WebApp.Data;
 namespace WebApp.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260716100231_AddUserGroups")]
+    partial class AddUserGroups
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "10.0.0");
@@ -33,17 +36,20 @@ namespace WebApp.Migrations
                         .IsRequired()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
 
+                    b.HasIndex("QuestionId");
+
                     b.HasIndex("TargetId");
 
                     b.HasIndex("UserId");
-
-                    b.HasIndex("QuestionId", "UserId", "TargetId")
-                        .IsUnique();
 
                     b.ToTable("Answers");
                 });
@@ -173,10 +179,9 @@ namespace WebApp.Migrations
 
                     b.HasIndex("ReviewerId");
 
-                    b.HasIndex("TargetId");
+                    b.HasIndex("SurveyId");
 
-                    b.HasIndex("SurveyId", "ReviewerId", "TargetId")
-                        .IsUnique();
+                    b.HasIndex("TargetId");
 
                     b.ToTable("SurveyAssignments");
                 });
@@ -187,9 +192,6 @@ namespace WebApp.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
                     b.Property<bool>("IsRespondent")
                         .HasColumnType("INTEGER");
 
@@ -199,16 +201,10 @@ namespace WebApp.Migrations
                     b.Property<int>("SurveyId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Token")
-                        .HasColumnType("TEXT");
-
                     b.Property<int>("UserId")
                         .HasColumnType("INTEGER");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Token")
-                        .IsUnique();
 
                     b.HasIndex("UserId");
 
@@ -216,6 +212,38 @@ namespace WebApp.Migrations
                         .IsUnique();
 
                     b.ToTable("SurveyParticipants");
+                });
+
+            modelBuilder.Entity("WebApp.Models.SurveyRespondentLink", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("ReviewerId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int>("SurveyId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Token")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewerId");
+
+                    b.HasIndex("Token")
+                        .IsUnique();
+
+                    b.HasIndex("SurveyId", "ReviewerId")
+                        .IsUnique();
+
+                    b.ToTable("SurveyRespondentLinks");
                 });
 
             modelBuilder.Entity("WebApp.Models.SurveyTemplate", b =>
@@ -232,6 +260,10 @@ namespace WebApp.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Props")
                         .IsRequired()
                         .HasColumnType("TEXT");
 
@@ -297,61 +329,41 @@ namespace WebApp.Migrations
 
             modelBuilder.Entity("WebApp.Models.Answer", b =>
                 {
-                    b.HasOne("WebApp.Models.Question", "Question")
-                        .WithMany("Answers")
+                    b.HasOne("WebApp.Models.Question", null)
+                        .WithMany()
                         .HasForeignKey("QuestionId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApp.Models.User", "TargetUser")
-                        .WithMany("TargetAnswers")
+                    b.HasOne("WebApp.Models.User", null)
+                        .WithMany()
                         .HasForeignKey("TargetId")
-                        .OnDelete(DeleteBehavior.SetNull)
-                        .IsRequired();
-
-                    b.HasOne("WebApp.Models.User", "User")
-                        .WithMany("Answers")
-                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Question");
-
-                    b.Navigation("TargetUser");
-
-                    b.Navigation("User");
+                    b.HasOne("WebApp.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("WebApp.Models.Question", b =>
                 {
-                    b.HasOne("WebApp.Models.Survey", "Survey")
-                        .WithMany("Questions")
+                    b.HasOne("WebApp.Models.Survey", null)
+                        .WithMany()
                         .HasForeignKey("SurveyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Survey");
                 });
 
             modelBuilder.Entity("WebApp.Models.QuestionTemplate", b =>
                 {
-                    b.HasOne("WebApp.Models.SurveyTemplate", "SurveyTemplate")
-                        .WithMany("QuestionTemplates")
+                    b.HasOne("WebApp.Models.SurveyTemplate", null)
+                        .WithMany()
                         .HasForeignKey("SurveyTemplateId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("SurveyTemplate");
-                });
-
-            modelBuilder.Entity("WebApp.Models.Survey", b =>
-                {
-                    b.HasOne("WebApp.Models.User", "CreatedByUser")
-                        .WithMany("CreatedSurveys")
-                        .HasForeignKey("CreatedByUserId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
-                    b.Navigation("CreatedByUser");
                 });
 
             modelBuilder.Entity("WebApp.Models.Survey", b =>
@@ -364,82 +376,53 @@ namespace WebApp.Migrations
 
             modelBuilder.Entity("WebApp.Models.SurveyAssignment", b =>
                 {
-                    b.HasOne("WebApp.Models.User", "Reviewer")
-                        .WithMany("ReviewerAssignments")
+                    b.HasOne("WebApp.Models.User", null)
+                        .WithMany()
                         .HasForeignKey("ReviewerId")
-                        .OnDelete(DeleteBehavior.SetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApp.Models.Survey", "Survey")
-                        .WithMany("Assignments")
+                    b.HasOne("WebApp.Models.Survey", null)
+                        .WithMany()
                         .HasForeignKey("SurveyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApp.Models.User", "Target")
-                        .WithMany("TargetAssignments")
+                    b.HasOne("WebApp.Models.User", null)
+                        .WithMany()
                         .HasForeignKey("TargetId")
-                        .OnDelete(DeleteBehavior.SetNull)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Reviewer");
-
-                    b.Navigation("Survey");
-
-                    b.Navigation("Target");
                 });
 
             modelBuilder.Entity("WebApp.Models.SurveyParticipant", b =>
                 {
-                    b.HasOne("WebApp.Models.Survey", "Survey")
-                        .WithMany("Participants")
+                    b.HasOne("WebApp.Models.Survey", null)
+                        .WithMany()
                         .HasForeignKey("SurveyId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("WebApp.Models.User", "User")
-                        .WithMany("Participations")
+                    b.HasOne("WebApp.Models.User", null)
+                        .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("Survey");
-
-                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("WebApp.Models.Question", b =>
+            modelBuilder.Entity("WebApp.Models.SurveyRespondentLink", b =>
                 {
-                    b.Navigation("Answers");
-                });
+                    b.HasOne("WebApp.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-            modelBuilder.Entity("WebApp.Models.Survey", b =>
-                {
-                    b.Navigation("Assignments");
-
-                    b.Navigation("Participants");
-
-                    b.Navigation("Questions");
-                });
-
-            modelBuilder.Entity("WebApp.Models.SurveyTemplate", b =>
-                {
-                    b.Navigation("QuestionTemplates");
-                });
-
-            modelBuilder.Entity("WebApp.Models.User", b =>
-                {
-                    b.Navigation("Answers");
-
-                    b.Navigation("CreatedSurveys");
-
-                    b.Navigation("Participations");
-
-                    b.Navigation("ReviewerAssignments");
-
-                    b.Navigation("TargetAnswers");
-
-                    b.Navigation("TargetAssignments");
+                    b.HasOne("WebApp.Models.Survey", null)
+                        .WithMany()
+                        .HasForeignKey("SurveyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("WebApp.Models.UserGroup", b =>

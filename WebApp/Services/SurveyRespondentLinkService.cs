@@ -10,56 +10,48 @@ public record InviteInfoDto(int SurveyId, int ReviewerId);
 
 public class SurveyRespondentLinkService(ApplicationDbContext context)
 {
-    public async Task SyncRespondentLinksAsync(int surveyId, CancellationToken ct)
+    private async Task<HashSet<int>> GetAssignedReviewerIdsAsync(int surveyId, CancellationToken ct)
     {
-        var assignedReviewerIds = await context.SurveyAssignments
+        var ids = await context.SurveyAssignments
             .AsNoTracking()
             .Where(a => a.SurveyId == surveyId && a.IsAssigned)
             .Select(a => a.ReviewerId)
             .Distinct()
             .ToListAsync(ct);
 
-        var assignedSet = assignedReviewerIds.ToHashSet();
+        return ids.ToHashSet();
+    }
 
-        await context.SurveyParticipants
-            .Where(p => p.SurveyId == surveyId && p.IsRespondent && !assignedSet.Contains(p.UserId))
+    public async Task SyncRespondentLinksAsync(int surveyId, CancellationToken ct)
+    {
+        var assignedReviewerIds = await GetAssignedReviewerIdsAsync(surveyId, ct);
+
+        await context.SurveyRespondentLinks
+            .Where(l => l.SurveyId == surveyId && !assignedReviewerIds.Contains(l.ReviewerId))
             .ExecuteDeleteAsync(ct);
 
         if (assignedReviewerIds.Count == 0)
             return;
 
-        var existingTokenUserIds = await context.SurveyParticipants
+        var existingIds = await context.SurveyRespondentLinks
             .AsNoTracking()
-            .Where(p => p.SurveyId == surveyId && p.IsRespondent && p.Token != null)
-            .Select(p => p.UserId)
+            .Where(l => l.SurveyId == surveyId)
+            .Select(l => l.ReviewerId)
             .ToHashSetAsync(ct);
 
-        var missing = assignedReviewerIds.Where(id => !existingTokenUserIds.Contains(id)).ToList();
+        var missing = assignedReviewerIds.Where(id => !existingIds.Contains(id)).ToList();
         if (missing.Count == 0)
             return;
 
         foreach (var reviewerId in missing)
         {
-            var participant = await context.SurveyParticipants
-                .FirstOrDefaultAsync(p => p.SurveyId == surveyId && p.UserId == reviewerId, ct);
-
-            if (participant is null)
+            await context.SurveyRespondentLinks.AddAsync(new SurveyRespondentLink
             {
-                participant = new SurveyParticipant
-                {
-                    SurveyId = surveyId,
-                    UserId = reviewerId,
-                    IsRespondent = true,
-                    Token = Guid.NewGuid().ToString("N"),
-                    CreatedAt = DateTime.UtcNow,
-                };
-                await context.SurveyParticipants.AddAsync(participant, ct);
-            }
-            else if (participant.Token is null)
-            {
-                participant.Token = Guid.NewGuid().ToString("N");
-                participant.CreatedAt = DateTime.UtcNow;
-            }
+                SurveyId = surveyId,
+                ReviewerId = reviewerId,
+                Token = Guid.NewGuid().ToString("N"),
+                CreatedAt = DateTime.UtcNow,
+            }, ct);
         }
 
         await context.SaveChangesAsync(ct);
@@ -67,20 +59,23 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
 
     public async Task<List<RespondentLinkDto>> GetLinksAsync(int surveyId, CancellationToken ct)
     {
-        var links = await context.SurveyParticipants
+        await SyncRespondentLinksAsync(surveyId, ct);
+
+        var assignedReviewerIds = await GetAssignedReviewerIdsAsync(surveyId, ct);
+        if (assignedReviewerIds.Count == 0)
+            return [];
+
+        return await context.SurveyRespondentLinks
             .AsNoTracking()
-            .Where(p => p.SurveyId == surveyId && p.IsRespondent && p.Token != null)
+            .Where(l => l.SurveyId == surveyId && assignedReviewerIds.Contains(l.ReviewerId))
             .Join(
                 context.Users.AsNoTracking(),
-                p => p.UserId,
+                l => l.ReviewerId,
                 u => u.Id,
-                (p, u) => new { u.Id, u.Name, u.Email, Token = p.Token! })
+                (l, u) => new { u.Id, u.Name, u.Email, l.Token })
             .OrderBy(x => x.Name)
-            .ToListAsync(ct);
-
-        return links
             .Select(x => new RespondentLinkDto(x.Id, x.Name, x.Email, x.Token))
-            .ToList();
+            .ToListAsync(ct);
     }
 
     public async Task<InviteInfoDto?> ResolveTokenAsync(string token, CancellationToken ct)
@@ -88,41 +83,42 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
         if (string.IsNullOrWhiteSpace(token))
             return null;
 
-        var participant = await context.SurveyParticipants
+        var link = await context.SurveyRespondentLinks
             .AsNoTracking()
-            .FirstOrDefaultAsync(p => p.Token == token, ct);
+            .FirstOrDefaultAsync(l => l.Token == token, ct);
 
-        if (participant is null)
+        if (link is null)
             return null;
 
-        if (!await context.Surveys.AnyAsync(s => s.Id == participant.SurveyId, ct))
+        if (!await context.Surveys.AnyAsync(s => s.Id == link.SurveyId, ct))
             return null;
 
-        if (!await context.Users.AnyAsync(u => u.Id == participant.UserId, ct))
+        if (!await context.Users.AnyAsync(u => u.Id == link.ReviewerId, ct))
             return null;
 
-        if (!participant.IsRespondent)
+        var isRespondent = await context.SurveyParticipants
+            .AsNoTracking()
+            .AnyAsync(p => p.SurveyId == link.SurveyId && p.UserId == link.ReviewerId && p.IsRespondent, ct);
+
+        if (!isRespondent)
             return null;
 
         var hasAssignment = await context.SurveyAssignments
             .AsNoTracking()
             .AnyAsync(
-                a => a.SurveyId == participant.SurveyId && a.ReviewerId == participant.UserId && a.IsAssigned,
+                a => a.SurveyId == link.SurveyId && a.ReviewerId == link.ReviewerId && a.IsAssigned,
                 ct);
 
         if (!hasAssignment)
             return null;
 
-        return new InviteInfoDto(participant.SurveyId, participant.UserId);
+        return new InviteInfoDto(link.SurveyId, link.ReviewerId);
     }
 
     public async Task DeleteLinkAsync(int surveyId, int reviewerId, CancellationToken ct)
     {
-        await context.SurveyParticipants
-            .Where(p => p.SurveyId == surveyId && p.UserId == reviewerId)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(p => p.Token, (string?)null)
-                .SetProperty(p => p.CreatedAt, default(DateTime)),
-                ct);
+        await context.SurveyRespondentLinks
+            .Where(l => l.SurveyId == surveyId && l.ReviewerId == reviewerId)
+            .ExecuteDeleteAsync(ct);
     }
 }

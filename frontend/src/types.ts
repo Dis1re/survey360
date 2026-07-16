@@ -45,6 +45,14 @@ export interface Participant {
   color: string
 }
 
+export interface UserGroup {
+  id: number
+  name: string
+  userIds: number[]
+  createdByUserId: number
+  createdAt: string
+}
+
 export interface Assignments {
   [respondentId: string]: Record<string, boolean>
 }
