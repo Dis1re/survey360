@@ -25,7 +25,7 @@ export function DevRoutePage() {
     }
 
     let cancelled = false
-    login('Admin', true)
+    login('Admin', { asAdmin: true })
       .then(() => {
         if (!cancelled) setReady(true)
       })

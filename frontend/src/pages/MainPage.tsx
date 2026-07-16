@@ -145,11 +145,12 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     [surveyId],
   )
 
+  // Restore this survey's own tab when switching surveys (do not inherit ?tab= from another).
   useEffect(() => {
-    setMainPageTabState(surveyId, activeTab)
-  }, [surveyId, activeTab])
+    const tab = resolveInitialMainPageTab(surveyId)
+    setActiveTab(tab)
+    setMainPageTabState(surveyId, tab)
 
-  useEffect(() => {
     if (prevSurveyIdRef.current !== null && prevSurveyIdRef.current !== surveyId) {
       clearAdminResponseViewParams()
       setResponseView(null)
@@ -423,8 +424,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     if (surveyId === null || !surveyEditable) return
     setCreatingQuestion(true)
     try {
-      const id = await questionApi.create({ surveyId, text, type: 'rating', isRequired: false })
-      setQuestions((prev) => [...prev, apiQuestionToQuestion({ id, surveyId, text, type: 'rating' })])
+      const id = await questionApi.create({ surveyId, text, type: 'text', isRequired: false })
+      setQuestions((prev) => [...prev, apiQuestionToQuestion({ id, surveyId, text, type: 'text' })])
       setActiveQuestionId(id)
     } catch (err) {
       console.error(err)

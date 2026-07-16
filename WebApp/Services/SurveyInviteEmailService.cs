@@ -70,12 +70,24 @@ public class SurveyInviteEmailService(
 
             var targets = targetsByReviewer.GetValueOrDefault(link.ReviewerId) ?? [];
             var inviteUrl = $"{baseUrl}/survey/invite/{link.Token}";
-            var subject = $"Приглашение к опросу: {survey.Name}";
-            var body = BuildBody(link.ReviewerName, survey, targets, inviteUrl);
+            var subject = InviteEmailTemplates.BuildSubject(survey);
+            var textBody = InviteEmailTemplates.BuildTextBody(link.ReviewerName, survey, targets, inviteUrl);
+            var htmlBody = InviteEmailTemplates.BuildHtmlBody(
+                link.ReviewerName,
+                survey,
+                targets,
+                inviteUrl,
+                baseUrl);
 
             try
             {
-                await emailService.SendAsync(link.ReviewerEmail, link.ReviewerName, subject, body, ct);
+                await emailService.SendAsync(
+                    link.ReviewerEmail,
+                    link.ReviewerName,
+                    subject,
+                    textBody,
+                    htmlBody,
+                    ct);
                 sent++;
                 items.Add(new SendInviteItemResult(link.ReviewerId, link.ReviewerEmail, "sent", null));
             }
@@ -103,34 +115,5 @@ public class SurveyInviteEmailService(
                 parts.Add(e.Message);
         }
         return string.Join(" → ", parts);
-    }
-
-    private static string BuildBody(
-        string reviewerName,
-        Survey survey,
-        List<string> targetNames,
-        string inviteUrl)
-    {
-        var greeting = string.IsNullOrWhiteSpace(reviewerName)
-            ? "Здравствуйте!"
-            : $"Здравствуйте, {reviewerName}!";
-
-        var about = targetNames.Count switch
-        {
-            0 => "О ком опрос: объекты оценки не назначены.",
-            1 => $"О ком опрос: {targetNames[0]}.",
-            _ => $"О ком опрос: {string.Join(", ", targetNames)}.",
-        };
-
-        var descriptionBlock = string.IsNullOrWhiteSpace(survey.Description)
-            ? ""
-            : $"\n\nОписание опроса:\n{survey.Description.Trim()}";
-
-        return
-            $"{greeting}\n\n" +
-            $"Вас приглашают пройти опрос «{survey.Name}».\n\n" +
-            $"{about}{descriptionBlock}\n\n" +
-            "Перейдите по персональной ссылке:\n" +
-            $"{inviteUrl}\n";
     }
 }

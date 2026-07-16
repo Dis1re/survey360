@@ -25,7 +25,25 @@ builder.Services.AddSingleton<SingletonTime>();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+builder.Services.AddSingleton<AuthTokenService>();
+
+builder.Services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = "Smart";
+        options.DefaultChallengeScheme = "Smart";
+    })
+    .AddPolicyScheme("Smart", "Bearer or Cookie", options =>
+    {
+        options.ForwardDefaultSelector = context =>
+        {
+            var header = context.Request.Headers.Authorization.ToString();
+            if (!string.IsNullOrEmpty(header) && header.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+                return BearerTokenAuthHandler.SchemeName;
+            return CookieAuthenticationDefaults.AuthenticationScheme;
+        };
+    })
+    .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, BearerTokenAuthHandler>(
+        BearerTokenAuthHandler.SchemeName, _ => { })
     .AddCookie(options =>
     {
         options.Cookie.Name = "Survey360.Auth";
@@ -71,6 +89,21 @@ using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     await db.Database.MigrateAsync();
+
+    var usersWithoutPassword = await db.Users
+        .Where(u => u.PasswordHash == null || u.PasswordHash == "")
+        .ToListAsync();
+    if (usersWithoutPassword.Count > 0)
+    {
+        var hash = PasswordHelper.HashDefault();
+        var now = DateTime.UtcNow;
+        foreach (var user in usersWithoutPassword)
+        {
+            user.PasswordHash = hash;
+            user.UpdatedAt = now;
+        }
+        await db.SaveChangesAsync();
+    }
 }
 
 if (!app.Environment.IsDevelopment())
@@ -86,6 +119,18 @@ else
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseCors();
+// SignalR sends the tab token as ?access_token= — promote it to Authorization for Smart auth.
+app.Use(async (context, next) =>
+{
+    if (string.IsNullOrEmpty(context.Request.Headers.Authorization)
+        && context.Request.Query.TryGetValue("access_token", out var accessToken)
+        && !string.IsNullOrEmpty(accessToken))
+    {
+        context.Request.Headers.Authorization = $"Bearer {accessToken}";
+    }
+
+    await next();
+});
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

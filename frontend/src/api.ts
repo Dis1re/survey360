@@ -9,7 +9,7 @@ import type {
   ApiSurveyTemplateDetails,
   ApiUser,
   AssignmentEntry,
-  AuthUser,
+  AuthSession,
   CreateAnswerRequest,
   CreateQuestionRequest,
   CreateUserRequest,
@@ -24,19 +24,27 @@ import type {
   UpdateSurveyRequest,
   UserGroup,
 } from './types'
+import { getAuthToken } from './authStorage'
 
 const API = '/api'
 
 async function sendRequest<T>(url: string, options: RequestInit = {}): Promise<T> {
-  // credentials: 'include' sends auth cookies on all requests, including public invite/survey routes.
+  const token = getAuthToken()
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    ...(options.headers as Record<string, string> | undefined),
+  }
+  // Prefer tab-scoped bearer token so each browser tab can use a different account.
+  if (token) {
+    headers.Authorization = `Bearer ${token}`
+  }
+
+  // credentials: 'include' keeps cookie as fallback for SignalR / first load of a new tab.
   const response = await fetch(url, {
     credentials: 'include',
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json',
-      ...options.headers,
-    },
+    headers,
   })
 
   if (!response.ok) {
@@ -83,7 +91,11 @@ async function downloadFileResponse(response: Response, fallbackName: string) {
 }
 
 async function downloadSurveyFile(path: string, fallbackName: string) {
-  const response = await fetch(`${API}${path}`, { credentials: 'include' })
+  const token = getAuthToken()
+  const headers: Record<string, string> = {}
+  if (token) headers.Authorization = `Bearer ${token}`
+
+  const response = await fetch(`${API}${path}`, { credentials: 'include', headers })
   if (!response.ok) {
     const errorText = await response.text()
     console.error(`API ${path} [${response.status}]:`, errorText || response.statusText)
@@ -103,19 +115,19 @@ function buildFilterQuery(filter?: { reviewerId?: number; targetId?: number }): 
 }
 
 export const authApi = {
-  login: (email: string) =>
-    sendRequest<AuthUser>(`${API}/auth/login`, {
+  login: (email: string, password: string) =>
+    sendRequest<AuthSession>(`${API}/auth/login`, {
       method: 'POST',
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, password }),
     }),
 
   adminLogin: (email: string) =>
-    sendRequest<AuthUser>(`${API}/auth/admin-login`, {
+    sendRequest<AuthSession>(`${API}/auth/admin-login`, {
       method: 'POST',
       body: JSON.stringify({ email }),
     }),
 
-  me: () => sendRequest<AuthUser>(`${API}/auth/me`),
+  me: () => sendRequest<AuthSession>(`${API}/auth/me`),
 
   logout: () => sendRequest<void>(`${API}/auth/logout`, { method: 'POST' }),
 }
@@ -286,7 +298,11 @@ export const userApi = {
   get: (id: number) => sendRequest<ApiUser>(`${API}/user/${id}`),
 
   exportCsv: async () => {
-    const response = await fetch(`${API}/user/export-csv`, { credentials: 'include' })
+    const token = getAuthToken()
+    const headers: Record<string, string> = {}
+    if (token) headers.Authorization = `Bearer ${token}`
+
+    const response = await fetch(`${API}/user/export-csv`, { credentials: 'include', headers })
     if (!response.ok) throw new Error(`Ошибка API [${response.status}]`)
 
     const blob = await response.blob()
@@ -301,9 +317,14 @@ export const userApi = {
   importCsv: async (file: File) => {
     const formData = new FormData()
     formData.append('file', file)
+    const token = getAuthToken()
+    const headers: Record<string, string> = {}
+    if (token) headers.Authorization = `Bearer ${token}`
+
     const response = await fetch(`${API}/user/import-csv`, {
       method: 'POST',
       credentials: 'include',
+      headers,
       body: formData,
     })
     if (!response.ok) {

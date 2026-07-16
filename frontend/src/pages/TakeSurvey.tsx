@@ -14,6 +14,8 @@ interface TakeSurveyProps {
   hideUserSwitch?: boolean
   lockedReviewerId?: number
   preview?: boolean
+  /** Fired after answers are submitted and assignment is marked complete. */
+  onCompleted?: () => void
 }
 
 interface TargetEntry {
@@ -231,6 +233,7 @@ export function TakeSurvey({
   hideUserSwitch = false,
   lockedReviewerId,
   preview = false,
+  onCompleted,
 }: TakeSurveyProps) {
   const initialParams = parseSurveyResponseParams()
   const initialReviewerId = authUserId ?? lockedReviewerId ?? initialParams.reviewerId
@@ -490,6 +493,7 @@ export function TakeSurvey({
       await surveyApi.completeAssignment(surveyId, { reviewerId: lockedUserId, targetId })
       setSubmitted(true)
       setThanksPopupOpen(true)
+      onCompleted?.()
       if (storageKey) {
         try {
           localStorage.removeItem(storageKey)
