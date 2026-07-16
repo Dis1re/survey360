@@ -601,7 +601,7 @@ export function Sidebar({
                 isSelected={survey.id === activeSurveyId}
                 onSelect={() => onSurveySelect(survey.id, scope)}
                 onDuplicate={onDuplicate && scope === 'mine' ? () => onDuplicate(survey.id) : undefined}
-                onDelete={onDelete && scope === 'mine' ? () => onDelete(survey.id) : undefined}
+                onDelete={onDelete && scope === 'mine' && survey.status !== 'active' ? () => onDelete(survey.id) : undefined}
                 showProgress={showProgress}
                 completedAll={allDone}
                 participationView={hasUserScope && scope === 'participation'}
