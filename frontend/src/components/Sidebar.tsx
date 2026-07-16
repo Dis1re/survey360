@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import {
   isMySurvey,
   isParticipationDone,
@@ -9,9 +10,9 @@ import type { Survey } from '../types'
 import { UserBar } from './UserBar'
 import { ThemeToggle } from './ThemeToggle'
 
-type SurveyStatusFilter = Survey['status']
+type SurveyStatusFilter = Survey['status'] | null
 type SurveyScope = 'mine' | 'participation'
-type ParticipationFilter = 'pending' | 'done'
+type ParticipationFilter = 'pending' | 'done' | null
 
 const mineStatusFilters: { id: SurveyStatusFilter; label: string }[] = [
   { id: 'draft', label: 'Черновик' },
@@ -40,6 +41,8 @@ interface SidebarProps {
   onSearch: (query: string) => void
   onOpenDev?: () => void
   onOpenDetails?: () => void
+  onDuplicate?: (id: number) => void
+  onDelete?: (id: number) => void
   collapsed: boolean
   onToggleCollapsed: () => void
 }
@@ -79,18 +82,28 @@ function SurveyCard({
   survey,
   isSelected,
   onSelect,
+  onDuplicate,
+  onDelete,
   showProgress = false,
   highlightPending = false,
+  completedAll = false,
 }: {
   survey: Survey
   isSelected: boolean
   onSelect: () => void
+  onDuplicate?: () => void
+  onDelete?: () => void
   showProgress?: boolean
   highlightPending?: boolean
+  completedAll?: boolean
 }) {
-  const cfg = statusConfig[survey.status]
+  const cfg = completedAll && survey.status === 'active'
+    ? { label: 'Активен', dotClass: 'bg-amber-400', bgClass: 'bg-amber-50', textClass: 'text-amber-700' }
+    : statusConfig[survey.status]
   const assigned = survey.myAssignedCount ?? 0
   const completed = survey.myCompletedCount ?? 0
+  const [menuOpen, setMenuOpen] = useState(false)
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 })
 
   return (
     <div
@@ -103,7 +116,7 @@ function SurveyCard({
           onSelect()
         }
       }}
-      className={`sidebar-card p-3 rounded-xl cursor-pointer border ${
+      className={`sidebar-card relative p-3 rounded-xl cursor-pointer border ${
         isSelected
           ? 'bg-white dark:bg-[#1e222e] border-l-4 border-l-[#FF8600] border-gray-200 dark:border-[#3a4250] shadow-sm'
           : highlightPending
@@ -120,20 +133,86 @@ function SurveyCard({
         </span>
           <span className="text-xs text-gray-400 dark:text-gray-400">{survey.date}</span>
       </div>
-      <h4
-        className={`font-medium text-sm truncate ${
-          isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-200'
-        }`}
-      >
-        {survey.title}
-      </h4>
-      {showProgress && assigned > 0 ? (
-        <p className="text-xs text-gray-500 dark:text-gray-300 truncate mt-0.5">
-          {completed} из {assigned} оценок
-        </p>
-      ) : (
-        <p className="text-xs text-gray-500 dark:text-gray-300 truncate mt-0.5">{survey.description}</p>
-      )}
+      <div className="flex items-end justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <h4
+            className={`font-medium text-sm truncate ${
+              isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-200'
+            }`}
+          >
+            {survey.title}
+          </h4>
+          {showProgress && assigned > 0 ? (
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">
+              {completed} из {assigned} оценок
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-0.5">{survey.description}</p>
+          )}
+        </div>
+        {(onDuplicate || onDelete) && (
+          <div className="shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                if (menuOpen) {
+                  setMenuOpen(false)
+                } else {
+                  const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+                  setMenuPos({ top: rect.bottom + 4, left: rect.right - 140 })
+                  setMenuOpen(true)
+                }
+              }}
+              className="w-7 h-7 flex items-center justify-center rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition cursor-pointer"
+              aria-label="Ещё"
+            >
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 16 16">
+                <circle cx="8" cy="3" r="1.5" />
+                <circle cx="8" cy="8" r="1.5" />
+                <circle cx="8" cy="13" r="1.5" />
+              </svg>
+            </button>
+          </div>
+        )}
+        {menuOpen && createPortal(
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+            <div
+              className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[140px]"
+              style={{ top: menuPos.top, left: menuPos.left }}
+            >
+              {onDuplicate && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                    onDuplicate()
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                >
+                  Дублировать
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setMenuOpen(false)
+                    onDelete()
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+                >
+                  Удалить
+                </button>
+              )}
+            </div>
+          </>,
+          document.body,
+        )}
+      </div>
     </div>
   )
 }
@@ -143,13 +222,17 @@ function SurveyMiniCard({
   isSelected,
   onSelect,
   showProgress = false,
+  completedAll = false,
 }: {
   survey: Survey
   isSelected: boolean
   onSelect: () => void
   showProgress?: boolean
+  completedAll?: boolean
 }) {
-  const cfg = statusConfig[survey.status]
+  const cfg = completedAll && survey.status === 'active'
+    ? { label: 'Активен', dotClass: 'bg-amber-400', bgClass: 'bg-amber-50', textClass: 'text-amber-700' }
+    : statusConfig[survey.status]
   const initial = getSurveyInitial(survey.title)
   const assigned = survey.myAssignedCount ?? 0
   const completed = survey.myCompletedCount ?? 0
@@ -216,13 +299,15 @@ export function Sidebar({
   onSearch,
   onOpenDev,
   onOpenDetails,
+  onDuplicate,
+  onDelete,
   collapsed,
   onToggleCollapsed,
 }: SidebarProps) {
   const [query, setQuery] = useState('')
   const [internalScope, setInternalScope] = useState<SurveyScope>('mine')
-  const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>('active')
-  const [participationFilter, setParticipationFilter] = useState<ParticipationFilter>('pending')
+  const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>(null)
+  const [participationFilter, setParticipationFilter] = useState<ParticipationFilter>(null)
   const initialDefaultApplied = useRef(false)
 
   const hasUserScope = currentUserId != null
@@ -248,11 +333,12 @@ export function Sidebar({
 
   const filteredSurveys = useMemo(() => {
     if (!hasUserScope) {
-      return scopedSurveys.filter((s) => s.status === statusFilter)
+      return statusFilter === null ? scopedSurveys : scopedSurveys.filter((s) => s.status === statusFilter)
     }
     if (scope === 'mine') {
-      return scopedSurveys.filter((s) => s.status === statusFilter)
+      return statusFilter === null ? scopedSurveys : scopedSurveys.filter((s) => s.status === statusFilter)
     }
+    if (participationFilter === null) return scopedSurveys
     return scopedSurveys.filter((s) =>
       participationFilter === 'pending' ? isParticipationPending(s) : isParticipationDone(s),
     )
@@ -260,35 +346,18 @@ export function Sidebar({
 
   useEffect(() => {
     if (!hasUserScope || loading || initialDefaultApplied.current) return
-    if (surveys.length === 0) {
-      initialDefaultApplied.current = true
-      return
-    }
-
     const pending = surveys.filter((s) => isParticipationSurvey(s) && isParticipationPending(s))
 
     if (pending.length > 0) {
       setScope('participation')
-      setParticipationFilter('pending')
     } else {
       setScope('mine')
-      setStatusFilter('active')
     }
+    setStatusFilter(null)
+    setParticipationFilter(null)
 
     initialDefaultApplied.current = true
   }, [loading, surveys, currentUserId, hasUserScope])
-
-  useEffect(() => {
-    if (!hasUserScope || activeSurveyId === null) return
-    const selected = surveys.find((s) => s.id === activeSurveyId)
-    if (!selected) return
-
-    if (scope === 'participation' && isParticipationSurvey(selected)) {
-      setParticipationFilter(isParticipationDone(selected) ? 'done' : 'pending')
-    } else if (scope === 'mine' && isMySurvey(selected, currentUserId!)) {
-      setStatusFilter(selected.status)
-    }
-  }, [activeSurveyId, surveys, currentUserId, hasUserScope, scope])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -441,9 +510,9 @@ export function Sidebar({
                 }
                 onClick={() => {
                   if (hasUserScope && scope === 'participation') {
-                    setParticipationFilter(id as ParticipationFilter)
+                    setParticipationFilter(participationFilter === id ? null : (id as ParticipationFilter))
                   } else {
-                    setStatusFilter(id as SurveyStatusFilter)
+                    setStatusFilter(statusFilter === id ? null : (id as SurveyStatusFilter))
                   }
                 }}
               >
@@ -496,30 +565,44 @@ export function Sidebar({
           ) : filteredSurveys.length === 0 ? (
             !collapsed &&             <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-400">{emptyMessage}</p>
           ) : collapsed ? (
-            filteredSurveys.map((survey) => (
+            filteredSurveys.map((survey) => {
+              const allDone = showProgress && survey.status === 'active'
+                && (survey.myCompletedCount ?? 0) >= (survey.myAssignedCount ?? 0)
+                && (survey.myAssignedCount ?? 0) > 0
+              return (
               <SurveyMiniCard
                 key={survey.id}
                 survey={survey}
                 isSelected={survey.id === activeSurveyId}
                 onSelect={() => onSurveySelect(survey.id, scope)}
                 showProgress={showProgress}
+                completedAll={allDone}
               />
-            ))
+              )
+            })
           ) : (
-            filteredSurveys.map((survey) => (
+            filteredSurveys.map((survey) => {
+              const allDone = showProgress && survey.status === 'active'
+                && (survey.myCompletedCount ?? 0) >= (survey.myAssignedCount ?? 0)
+                && (survey.myAssignedCount ?? 0) > 0
+              return (
               <SurveyCard
                 key={survey.id}
                 survey={survey}
                 isSelected={survey.id === activeSurveyId}
                 onSelect={() => onSurveySelect(survey.id, scope)}
+                onDuplicate={onDuplicate && scope === 'mine' ? () => onDuplicate(survey.id) : undefined}
+                onDelete={onDelete && scope === 'mine' ? () => onDelete(survey.id) : undefined}
                 showProgress={showProgress}
+                completedAll={allDone}
                 highlightPending={
                   showProgress &&
                   participationFilter === 'pending' &&
                   isParticipationPending(survey)
                 }
               />
-            ))
+              )
+            })
           )}
         </div>
       </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { surveyApi } from '../api'
+import { ConfirmModal } from '../components/ConfirmModal'
 import { Sidebar } from '../components/Sidebar'
 import { useAuth } from '../context/AuthContext'
 import { useSurveyLive } from '../hooks/useSurveyLive'
@@ -20,6 +21,7 @@ export function UserApp() {
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -73,6 +75,28 @@ export function UserApp() {
   // Remount open page when list status changes (e.g. Активен → Завершен).
   const openPageKey = `${selectedSurveyId ?? 'none'}-${selectedSurvey?.status ?? ''}`
 
+  const handleDuplicate = async (id: number) => {
+    try {
+      const newId = await surveyApi.duplicate(id)
+      await loadSurveys()
+      setSelectedSurveyId(newId)
+      setSidebarScope('mine')
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (deletingId === null) return
+    try {
+      await surveyApi.delete(deletingId)
+      setDeletingId(null)
+      await loadSurveys()
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   return (
     <div className="flex h-screen overflow-hidden dark:bg-[#161a22]">
       <Sidebar
@@ -90,6 +114,8 @@ export function UserApp() {
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
         onOpenDev={user?.isAdmin ? openDevPage : undefined}
+        onDuplicate={handleDuplicate}
+        onDelete={(id) => setDeletingId(id)}
         collapsed={sidebarCollapsed}
         onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
       />
@@ -123,6 +149,17 @@ export function UserApp() {
           />
         )}
       </main>
+
+      {deletingId !== null && (
+        <ConfirmModal
+          title="Удалить опрос?"
+          variant="danger"
+          confirmLabel="Удалить"
+          message="Опрос и все его ответы будут безвозвратно удалены. Действие нельзя отменить."
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeletingId(null)}
+        />
+      )}
     </div>
   )
 }
