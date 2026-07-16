@@ -3,7 +3,7 @@ import type { Question } from '../types'
 function getOptions(props?: Record<string, string | number>): { value: number; label: string }[] {
   if (!props) return []
   return Object.entries(props)
-    .filter(([k]) => !['min', 'max', 'step', 'maxStars'].includes(k))
+    .filter(([k]) => !['min', 'max', 'step', 'maxStars', 'minSelect', 'maxSelect'].includes(k))
     .map(([k, v]) => ({ value: Number(k), label: String(v) }))
     .sort((a, b) => a.value - b.value)
 }
