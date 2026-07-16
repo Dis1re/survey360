@@ -1,11 +1,30 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-out: cubic-bezier(0.2, 0.9, 0.2, 1);
   --dur-fast: 160ms;
   --dur: 240ms;
   --dur-slow: 360ms;
+
+  /* Brand */
+  --brand: #FF8600;
+  --brand-strong: #FF6B00;
+
+  /* Light surfaces */
+  --bg-app: #f9fafb;
+  --bg-surface: #ffffff;
+  --bg-surface-2: #f3f4f6;
+  --border: #e5e7eb;
+}
+
+.dark {
+  --bg-app: #161a22;
+  --bg-surface: #1e222e;
+  --bg-surface-2: #303a48;
+  --border: #3a4250;
 }
 
 /* ——— Shared motion utilities ——— */
@@ -194,6 +213,12 @@
 }
 .tab-btn:hover[data-active='false'] {
   color: rgba(17, 24, 39, 0.8);
+}
+.dark .tab-btn[data-active='false'] {
+  color: rgba(229, 231, 235, 0.7);
+}
+.dark .tab-btn:hover[data-active='false'] {
+  color: rgba(229, 231, 235, 0.92);
 }
 
 /* ——— Form focus polish ——— */
