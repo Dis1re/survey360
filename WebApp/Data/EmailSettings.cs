@@ -16,8 +16,8 @@ public class EmailSettings
     /// <summary>Base URL of the frontend (for invite links), e.g. http://localhost:5173</summary>
     public string PublicBaseUrl { get; set; } = "http://localhost:5173";
 
-    /// <summary>Pause between emails to avoid Mailtrap free-plan rate limit (429).</summary>
-    public int DelayBetweenEmailsMs { get; set; } = 1500;
+    /// <summary>Pause between emails to avoid Mailtrap rate limits and transient API errors.</summary>
+    public int DelayBetweenEmailsMs { get; set; } = 2000;
 
     // SMTP left for reference; outbound SMTP is often blocked on local networks
     public string Host { get; set; } = "sandbox.smtp.mailtrap.io";

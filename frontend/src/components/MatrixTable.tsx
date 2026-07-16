@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { buildRespondentInviteLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
+import { ConfirmModal } from './ConfirmModal'
 import { Modal } from './Modal'
 
 interface MatrixTableProps {
@@ -86,6 +87,7 @@ export function MatrixTable({
   const [search, setSearch] = useState('')
   const [copiedReviewerId, setCopiedReviewerId] = useState<number | null>(null)
   const [sendingReviewerId, setSendingReviewerId] = useState<number | null>(null)
+  const [confirmSendAll, setConfirmSendAll] = useState(false)
 
   const dirtyRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -100,7 +102,8 @@ export function MatrixTable({
     respondentLinks.map((l) => [l.reviewerId, l]),
   ) as Record<number, RespondentLink>
 
-  const hasInviteEmails = respondentLinks.some((l) => l.reviewerEmail?.trim())
+  const inviteEmailCount = respondentLinks.filter((l) => l.reviewerEmail?.trim()).length
+  const hasInviteEmails = inviteEmailCount > 0
 
   const handleCopyInviteLink = async (reviewerId: number, token: string) => {
     try {
@@ -306,10 +309,7 @@ export function MatrixTable({
             {surveyActive && onSendInvites && respondentLinks.length > 0 && (
               <button
                 type="button"
-                onClick={() => {
-                  if (!window.confirm('Отправить приглашения всем респондентам с email?')) return
-                  handleSendInvite()
-                }}
+                onClick={() => setConfirmSendAll(true)}
                 disabled={sendingInvites || !hasInviteEmails}
                 className="px-3 py-1.5 text-xs font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 rounded-lg transition cursor-pointer"
                 title={!hasInviteEmails ? 'У респондентов нет email' : 'Отправить приглашения всем респондентам'}
@@ -416,6 +416,19 @@ export function MatrixTable({
                             </div>
                             <div className="min-w-0">
                               <div>{respondent.name}</div>
+                              {surveyActive && (() => {
+                                const assignedTargets = targets.filter(
+                                  (t) =>
+                                    respondent.id !== t.id &&
+                                    (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
+                                )
+                                if (assignedTargets.length === 0) return null
+                                return (
+                                  <div className="text-[11px] text-gray-500 mt-0.5">
+                                    Объект: {assignedTargets.map((t) => t.name).join(', ')}
+                                  </div>
+                                )
+                              })()}
                               {!readOnly && targets.length > 0 && (() => {
                                 const rowActive = targets.every(
                                   (t) => respondent.id === t.id || (assignments[String(respondent.id)]?.[String(t.id)] ?? false),
@@ -699,6 +712,30 @@ export function MatrixTable({
             </button>
           </div>
         </Modal>
+      )}
+
+      {confirmSendAll && (
+        <ConfirmModal
+          title="Разослать приглашения?"
+          variant="default"
+          confirmLabel="Разослать"
+          loadingLabel="Отправка…"
+          loading={sendingInvites && sendingReviewerId === -1}
+          onConfirm={async () => {
+            await handleSendInvite()
+            setConfirmSendAll(false)
+          }}
+          onCancel={() => {
+            if (!sendingInvites) setConfirmSendAll(false)
+          }}
+          message={
+            <>
+              Приглашения будут отправлены всем респондентам с указанным email{' '}
+              <span className="font-semibold text-gray-900">({inviteEmailCount})</span>.
+              Продолжить?
+            </>
+          }
+        />
       )}
     </>
   )
