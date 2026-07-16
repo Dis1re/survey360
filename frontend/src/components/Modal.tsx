@@ -84,7 +84,7 @@ export function Modal({
               type="button"
               onClick={onClose}
               disabled={preventClose}
-              className={lc('shrink-0 p-1.5 text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 dark:hover:text-gray-300 dark:hover:text-gray-400 hover:bg-gray-100 dark:hover:bg-#303a48 dark:hover:bg-[#3a4250] rounded-lg transition cursor-pointer disabled:opacity-50')}
+              className={lc('shrink-0 p-1.5 text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3a4250] rounded-lg transition cursor-pointer disabled:opacity-50')}
               aria-label="Закрыть"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>

@@ -123,7 +123,7 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
           <button
             type="button"
             onClick={onBack}
-            className="soft-press text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 dark:hover:text-gray-300 dark:hover:text-gray-400 cursor-pointer"
+            className="soft-press text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 cursor-pointer"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -204,7 +204,7 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
                 type="button"
                 onClick={handleCreateQuestion}
                 disabled={creatingQuestion}
-                className="w-full text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 dark:hover:text-gray-200 py-2 rounded-lg border border-dashed border-gray-200 dark:border-[#3a4250] hover:border-gray-300 dark:hover:border-#3a4250 dark:hover:border-[#3a4250] transition cursor-pointer"
+                className="w-full text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 py-2 rounded-lg border border-dashed border-gray-200 dark:border-[#3a4250] hover:border-gray-300 dark:hover:border-[#3a4250] transition cursor-pointer"
               >
                 {creatingQuestion ? 'Добавление…' : '+ Добавить вопрос'}
               </button>
@@ -213,7 +213,7 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
                 <button
                   type="button"
                   onClick={() => setPreviewOpen(true)}
-                  className="w-full text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 dark:hover:text-gray-200 py-2.5 rounded-lg border border-gray-200 dark:border-[#3a4250] hover:border-gray-300 dark:hover:border-#3a4250 dark:hover:border-[#3a4250] transition cursor-pointer"
+                  className="w-full text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 dark:hover:text-gray-200 py-2.5 rounded-lg border border-gray-200 dark:border-[#3a4250] hover:border-gray-300 dark:hover:border-[#3a4250] transition cursor-pointer"
                 >
                   Предпросмотр
                 </button>

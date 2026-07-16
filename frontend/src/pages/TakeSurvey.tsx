@@ -91,7 +91,7 @@ function UserPicker({
           <button
             type="button"
             onClick={onBack}
-            className="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-xl hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#1e222e] cursor-pointer"
+            className="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-xl hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
           >
             Назад
           </button>
@@ -200,7 +200,7 @@ function TargetPicker({
           <button
             type="button"
             onClick={onBack}
-            className="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-xl hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#1e222e] cursor-pointer"
+            className="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-xl hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
           >
             {backLabel}
           </button>
@@ -549,7 +549,7 @@ export function TakeSurvey({
             <button
               type="button"
               onClick={() => setThanksPopupOpen(false)}
-              className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-#303a48 dark:hover:bg-[#303a48] transition cursor-pointer"
+              className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#303a48] transition cursor-pointer"
               aria-label="Закрыть"
             >
               ✕
@@ -600,7 +600,7 @@ export function TakeSurvey({
           <button
             type="button"
             onClick={() => setTargetModalOpen(true)}
-            className="soft-press text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#1e222e] cursor-pointer"
+            className="soft-press text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
           >
             Сменить цель
           </button>
@@ -612,7 +612,7 @@ export function TakeSurvey({
             <button
               type="button"
               onClick={onBack}
-              className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 dark:hover:text-gray-200 cursor-pointer"
+              className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -624,7 +624,7 @@ export function TakeSurvey({
               <button
                 type="button"
                 onClick={() => setUserModalOpen(true)}
-                className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#1e222e] cursor-pointer"
+                className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
               >
                 Сменить пользователя
               </button>
@@ -632,7 +632,7 @@ export function TakeSurvey({
               <button
                 type="button"
                 onClick={() => setTargetModalOpen(true)}
-                className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#1e222e] cursor-pointer"
+                className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
               >
                 Сменить цель
               </button>
@@ -646,7 +646,7 @@ export function TakeSurvey({
             <button
               type="button"
               onClick={() => setUserModalOpen(true)}
-              className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#1e222e] cursor-pointer"
+              className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
             >
               Сменить пользователя
             </button>
@@ -654,7 +654,7 @@ export function TakeSurvey({
           <button
             type="button"
             onClick={() => setTargetModalOpen(true)}
-            className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#1e222e] cursor-pointer"
+            className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
           >
             Сменить цель
           </button>

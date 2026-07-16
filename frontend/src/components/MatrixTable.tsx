@@ -451,7 +451,7 @@ export function MatrixTable({
                                       type="button"
                                       onClick={() => handleSendInvite(respondent.id)}
                                       disabled={sendingInvites}
-                                      className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 dark:hover:text-gray-200 dark:hover:text-gray-300 disabled:opacity-50 cursor-pointer"
+                                      className="inline-flex items-center gap-1 text-[11px] font-medium text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 disabled:opacity-50 cursor-pointer"
                                       title="Отправить приглашение по email"
                                     >
                                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -650,7 +650,7 @@ export function MatrixTable({
                     return (
                       <label
                         key={user.id}
-                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#262d3a] border border-gray-100 dark:border-[#303a48] cursor-pointer"
+                        className="flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-gray-50 dark:hover:bg-[#262d3a] border border-gray-100 dark:border-[#303a48] cursor-pointer"
                       >
                         <input
                           type="checkbox"
@@ -678,7 +678,7 @@ export function MatrixTable({
               type="button"
               onClick={() => { setPickerRole(null); setSelectedUserIds([]) }}
               disabled={adding}
-              className="text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 dark:hover:text-gray-200 dark:hover:text-gray-300 cursor-pointer disabled:opacity-50"
+              className="text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer disabled:opacity-50"
             >
               Отмена
             </button>

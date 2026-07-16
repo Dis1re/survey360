@@ -592,7 +592,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 type="button"
                 onClick={() => setTemplateModal('save')}
                 disabled={questions.length === 0}
-                className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-lg hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#262d3a] disabled:opacity-40 disabled:cursor-default cursor-pointer"
+                className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-lg hover:bg-gray-50 dark:hover:bg-[#262d3a] disabled:opacity-40 disabled:cursor-default cursor-pointer"
                 title={questions.length === 0 ? 'Добавьте хотя бы один вопрос' : ''}
               >
                 Сохранить как шаблон
@@ -601,7 +601,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 <button
                   type="button"
                   onClick={() => setTemplateModal('load')}
-                  className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-lg hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#262d3a] cursor-pointer"
+                  className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-lg hover:bg-gray-50 dark:hover:bg-[#262d3a] cursor-pointer"
                 >
                   Загрузить из шаблона
                 </button>

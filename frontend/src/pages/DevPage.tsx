@@ -522,7 +522,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-[#3a4250]">
                     {surveys.map((survey) => (
-                      <tr key={survey.id} className="hover:bg-gray-50 dark:hover:bg-#1e222e/50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50 transition">
+                      <tr key={survey.id} className="hover:bg-gray-50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50 transition">
                         <td className="px-4 py-3 text-gray-500 dark:text-gray-300 font-mono">{survey.id}</td>
                         <td className="px-4 py-3 font-medium">
                           <button
@@ -647,12 +647,12 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-[#3a4250]">
                     {knownUserIds.map((userId) => (
-                      <tr key={userId} className="hover:bg-gray-50 dark:hover:bg-#1e222e/50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50">
+                      <tr key={userId} className="hover:bg-gray-50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50">
                         <td className={`${tdClass} font-mono`}>{userId}</td>
                         <td className={`${tdClass} text-right`}>
                           <button
                             type="button"
-                            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-#1e222e dark:bg-[#161a22] dark:hover:bg-[#262d3a] rounded-lg transition cursor-pointer disabled:opacity-50"
+                            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] dark:bg-[#161a22] rounded-lg transition cursor-pointer disabled:opacity-50"
                             onClick={() => handleGetUser(userId)}
                             disabled={userBusy}
                           >
@@ -741,7 +741,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-[#3a4250]">
                     {knownQuestions.map((question) => (
-                      <tr key={question.id} className="hover:bg-gray-50 dark:hover:bg-#1e222e/50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50">
+                      <tr key={question.id} className="hover:bg-gray-50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50">
                         <td className={`${tdClass} font-mono`}>{question.id}</td>
                         <td className={tdClass}>{question.surveyId}</td>
                         <td className={tdClass}>{question.text || '—'}</td>
@@ -749,7 +749,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                         <td className={`${tdClass} text-right whitespace-nowrap`}>
                           <button
                             type="button"
-                            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-#1e222e dark:bg-[#161a22] dark:hover:bg-[#262d3a] rounded-lg transition cursor-pointer disabled:opacity-50 mr-1"
+                            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] dark:bg-[#161a22] rounded-lg transition cursor-pointer disabled:opacity-50 mr-1"
                             onClick={() => handleGetQuestion(question.id)}
                             disabled={questionBusy}
                           >
@@ -874,7 +874,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-[#3a4250]">
                     {knownAnswers.map((answer) => (
-                      <tr key={answer.id} className="hover:bg-gray-50 dark:hover:bg-#1e222e/50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50">
+                      <tr key={answer.id} className="hover:bg-gray-50 dark:hover:bg-[#262d3a]/50 dark:bg-[#161a22]/50">
                         <td className={`${tdClass} font-mono`}>{answer.id}</td>
                         <td className={tdClass}>{answer.questionId}</td>
                         <td className={tdClass}>{answer.userId}</td>
@@ -882,7 +882,7 @@ export function EntitiesPage({ onBack, onOpenSurvey }: EntitiesPageProps) {
                         <td className={`${tdClass} text-right whitespace-nowrap`}>
                           <button
                             type="button"
-                            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-#1e222e dark:bg-[#161a22] dark:hover:bg-[#262d3a] rounded-lg transition cursor-pointer disabled:opacity-50 mr-1"
+                            className="px-3 py-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] dark:bg-[#161a22] rounded-lg transition cursor-pointer disabled:opacity-50 mr-1"
                             onClick={() => handleGetAnswer(answer.id)}
                             disabled={questionBusy}
                           >

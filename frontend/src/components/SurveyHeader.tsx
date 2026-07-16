@@ -552,7 +552,7 @@ export function SurveyHeader({
                         setStartDates((prev) => ({ ...prev, endDate: '' }))
                       }}
                       disabled={starting}
-                      className="text-[11px] text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 dark:hover:text-gray-300 dark:hover:text-gray-400 transition cursor-pointer disabled:opacity-50"
+                      className="text-[11px] text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition cursor-pointer disabled:opacity-50"
                     >
                       Убрать
                     </button>

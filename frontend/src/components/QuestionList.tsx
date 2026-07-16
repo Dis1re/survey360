@@ -213,7 +213,7 @@ export function QuestionList({
         type="button"
         onClick={onPreview}
         disabled={questions.length === 0}
-        className="mt-2 w-full text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 py-2.5 rounded-lg border border-gray-200 dark:border-[#3a4250] hover:border-gray-300 dark:hover:border-#3a4250 transition disabled:opacity-40 disabled:cursor-default cursor-pointer"
+        className="mt-2 w-full text-sm font-medium text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-gray-100 py-2.5 rounded-lg border border-gray-200 dark:border-[#3a4250] hover:border-gray-300 dark:hover:border-[#3a4250] transition disabled:opacity-40 disabled:cursor-default cursor-pointer"
       >
         Предпросмотр
       </button>

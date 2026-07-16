@@ -386,7 +386,7 @@ export function Sidebar({
         <button
           type="button"
           onClick={onToggleCollapsed}
-          className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-gray-100 dark:bg-[#303a48] text-gray-700 dark:text-gray-200 transition p-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-#2b323f dark:hover:bg-[#454f60]"
+          className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-gray-100 dark:bg-[#303a48] text-gray-700 dark:text-gray-200 transition p-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-[#454f60]"
           aria-label={collapsed ? 'Показать боковую панель' : 'Скрыть боковую панель'}
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -417,7 +417,7 @@ export function Sidebar({
                   onClick={onOpenDetails}
                   title="Детали опроса"
                   aria-label="Детали опроса"
-                  className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#262d3a] text-gray-600 dark:text-gray-300 transition p-1.5 cursor-pointer"
+                  className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:bg-gray-50 dark:hover:bg-[#262d3a] text-gray-600 dark:text-gray-300 transition p-1.5 cursor-pointer"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -430,7 +430,7 @@ export function Sidebar({
                   onClick={onOpenDev}
                   title="База данных"
                   aria-label="База данных"
-                  className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#262d3a] text-gray-600 dark:text-gray-300 transition p-1.5 cursor-pointer"
+                  className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:bg-gray-50 dark:hover:bg-[#262d3a] text-gray-600 dark:text-gray-300 transition p-1.5 cursor-pointer"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
@@ -449,7 +449,7 @@ export function Sidebar({
                 onClick={onOpenDev}
                 title="База данных"
                 aria-label="База данных"
-                  className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:bg-gray-50 dark:hover:bg-#1e222e dark:hover:bg-[#262d3a] text-gray-600 dark:text-gray-300 transition p-2 cursor-pointer"
+                  className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:bg-gray-50 dark:hover:bg-[#262d3a] text-gray-600 dark:text-gray-300 transition p-2 cursor-pointer"
               >
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
