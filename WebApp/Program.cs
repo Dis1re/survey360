@@ -55,6 +55,7 @@ builder.Services.AddScoped<SurveyCsvReportService>();
 builder.Services.AddScoped<SurveyRespondentLinkService>();
 builder.Services.AddHttpClient<EmailService>();
 builder.Services.AddScoped<SurveyInviteEmailService>();
+builder.Services.AddScoped<AiSummaryService>();
 
 builder.Services.AddCors(options =>
 {
