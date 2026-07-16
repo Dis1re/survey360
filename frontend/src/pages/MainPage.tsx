@@ -58,17 +58,17 @@ function buildInviteResultModal(result: SendInvitesResult): {
           {result.failed > 0 ? ` · ошибок: ${result.failed}` : ''}
         </p>
         {failedItems.length > 0 && (
-          <ul className="space-y-1 text-xs text-gray-500">
+          <ul className="space-y-1 text-xs text-gray-500 dark:text-gray-300">
             {failedItems.map((item) => (
               <li key={item.reviewerId}>
-                <span className="font-medium text-gray-700">{item.reviewerEmail || item.reviewerId}</span>
+                <span className="font-medium text-gray-700 dark:text-gray-200">{item.reviewerEmail || item.reviewerId}</span>
                 {item.error ? ` — ${item.error}` : ''}
               </li>
             ))}
           </ul>
         )}
         {result.sent > 0 && result.failed === 0 && (
-          <p className="text-xs text-gray-500">Проверьте письма в Mailtrap → Sandboxes → Emails.</p>
+          <p className="text-xs text-gray-500 dark:text-gray-300">Проверьте письма в Mailtrap → Sandboxes → Emails.</p>
         )}
       </div>
     ),
@@ -540,7 +540,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   if (surveyId === null) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-gray-500 dark:text-gray-300">
           {loading ? 'Загрузка…' : 'Нет опросов. Создайте первый в боковой панели.'}
         </p>
       </div>
@@ -550,7 +550,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <p className="text-sm text-gray-500">Загрузка опроса…</p>
+        <p className="text-sm text-gray-500 dark:text-gray-300">Загрузка опроса…</p>
       </div>
     )
   }
@@ -558,7 +558,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   if (!survey) {
     return (
       <div className="flex items-center justify-center h-full p-6">
-        <p className="text-sm text-gray-500">{loadError ?? 'Не удалось загрузить опрос'}</p>
+        <p className="text-sm text-gray-500 dark:text-gray-300">{loadError ?? 'Не удалось загрузить опрос'}</p>
       </div>
     )
   }
@@ -592,7 +592,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 type="button"
                 onClick={() => setTemplateModal('save')}
                 disabled={questions.length === 0}
-                className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-40 disabled:cursor-default cursor-pointer"
+                className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-lg hover:bg-gray-50 dark:hover:bg-[#262d3a] disabled:opacity-40 disabled:cursor-default cursor-pointer"
                 title={questions.length === 0 ? 'Добавьте хотя бы один вопрос' : ''}
               >
                 Сохранить как шаблон
@@ -601,7 +601,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 <button
                   type="button"
                   onClick={() => setTemplateModal('load')}
-                  className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                  className="soft-press px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-lg hover:bg-gray-50 dark:hover:bg-[#262d3a] cursor-pointer"
                 >
                   Загрузить из шаблона
                 </button>
@@ -778,13 +778,13 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
 
       {previewOpen && surveyId !== null && (
         <div
-          className="fixed top-0 right-0 bottom-0 z-40 bg-gray-100 flex flex-col border-l border-gray-200 transition-[left] duration-300 ease-out"
+          className="fixed top-0 right-0 bottom-0 z-40 bg-gray-100 dark:bg-[#303a48] flex flex-col border-l border-gray-200 dark:border-[#3a4250] transition-[left] duration-300 ease-out"
           style={{ left: sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
         >
-          <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
+          <div className="bg-white dark:bg-[#1e222e] border-b border-gray-200 dark:border-[#3a4250] px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Предпросмотр анкеты</h2>
-              <p className="text-sm text-gray-500 mt-0.5">{survey?.name}</p>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Предпросмотр анкеты</h2>
+              <p className="text-sm text-gray-500 dark:text-gray-300 mt-0.5">{survey?.name}</p>
             </div>
             <button
               type="button"

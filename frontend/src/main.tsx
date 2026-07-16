@@ -7,6 +7,7 @@ import { UserApp } from './pages/UserApp.tsx'
 import { InviteSurveyPage } from './pages/InviteSurveyPage.tsx'
 import { PublicSurveyPage } from './pages/PublicSurveyPage.tsx'
 import { getInviteToken, getPublicSurveyId, isDevRoute } from './routing.ts'
+import { ThemeProvider } from './theme.tsx'
 import './site.css'
 
 function AuthenticatedApp() {
@@ -36,14 +37,16 @@ const publicSurveyId = inviteToken === null ? getPublicSurveyId() : null
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    {inviteToken !== null ? (
-      <InviteSurveyPage token={inviteToken} />
-    ) : publicSurveyId !== null ? (
-      <PublicSurveyPage surveyId={publicSurveyId} />
-    ) : (
-      <AuthProvider>
-        <AuthenticatedApp />
-      </AuthProvider>
-    )}
+    <ThemeProvider>
+      {inviteToken !== null ? (
+        <InviteSurveyPage token={inviteToken} />
+      ) : publicSurveyId !== null ? (
+        <PublicSurveyPage surveyId={publicSurveyId} />
+      ) : (
+        <AuthProvider>
+          <AuthenticatedApp />
+        </AuthProvider>
+      )}
+    </ThemeProvider>
   </StrictMode>,
 )

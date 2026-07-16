@@ -101,7 +101,7 @@ export function UserApp() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden dark:bg-[#161a22]">
       {isMobile && !mobileNavOpen && (
         <button
           type="button"
@@ -141,7 +141,7 @@ export function UserApp() {
         {selectedSurveyId === null ? (
           <div className="flex items-center justify-center h-full p-6">
             <div className="text-center max-w-md">
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-300">
                 {loading
                   ? 'Загрузка…'
                   : surveys.length === 0

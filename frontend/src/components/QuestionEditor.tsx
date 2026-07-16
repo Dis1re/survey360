@@ -146,36 +146,36 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
 
   if (!question) {
     return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm flex items-center justify-center h-48">
-        <p className="text-gray-400 text-sm">Выберите вопрос из списка</p>
+      <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-6 shadow-sm flex items-center justify-center h-48">
+        <p className="text-gray-400 dark:text-gray-400 text-sm">Выберите вопрос из списка</p>
       </div>
     )
   }
 
   return (
-    <form onSubmit={(e) => e.preventDefault()} className={`bg-white border border-gray-200 rounded-2xl p-6 shadow-sm space-y-5 overflow-y-auto h-full ${readOnly ? 'opacity-80' : ''}`}>
+    <form onSubmit={(e) => e.preventDefault()} className={`bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-6 shadow-sm space-y-5 overflow-y-auto h-full ${readOnly ? 'opacity-80' : ''}`}>
       <div className="flex items-center justify-between">
         {readOnly ? (
-          <p className="text-xs text-gray-500 bg-gray-50 border border-gray-200 rounded-lg px-3 py-2">
+          <p className="text-xs text-gray-500 dark:text-gray-300 bg-gray-50 dark:bg-[#161a22] border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-2">
             Режим просмотра — изменить вопросы нельзя
           </p>
         ) : (
-          <p className="text-xs text-gray-400">Изменения сохраняются автоматически</p>
+          <p className="text-xs text-gray-400 dark:text-gray-400">Изменения сохраняются автоматически</p>
         )}
         {!readOnly && saving && (
-          <span className="text-xs text-gray-400 flex items-center gap-1.5">
-            <span className="w-3 h-3 border-2 border-gray-300 border-t-[#FF8600] rounded-full animate-spin" />
+            <span className="text-xs text-gray-400 dark:text-gray-400 flex items-center gap-1.5">
+              <span className="w-3 h-3 border-2 border-gray-300 dark:border-[#3a4250] border-t-[#FF8600] rounded-full animate-spin" />
             Сохранение…
           </span>
         )}
       </div>
       <div>
-        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+        <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
           Формулировка вопроса
         </label>
         <input
           type="text"
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 text-sm shadow-sm font-medium disabled:bg-gray-50 disabled:cursor-default"
+            className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] dark:text-gray-200 text-sm shadow-sm font-medium disabled:bg-gray-50 dark:disabled:bg-[#2b323f] dark:disabled:text-gray-400 disabled:cursor-default"
           value={text}
           onChange={(e) => {
             setText(e.target.value)
@@ -187,11 +187,11 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
       </div>
 
       <div>
-        <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+        <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
           Тип ответа
         </label>
         <select
-          className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-blue-500 text-sm shadow-sm disabled:bg-gray-50 disabled:cursor-default"
+            className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 bg-white dark:bg-[#1e222e] focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] text-sm shadow-sm dark:text-gray-200 disabled:bg-gray-50 dark:disabled:bg-[#2b323f] dark:disabled:text-gray-400 disabled:cursor-default"
           value={type}
           onChange={(e) => {
             setType(e.target.value as Question['type'])
@@ -208,12 +208,12 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
       {type === 'scale' && (
         <div className="grid grid-cols-3 gap-3">
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
               Мин.
             </label>
             <input
               type="number"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-default"
+              className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] dark:text-gray-200 disabled:bg-gray-50 dark:disabled:bg-[#2b323f] dark:disabled:text-gray-400 disabled:cursor-default"
               value={min}
               onChange={(e) => {
                 setMin(e.target.value === '' ? '' : Number(e.target.value))
@@ -225,12 +225,12 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
               Макс.
             </label>
             <input
               type="number"
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-default"
+              className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] dark:text-gray-200 disabled:bg-gray-50 dark:disabled:bg-[#2b323f] dark:disabled:text-gray-400 disabled:cursor-default"
               value={max}
               onChange={(e) => {
                 setMax(e.target.value === '' ? '' : Number(e.target.value))
@@ -242,13 +242,13 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
               Шаг
             </label>
             <input
               type="number"
               step={1}
-              className="w-full border border-gray-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-default"
+              className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] dark:text-gray-200 disabled:bg-gray-50 dark:disabled:bg-[#2b323f] dark:disabled:text-gray-400 disabled:cursor-default"
               value={step}
               onChange={(e) => {
                 setStep(e.target.value === '' ? '' : Math.max(1, Math.round(Number(e.target.value))))
@@ -264,18 +264,18 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
 
       {type === 'radio' && (
         <div>
-          <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">
+          <label className="block text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider mb-2">
             Варианты ответов
           </label>
           <div className="space-y-2">
             {options.map((opt, i) => (
               <div key={i} className="flex items-center gap-2">
-                <span className="text-xs bg-gray-100 text-gray-500 font-bold w-6 h-6 rounded-md flex items-center justify-center shrink-0">
+                  <span className="text-xs bg-gray-100 dark:bg-[#303a48] text-gray-500 dark:text-gray-300 font-bold w-6 h-6 rounded-md flex items-center justify-center shrink-0">
                   {i + 1}
                 </span>
                 <input
                   type="text"
-                  className="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 disabled:bg-gray-50 disabled:cursor-default"
+                  className="flex-1 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] dark:text-gray-200 disabled:bg-gray-50 dark:disabled:bg-[#2b323f] dark:disabled:text-gray-400 disabled:cursor-default"
                   value={opt.label}
                   onChange={(e) => {
                     const next = [...options]
@@ -294,7 +294,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
                       setOptions(options.filter((_, idx) => idx !== i))
                       markDirty()
                     }}
-                    className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 hover:text-red-500 hover:bg-red-50 transition cursor-pointer shrink-0"
+                    className="w-6 h-6 flex items-center justify-center rounded-md text-gray-400 dark:text-gray-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer shrink-0"
                     title="Удалить вариант"
                   >
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -312,7 +312,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
                 setOptions([...options, { value: options.length + 1, label: '' }])
                 markDirty()
               }}
-              className="mt-2 w-full py-2 border-2 border-dashed border-gray-200 hover:border-blue-400 hover:text-blue-600 text-gray-500 text-sm font-medium rounded-xl transition flex items-center justify-center gap-1 cursor-pointer"
+              className="mt-2 w-full py-2 border-2 border-dashed border-gray-200 dark:border-[#3a4250] hover:border-blue-400 hover:text-blue-600 dark:hover:text-blue-400 text-gray-500 dark:text-gray-300 text-sm font-medium rounded-xl transition flex items-center justify-center gap-1 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -334,20 +334,20 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
             }}
             className="w-4 h-4 text-[#FF8600] rounded focus:ring-[#FF8600]"
           />
-          <span className="text-sm text-gray-700">
+          <span className="text-sm text-gray-700 dark:text-gray-200">
             Обязательный вопрос
-            <span className="text-gray-400"> — нельзя отправить опрос, не ответив на него</span>
+            <span className="text-gray-400 dark:text-gray-400"> — нельзя отправить опрос, не ответив на него</span>
           </span>
         </label>
       )}
 
       {!readOnly && (
-        <div className="pt-4 border-t border-gray-100 flex justify-end">
+        <div className="pt-4 border-t border-gray-100 dark:border-[#303a48] flex justify-end">
           <button
             type="button"
             onClick={handleReset}
             disabled={saving}
-            className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-xl transition cursor-pointer"
+            className="px-4 py-2 text-sm font-medium text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 rounded-xl transition cursor-pointer"
           >
             Сбросить
           </button>

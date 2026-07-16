@@ -21,6 +21,7 @@ export interface ModalProps {
   closeOnEscape?: boolean
   preventClose?: boolean
   scrollable?: boolean
+  forceLight?: boolean
 }
 
 export function Modal({
@@ -34,7 +35,10 @@ export function Modal({
   closeOnEscape = true,
   preventClose = false,
   scrollable = true,
+  forceLight = false,
 }: ModalProps) {
+  const lc = (cls: string) =>
+    forceLight ? cls.split(/\s+/).filter((t) => !t.startsWith('dark:')).join(' ') : cls
   const titleId = useId()
 
   useEffect(() => {
@@ -54,25 +58,25 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] modal-backdrop-enter"
+      className={lc('fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-[2px] modal-backdrop-enter')}
       onClick={handleBackdropClick}
     >
       <div
-        className={`w-full ${sizeClass[size]} bg-white rounded-2xl shadow-xl overflow-hidden modal-panel-enter ${
+        className={lc(`w-full ${sizeClass[size]} bg-white dark:bg-[#1e222e] rounded-2xl shadow-xl overflow-hidden modal-panel-enter ${
           scrollable ? (size === 'full' ? 'h-[92vh] flex flex-col' : 'max-h-[90vh] flex flex-col') : ''
-        }`}
+        }`)}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3 px-5 pt-5 pb-3 border-b border-gray-100 shrink-0">
+        <div className={lc('flex items-start justify-between gap-3 px-5 pt-5 pb-3 border-b border-gray-100 dark:border-[#303a48] shrink-0')}>
           <div className="min-w-0">
-            <h2 id={titleId} className="text-base font-bold text-gray-900">
+            <h2 id={titleId} className={lc('text-base font-bold text-gray-900 dark:text-gray-100')}>
               {title}
             </h2>
             {description && (
-              <p className="text-sm text-gray-500 mt-1 leading-relaxed">{description}</p>
+              <p className={lc('text-sm text-gray-500 dark:text-gray-300 mt-1 leading-relaxed')}>{description}</p>
             )}
           </div>
           {onClose && (
@@ -80,7 +84,7 @@ export function Modal({
               type="button"
               onClick={onClose}
               disabled={preventClose}
-              className="shrink-0 p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition cursor-pointer disabled:opacity-50"
+              className={lc('shrink-0 p-1.5 text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#3a4250] rounded-lg transition cursor-pointer disabled:opacity-50')}
               aria-label="Закрыть"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
