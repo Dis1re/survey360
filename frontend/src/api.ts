@@ -92,6 +92,15 @@ async function downloadSurveyFile(path: string, fallbackName: string) {
   await downloadFileResponse(response, fallbackName)
 }
 
+function buildFilterQuery(filter?: { reviewerId?: number; targetId?: number }): string {
+  if (!filter) return ''
+  const params = new URLSearchParams()
+  if (filter.reviewerId != null) params.set('reviewerId', String(filter.reviewerId))
+  if (filter.targetId != null) params.set('targetId', String(filter.targetId))
+  const qs = params.toString()
+  return qs ? `?${qs}` : ''
+}
+
 export const authApi = {
   login: (email: string) =>
     sendRequest<AuthUser>(`${API}/auth/login`, {
@@ -196,18 +205,24 @@ export const surveyApi = {
   resolveInvite: (token: string) =>
     sendRequest<InviteInfo>(`${API}/survey/invite/${token}`),
 
-  downloadReport: async (id: number) => {
-    await downloadSurveyFile(`/survey/${id}/report.docx`, `survey-${id}-результаты.docx`)
+  downloadReport: async (id: number, filter?: { reviewerId?: number; targetId?: number }) => {
+    await downloadSurveyFile(
+      `/survey/${id}/report.docx${buildFilterQuery(filter)}`,
+      `survey-${id}-результаты.docx`,
+    )
   },
-  downloadReportByQuestion: async (id: number) => {
-    await downloadSurveyFile(`/survey/${id}/report-by-question.docx`, `survey-${id}-результаты-по-вопросам.docx`)
+  downloadReportByQuestion: async (id: number, filter?: { reviewerId?: number; targetId?: number }) => {
+    await downloadSurveyFile(
+      `/survey/${id}/report-by-question.docx${buildFilterQuery(filter)}`,
+      `survey-${id}-результаты-по-вопросам.docx`,
+    )
   },
 
-  downloadCsv: async (id: number) => {
-    await downloadSurveyFile(`/survey/${id}/report.csv`, `survey-${id}-результаты.csv`)
+  downloadCsv: async (id: number, filter?: { reviewerId?: number; targetId?: number }) => {
+    await downloadSurveyFile(`/survey/${id}/report.csv${buildFilterQuery(filter)}`, `survey-${id}-результаты.csv`)
   },
-  downloadXlsx: async (id: number) => {
-    await downloadSurveyFile(`/survey/${id}/report.xlsx`, `survey-${id}-результаты.xlsx`)
+  downloadXlsx: async (id: number, filter?: { reviewerId?: number; targetId?: number }) => {
+    await downloadSurveyFile(`/survey/${id}/report.xlsx${buildFilterQuery(filter)}`, `survey-${id}-результаты.xlsx`)
   },
   saveAsTemplate: (id: number, data: SaveAsTemplateRequest) =>
     sendRequest<number>(`${API}/survey/${id}/save-as-template`, {

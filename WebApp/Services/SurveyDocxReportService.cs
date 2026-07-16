@@ -60,9 +60,18 @@ public class SurveyDocxReportService(ApplicationDbContext context, ILogger<Surve
 
     public async Task<(byte[] Bytes, string FileName)?> BuildReportAsync(int surveyId, CancellationToken ct)
     {
+        return await BuildReportAsync(surveyId, ct, null, null);
+    }
+
+    public async Task<(byte[] Bytes, string FileName)?> BuildReportAsync(
+        int surveyId,
+        CancellationToken ct,
+        int? filterReviewerId = null,
+        int? filterTargetId = null)
+    {
         try
         {
-            var report = await LoadReportContextAsync(surveyId, ct);
+            var report = await LoadReportContextAsync(surveyId, ct, filterReviewerId, filterTargetId);
             if (report is null)
                 return null;
 
@@ -134,9 +143,18 @@ public class SurveyDocxReportService(ApplicationDbContext context, ILogger<Surve
 
     public async Task<(byte[] Bytes, string FileName)?> BuildReportByQuestionAsync(int surveyId, CancellationToken ct)
     {
+        return await BuildReportByQuestionAsync(surveyId, ct, null, null);
+    }
+
+    public async Task<(byte[] Bytes, string FileName)?> BuildReportByQuestionAsync(
+        int surveyId,
+        CancellationToken ct,
+        int? filterReviewerId = null,
+        int? filterTargetId = null)
+    {
         try
         {
-            var report = await LoadReportContextAsync(surveyId, ct);
+            var report = await LoadReportContextAsync(surveyId, ct, filterReviewerId, filterTargetId);
             if (report is null)
                 return null;
 
@@ -203,7 +221,11 @@ public class SurveyDocxReportService(ApplicationDbContext context, ILogger<Surve
         }
     }
 
-    private async Task<SurveyReportContext?> LoadReportContextAsync(int surveyId, CancellationToken ct)
+    private async Task<SurveyReportContext?> LoadReportContextAsync(
+        int surveyId,
+        CancellationToken ct,
+        int? filterReviewerId = null,
+        int? filterTargetId = null)
     {
         var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == surveyId, ct);
         if (survey is null)
@@ -220,10 +242,16 @@ public class SurveyDocxReportService(ApplicationDbContext context, ILogger<Surve
         if (questionIds.Count == 0)
             return null;
 
-        var answers = await context.Answers
+        var answersQuery = context.Answers
             .AsNoTracking()
-            .Where(a => questionIds.Contains(a.QuestionId))
-            .ToListAsync(ct);
+            .Where(a => questionIds.Contains(a.QuestionId));
+
+        if (filterReviewerId.HasValue)
+            answersQuery = answersQuery.Where(a => a.UserId == filterReviewerId.Value);
+        if (filterTargetId.HasValue)
+            answersQuery = answersQuery.Where(a => a.TargetId == filterTargetId.Value);
+
+        var answers = await answersQuery.ToListAsync(ct);
 
         if (answers.Count == 0)
             return null;
