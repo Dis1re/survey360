@@ -39,7 +39,9 @@ createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
       {inviteToken !== null ? (
-        <InviteSurveyPage token={inviteToken} />
+        <AuthProvider>
+          <InviteSurveyPage token={inviteToken} />
+        </AuthProvider>
       ) : publicSurveyId !== null ? (
         <PublicSurveyPage surveyId={publicSurveyId} />
       ) : (

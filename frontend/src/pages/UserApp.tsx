@@ -5,8 +5,14 @@ import { Sidebar } from '../components/Sidebar'
 import { useAuth } from '../context/AuthContext'
 import { useIsMobile } from '../hooks/useMediaQuery'
 import { useSurveyLive } from '../hooks/useSurveyLive'
-import { apiSurveyToSurvey, isMySurvey } from '../mappers'
-import { openDevPage } from '../routing'
+import {
+  apiSurveyToSurvey,
+  isMySurvey,
+  isParticipationDone,
+  isParticipationPending,
+  isParticipationSurvey,
+} from '../mappers'
+import { openDevPage, setMainPageTabState } from '../routing'
 import { MainPage } from './MainPage'
 import { TakeSurvey } from './TakeSurvey'
 import type { Survey } from '../types'
@@ -36,6 +42,44 @@ function readStoredSidebarScope(): SidebarScope {
   }
 }
 
+function resolveScopeForSurvey(survey: Survey, userId: number): SidebarScope {
+  if (isParticipationSurvey(survey) && !isMySurvey(survey, userId)) return 'participation'
+  if (isMySurvey(survey, userId)) return 'mine'
+  if (isParticipationSurvey(survey)) return 'participation'
+  return 'mine'
+}
+
+function pickDefaultSurvey(
+  surveys: Survey[],
+  userId: number | null,
+): { id: number | null; scope: SidebarScope } {
+  if (userId == null) {
+    return { id: surveys[0]?.id ?? null, scope: 'mine' }
+  }
+
+  const pending = surveys.filter((s) => isParticipationSurvey(s) && isParticipationPending(s))
+  if (pending.length > 0) {
+    return { id: pending[0].id, scope: 'participation' }
+  }
+
+  const activeMine = surveys.filter((s) => isMySurvey(s, userId) && s.status === 'active')
+  if (activeMine.length > 0) {
+    return { id: activeMine[0].id, scope: 'mine' }
+  }
+
+  const doneParticipation = surveys.filter((s) => isParticipationSurvey(s) && isParticipationDone(s))
+  if (doneParticipation.length > 0) {
+    return { id: doneParticipation[0].id, scope: 'participation' }
+  }
+
+  const mine = surveys.filter((s) => isMySurvey(s, userId))
+  if (mine.length > 0) {
+    return { id: mine[0].id, scope: 'mine' }
+  }
+
+  return { id: null, scope: 'mine' }
+}
+
 export function UserApp() {
   const { user } = useAuth()
   const [surveys, setSurveys] = useState<Survey[]>([])
@@ -53,20 +97,34 @@ export function UserApp() {
     const list = await surveyApi.list()
     const mapped = list.map(apiSurveyToSurvey)
     setSurveys(mapped)
+
+    const userId = user?.id ?? null
     setSelectedSurveyId((prev) => {
-      if (prev !== null && mapped.some((s) => s.id === prev)) return prev
-      if (prev !== null && !mapped.some((s) => s.id === prev)) {
+      if (prev !== null && mapped.some((s) => s.id === prev)) {
+        const survey = mapped.find((s) => s.id === prev)!
+        if (userId != null) {
+          // Owner viewing their survey (incl. after start) → Мои; participant → Участие
+          setSidebarScope(resolveScopeForSurvey(survey, userId))
+        }
+        return prev
+      }
+
+      if (prev !== null) {
         try {
           sessionStorage.removeItem(SELECTED_SURVEY_STORAGE_KEY)
         } catch {
           // sessionStorage unavailable
         }
       }
-      return mapped[0]?.id ?? null
+
+      const pick = pickDefaultSurvey(mapped, userId)
+      setSidebarScope(pick.scope)
+      return pick.id
     })
-  }, [])
+  }, [user?.id])
 
   useEffect(() => {
+    setLoading(true)
     loadSurveys().catch(console.error).finally(() => setLoading(false))
   }, [loadSurveys])
 
@@ -116,6 +174,8 @@ export function UserApp() {
     try {
       const id = await surveyApi.create()
       await loadSurveys()
+      // New survey always opens on questionnaire editor; later tab choice is remembered per survey.
+      setMainPageTabState(id, 'editor')
       setSelectedSurveyId(id)
       setSidebarScope('mine')
     } catch (err) {
@@ -214,6 +274,9 @@ export function UserApp() {
             surveyId={selectedSurveyId}
             authUserId={user?.id ?? null}
             hideUserSwitch
+            onCompleted={() => {
+              void loadSurveys().catch(console.error)
+            }}
           />
         )}
       </main>

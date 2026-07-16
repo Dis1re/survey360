@@ -19,7 +19,7 @@ export function UserPickerModal({
   title,
   allUsers,
   existingIds,
-  initialSelectedIds = [],
+  initialSelectedIds: _initialSelectedIds = [],
   adding = false,
   onClose,
   onAdd,
@@ -27,11 +27,11 @@ export function UserPickerModal({
 }: UserPickerModalProps) {
   const [tab, setTab] = useState<'users' | 'groups'>('users')
   const [search, setSearch] = useState('')
-  const [selectedUserIds, setSelectedUserIds] = useState<number[]>(initialSelectedIds)
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>(_initialSelectedIds)
   const [removingIds, setRemovingIds] = useState<number[]>([])
 
   const [groups, setGroups] = useState<UserGroup[]>([])
-  const [expandedGroupId, setExpandedGroupId] = useState<number | null>(null)
+  const [expandedGroupId, setExpandedGroupId] = useState<string | number | null>(null)
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([])
 
   const [isCreatingGroup, setIsCreatingGroup] = useState(false)

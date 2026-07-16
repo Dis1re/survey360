@@ -83,14 +83,16 @@ export function storeMainPageTab(surveyId: number, tab: MainPageTab): void {
 }
 
 export function resolveInitialMainPageTab(surveyId: number | null): MainPageTab {
-  const params = new URLSearchParams(window.location.search)
-  const urlTab = params.get('tab')
-  if (urlTab === 'matrix' || urlTab === 'editor' || urlTab === 'analytics') return urlTab
+  // Per-survey memory wins over shared ?tab= in the URL (URL is one for the whole app).
+  if (parseAdminResponseViewParams()) return 'matrix'
 
   const stored = readStoredMainPageTab(surveyId)
   if (stored) return stored
 
-  if (parseAdminResponseViewParams()) return 'matrix'
+  const params = new URLSearchParams(window.location.search)
+  const urlTab = params.get('tab')
+  if (urlTab === 'matrix' || urlTab === 'editor' || urlTab === 'analytics') return urlTab
+
   return 'editor'
 }
 

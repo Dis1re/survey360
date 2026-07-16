@@ -74,13 +74,20 @@ export interface AuthUser {
   isAdmin: boolean
 }
 
+/** Login /me response may include a tab-scoped bearer token. */
+export interface AuthSession extends AuthUser {
+  token?: string | null
+}
+
 export interface LoginRequest {
   email: string
+  password?: string
 }
 
 export interface CreateUserRequest {
   name: string
   email: string
+  password: string
 }
 
 export interface UpdateSurveyRequest {
@@ -232,6 +239,8 @@ export interface RespondentLink {
 export interface InviteInfo {
   surveyId: number
   reviewerId: number
+  reviewerEmail: string
+  reviewerName: string
 }
 
 export interface SendInviteItemResult {

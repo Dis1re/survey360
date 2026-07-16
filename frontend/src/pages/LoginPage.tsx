@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { userApi } from '../api'
 import { Modal } from '../components/Modal'
-import { useAuth } from '../context/AuthContext'
+import { DEMO_PASSWORD, useAuth } from '../context/AuthContext'
 import { openDevPage } from '../routing'
 import type { ApiUser } from '../types'
 import { getInitials } from '../utils'
@@ -16,6 +16,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
   const { login } = useAuth()
   const [mode, setMode] = useState<LoginMode>(initialMode)
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [users, setUsers] = useState<ApiUser[]>([])
   const [usersLoading, setUsersLoading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
@@ -36,27 +37,35 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
   const openPopup = (nextMode: LoginMode) => {
     setMode(nextMode)
     setEmail(nextMode === 'admin' ? 'Админ' : '')
+    setPassword('')
     setError(null)
     setPopupOpen(true)
   }
 
-  const handleLogin = async (value: string, asAdmin: boolean) => {
+  const handleLogin = async (value: string, asAdmin: boolean, pwd?: string) => {
     const trimmed = value.trim()
     if (!trimmed) {
-      setError('Введите email')
+      setError(asAdmin ? 'Введите логин' : 'Введите email')
+      return
+    }
+
+    if (!asAdmin && !pwd?.trim()) {
+      setError('Введите пароль')
       return
     }
 
     setSubmitting(true)
     setError(null)
     try {
-      await login(trimmed, asAdmin)
+      await login(trimmed, asAdmin ? { asAdmin: true } : { password: pwd!.trim() })
     } catch (err) {
       const status = (err as Error & { status?: number }).status
       if (status === 404) {
         setError('Пользователь с таким email не найден')
       } else if (status === 403) {
         setError('Нет прав администратора для этого email')
+      } else if (status === 401) {
+        setError('Неверный пароль')
       } else {
         setError('Не удалось войти. Попробуйте ещё раз.')
       }
@@ -67,8 +76,13 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    const trimmed = email.trim()
-    await handleLogin(trimmed, mode === 'admin')
+    await handleLogin(email, mode === 'admin', password)
+  }
+
+  const selectUser = (user: ApiUser) => {
+    setEmail(user.email)
+    setPassword(DEMO_PASSWORD)
+    setError(null)
   }
 
   return (
@@ -112,7 +126,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
           description={
             mode === 'admin'
               ? 'Нажмите «Войти» — логин уже подставлен'
-              : 'Выберите пользователя или введите email'
+              : 'Выберите пользователя или введите email и пароль'
           }
           size="lg"
           onClose={() => setPopupOpen(false)}
@@ -133,8 +147,10 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
                         key={user.id}
                         type="button"
                         disabled={submitting}
-                        onClick={() => handleLogin(user.email, false)}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-orange-50 disabled:opacity-50 soft-press cursor-pointer"
+                        onClick={() => selectUser(user)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-orange-50 disabled:opacity-50 soft-press cursor-pointer ${
+                          email === user.email ? 'bg-orange-50' : ''
+                        }`}
                       >
                         <div className="w-9 h-9 rounded-full bg-[#FF8600] text-white text-xs font-semibold flex items-center justify-center shrink-0">
                           {getInitials(user.name, user.email)}
@@ -158,7 +174,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
                   <div className="w-full border-t border-gray-200" />
                 </div>
                 <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-white px-2 text-gray-400">или email</span>
+                  <span className="bg-white px-2 text-gray-400">или email и пароль</span>
                 </div>
               </div>
             )}
@@ -182,6 +198,24 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
               />
             </div>
 
+            {mode === 'user' && (
+              <div>
+                <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Пароль
+                </label>
+                <input
+                  id="login-password"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Пароль"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
+                />
+                <p className="mt-1.5 text-xs text-gray-400">Для демо пароль всех пользователей: {DEMO_PASSWORD}</p>
+              </div>
+            )}
+
             {error && <p className="text-sm text-red-500">{error}</p>}
 
             <button
@@ -189,7 +223,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
               disabled={submitting}
               className="w-full bg-[#FF8600] hover:bg-[#FF6B00] disabled:opacity-50 text-white font-medium py-2.5 px-4 rounded-xl soft-press shadow-sm cursor-pointer"
             >
-              {submitting ? 'Вход…' : mode === 'admin' ? 'Войти' : 'Продолжить'}
+              {submitting ? 'Вход…' : 'Войти'}
             </button>
 
             {mode === 'user' ? (
@@ -198,6 +232,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
                 onClick={() => {
                   setMode('admin')
                   setEmail('Админ')
+                  setPassword('')
                   setError(null)
                 }}
                 className="w-full text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
@@ -210,6 +245,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
                 onClick={() => {
                   setMode('user')
                   setEmail('')
+                  setPassword('')
                   setError(null)
                 }}
                 className="w-full text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
