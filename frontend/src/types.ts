@@ -23,7 +23,7 @@ export interface Question {
   id: number
   surveyId: number
   text: string
-  type: 'radio' | 'scale' | 'text'
+  type: 'radio' | 'scale' | 'text' | 'checkboxes' | 'dropdown' | 'date' | 'stars'
   isRequired?: boolean
   props?: QuestionProps
   options?: { value: number; label: string }[]
