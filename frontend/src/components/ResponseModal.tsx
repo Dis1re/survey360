@@ -67,7 +67,7 @@ export function ResponseModal({
       {questions.map((question, index) => (
         <div
           key={question.id}
-          className="soft-lift bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-5 shadow-sm"
+          className="soft-lift bg-white dark:bg-[#262d3a] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-5 shadow-sm dark:shadow-none"
         >
           <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
             <span className="text-gray-400 dark:text-gray-400 mr-1.5">{index + 1}.</span>
