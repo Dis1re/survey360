@@ -743,6 +743,12 @@ public class SurveyController(
             survey.Status = "Завершен";
             survey.ClosedAt = DateTime.UtcNow;
             await context.SaveChangesAsync(ct);
+
+            _ = Task.Run(async () =>
+            {
+                try { await aiSummaryService.GenerateOverallAsync(id); }
+                catch (Exception ex) { /* best-effort */ }
+            });
         }
 
         await NotifySurveyUpdatedAsync(id, survey.Status, ct);
