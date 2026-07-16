@@ -17,6 +17,7 @@ builder.Services.AddDbContextPool<ApplicationDbContext>(options => options.UseSq
 var mySettingsSection = builder.Configuration.GetSection("MySettings");
 builder.Services.Configure<MySettings>(mySettingsSection);
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection(EmailSettings.SectionName));
+builder.Services.Configure<AiSummaryOptions>(builder.Configuration.GetSection(AiSummaryOptions.SectionName));
 
 builder.Services.AddTransient<TransientTime>();
 builder.Services.AddScoped<ScopedTime>();
