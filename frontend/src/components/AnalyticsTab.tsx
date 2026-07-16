@@ -83,7 +83,7 @@ function ScaleRadarChart({ questions, answersByQuestion }: { questions: Question
             y={p.y}
             textAnchor={anchor}
             dominantBaseline="middle"
-            className="fill-gray-500"
+            className="fill-gray-500 dark:fill-gray-400"
             fontSize={textLen > 18 ? 8 : 10}
           >
             {q.text.length > 22 ? q.text.slice(0, 20) + '…' : q.text}
@@ -111,24 +111,24 @@ function ScaleBar({ question, qAnswers }: { question: Question; qAnswers: ApiAns
   return (
     <div>
       <div className="flex items-baseline justify-between mb-2">
-        <span className="text-sm font-medium text-gray-900">{question.text}</span>
-        <span className="text-sm font-bold text-[#FF8600]">{avg.toFixed(1)}</span>
+        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{question.text}</span>
+        <span className="text-sm font-bold text-[#FF8600] dark:text-[#FFA64D]">{avg.toFixed(1)}</span>
       </div>
       <div className="flex items-center gap-1.5">
         {counts.map((c, i) => (
           <div key={i} className="flex flex-col items-center flex-1 gap-0.5">
-            <span className="text-[10px] text-gray-400 h-3">{c > 0 ? c : ''}</span>
-            <div className="w-full relative h-5 bg-gray-50 rounded-sm overflow-hidden">
+            <span className="text-[10px] text-gray-500 dark:text-gray-300 h-3">{c > 0 ? c : ''}</span>
+            <div className="w-full relative h-5 bg-gray-200 dark:bg-[#3a4250] rounded-sm overflow-hidden">
               <div
-                className="absolute inset-y-0 left-0 bg-[#FF8600]/70 rounded-sm transition-all"
+                className="absolute inset-y-0 left-0 bg-[#FF8600] dark:bg-[#FF8600] rounded-sm transition-all"
                 style={{ width: `${(c / maxCount) * 100}%` }}
               />
             </div>
-            <span className="text-[10px] text-gray-400">{min + i}</span>
+            <span className="text-[10px] text-gray-500 dark:text-gray-300">{min + i}</span>
           </div>
         ))}
       </div>
-      <p className="text-[10px] text-gray-400 mt-1 text-right">{qAnswers.length} ответов</p>
+      <p className="text-[10px] text-gray-500 dark:text-gray-400 mt-1 text-right">{qAnswers.length} ответов</p>
     </div>
   )
 }
@@ -165,7 +165,7 @@ function RadioDistribution({ question, qAnswers }: { question: Question; qAnswer
           const pct = Math.round((counts[i] / total) * 100)
           return (
             <div key={i} className="flex items-center gap-2">
-              <span className="text-xs text-gray-600 w-32 truncate shrink-0" title={opt}>{opt}</span>
+              <span className="text-xs text-gray-600 dark:text-gray-300 w-32 truncate shrink-0" title={opt}>{opt}</span>
               <div className="flex-1 h-4 bg-gray-50 rounded-sm overflow-hidden">
                 <div
                   className="h-full bg-[#FF8600]/70 rounded-sm transition-all"
@@ -197,7 +197,7 @@ function TextResponses({ question, qAnswers, nameMap }: { question: Question; qA
             <span className="font-medium text-gray-500 shrink-0">{nameMap[a.userId] ?? `#${a.userId}`}</span>
             <span className="text-gray-300">→</span>
             <span className="text-gray-500 shrink-0">{nameMap[a.targetId] ?? `#${a.targetId}`}</span>
-            <span className="text-gray-700">: {a.text || '—'}</span>
+            <span className="text-gray-700 dark:text-gray-200">: {a.text || '—'}</span>
           </div>
         ))}
       </div>
@@ -207,9 +207,9 @@ function TextResponses({ question, qAnswers, nameMap }: { question: Question; qA
 
 function Card({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent?: boolean }) {
   return (
-    <div className="bg-white border border-gray-200 rounded-xl p-4">
+    <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-xl p-4">
       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{label}</p>
-      <p className={`text-2xl font-bold mt-1 ${accent ? 'text-[#FF8600]' : 'text-gray-900'}`}>{value}</p>
+      <p className={`text-2xl font-bold mt-1 ${accent ? 'text-[#FF8600]' : 'text-gray-900 dark:text-gray-100'}`}>{value}</p>
       {sub && <p className="text-[10px] text-gray-400 mt-0.5">{sub}</p>}
     </div>
   )
@@ -286,7 +286,7 @@ export function AnalyticsTab({
 
   return (
     <div className="space-y-8">
-      <h2 className="text-lg font-bold text-gray-900">Аналитика</h2>
+      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Аналитика</h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <Card label="Прогресс" value={`${completionPct}%`} sub={`${totalCompleted} из ${totalAssigned}`} />
@@ -299,20 +299,20 @@ export function AnalyticsTab({
         <section>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-1 h-5 bg-[#FF8600] rounded-full" />
-            <h3 className="text-sm font-bold text-gray-700">Шкала оценок</h3>
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200">Шкала оценок</h3>
             <span className="text-xs text-gray-400">{scaleQuestions.length} вопросов</span>
           </div>
 
           {scaleQuestions.length >= 3 && (
-            <div className="bg-white border border-gray-200 rounded-xl p-6 mb-4">
-              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-center">Обзор по шкале</p>
+      <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-xl p-6 mb-4">
+        <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2 text-center">Обзор по шкале</p>
               <ScaleRadarChart questions={scaleQuestions} answersByQuestion={answersByQuestion} />
             </div>
           )}
 
           <div className="space-y-3">
             {scaleQuestions.map((q) => (
-              <div key={q.id} className="bg-white border border-gray-200 rounded-xl px-5 py-4">
+              <div key={q.id} className="bg-gray-50 dark:bg-[#161a22] border border-gray-200 dark:border-[#3a4250] rounded-xl px-5 py-4">
                 <ScaleBar question={q} qAnswers={answersByQuestion.get(q.id) ?? []} />
               </div>
             ))}
@@ -324,12 +324,12 @@ export function AnalyticsTab({
         <section>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-1 h-5 bg-blue-500 rounded-full" />
-            <h3 className="text-sm font-bold text-gray-700">Варианты ответа</h3>
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200">Варианты ответа</h3>
             <span className="text-xs text-gray-400">{radioQuestions.length} вопросов</span>
           </div>
           <div className="space-y-3">
             {radioQuestions.map((q) => (
-              <div key={q.id} className="bg-white border border-gray-200 rounded-xl px-5 py-4">
+              <div key={q.id} className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-xl px-5 py-4">
                 <RadioDistribution question={q} qAnswers={answersByQuestion.get(q.id) ?? []} />
               </div>
             ))}
@@ -341,12 +341,12 @@ export function AnalyticsTab({
         <section>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-1 h-5 bg-gray-400 rounded-full" />
-            <h3 className="text-sm font-bold text-gray-700">Текстовые ответы</h3>
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200">Текстовые ответы</h3>
             <span className="text-xs text-gray-400">{textQuestions.length} вопросов</span>
           </div>
           <div className="space-y-3">
             {textQuestions.map((q) => (
-              <div key={q.id} className="bg-white border border-gray-200 rounded-xl px-5 py-4">
+              <div key={q.id} className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-xl px-5 py-4">
                 <TextResponses question={q} qAnswers={answersByQuestion.get(q.id) ?? []} nameMap={nameMap} />
               </div>
             ))}
@@ -358,19 +358,19 @@ export function AnalyticsTab({
         <section>
           <div className="flex items-center gap-3 mb-4">
             <div className="w-1 h-5 bg-emerald-500 rounded-full" />
-            <h3 className="text-sm font-bold text-gray-700">По оцениваемым</h3>
+            <h3 className="text-sm font-bold text-gray-700 dark:text-gray-200">По оцениваемым</h3>
           </div>
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+          <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] overflow-hidden">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50/80 border-b border-gray-200">
+                <tr className="bg-gray-50/80 dark:bg-[#161a22] border-b border-gray-200 dark:border-[#3a4250]">
                   <th className="text-left px-4 py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Имя</th>
                   <th className="text-center px-4 py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Отзывов</th>
                   <th className="text-center px-4 py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Средний балл</th>
                   <th className="text-left px-4 py-2.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider w-40">Прогресс</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-200 dark:divide-[#3a4250]">
                 {targets.map((t) => {
                   const targetAnswers = answersByTarget.get(t.id) ?? []
                   const expected = Object.values(assignments).reduce(
@@ -386,9 +386,9 @@ export function AnalyticsTab({
 
                   return (
                     <tr key={t.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-2.5 font-medium text-gray-900">{nameMap[t.id] ?? `#${t.id}`}</td>
-                      <td className="px-4 py-2.5 text-center text-gray-600">{targetAnswers.length}</td>
-                      <td className="px-4 py-2.5 text-center font-semibold text-gray-900">{avg}</td>
+                   <td className="px-4 py-2.5 font-medium text-gray-900 dark:text-gray-100">{nameMap[t.id] ?? `#${t.id}`}</td>
+                  <td className="px-4 py-2.5 text-center text-gray-600 dark:text-gray-300">{targetAnswers.length}</td>
+                  <td className="px-4 py-2.5 text-center font-semibold text-gray-900 dark:text-gray-100">{avg}</td>
                       <td className="px-4 py-2.5">
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">

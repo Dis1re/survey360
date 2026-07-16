@@ -50,15 +50,15 @@ function UserPicker({
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">
         Укажите, за кого вы проходите опрос. Ответы будут записаны в базу данных под этим пользователем.
       </p>
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Участники опроса</span>
+      <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-5 shadow-sm">
+        <span className="text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">Участники опроса</span>
         {loading ? (
-          <p className="text-sm text-gray-400 mt-3">Загрузка…</p>
+          <p className="text-sm text-gray-400 dark:text-gray-400 mt-3">Загрузка…</p>
         ) : users.length === 0 ? (
-          <p className="text-sm text-gray-400 mt-3">Нет пользователей, назначенных на этот опрос</p>
+          <p className="text-sm text-gray-400 dark:text-gray-400 mt-3">Нет пользователей, назначенных на этот опрос</p>
         ) : (
           <div className="mt-3 space-y-2 max-h-72 overflow-y-auto pr-1">
             {users.map((user) => {
@@ -67,7 +67,7 @@ function UserPicker({
                 <label
                   key={user.id}
                   className={`soft-lift flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${
-                    isActive ? 'border-blue-500 bg-blue-50' : 'border-gray-100 hover:bg-gray-50'
+                    isActive ? 'border-blue-500 bg-blue-50 dark:bg-blue-500/10' : 'border-gray-100 hover:bg-gray-50'
                   }`}
                 >
                   <input
@@ -75,11 +75,11 @@ function UserPicker({
                     name="participant"
                     checked={isActive}
                     onChange={() => setSelectedId(user.id)}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-blue-600 dark:text-blue-400"
                   />
                   <div className="min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
-                    <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-300 truncate">{user.email}</div>
                   </div>
                 </label>
               )
@@ -92,7 +92,7 @@ function UserPicker({
           <button
             type="button"
             onClick={onBack}
-            className="px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
+            className="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-xl hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
           >
             Назад
           </button>
@@ -149,15 +149,15 @@ function TargetPicker({
 
   return (
     <div>
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">
         По кому вы хотите пройти опрос? Один и тот же пользователь может оценивать несколько целей.
       </p>
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Доступные цели</span>
+      <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-5 shadow-sm">
+        <span className="text-xs font-bold text-gray-400 dark:text-gray-400 uppercase tracking-wider">Доступные цели</span>
         {loading ? (
-          <p className="text-sm text-gray-400 mt-3">Загрузка…</p>
+          <p className="text-sm text-gray-400 dark:text-gray-400 mt-3">Загрузка…</p>
         ) : targets.length === 0 ? (
-          <p className="text-sm text-gray-400 mt-3">Для этого пользователя нет назначенных целей</p>
+          <p className="text-sm text-gray-400 dark:text-gray-400 mt-3">Для этого пользователя нет назначенных целей</p>
         ) : (
           <div className="mt-3 space-y-2 max-h-72 overflow-y-auto pr-1">
             {targets.map(({ user, completed }) => {
@@ -165,14 +165,10 @@ function TargetPicker({
               return (
                 <label
                   key={user.id}
-                  className={`soft-lift flex items-center gap-3 p-3 rounded-xl border cursor-pointer ${
-                    completed
-                      ? isActive
-                        ? 'border-green-500 bg-green-50'
-                        : 'border-gray-100 bg-gray-50 hover:bg-gray-100'
-                      : isActive
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-100 hover:bg-gray-50'
+                  className={`soft-lift flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition ${
+                    isActive
+                      ? 'border-[#FF8600] bg-orange-50 dark:bg-[#FF8600]/12'
+                      : 'border-gray-200 dark:border-[#3a4250] bg-white dark:bg-[#1e222e] hover:border-gray-300 dark:hover:border-[#454f60] hover:bg-gray-50 dark:hover:bg-[#262d3a]'
                   }`}
                 >
                   <input
@@ -180,14 +176,14 @@ function TargetPicker({
                     name="target"
                     checked={isActive}
                     onChange={() => setSelectedId(user.id)}
-                    className="w-4 h-4 text-blue-600"
+                    className="w-4 h-4 text-[#FF8600] dark:text-[#FF8600]"
                   />
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm font-medium text-gray-900 truncate">{user.name}</div>
-                    <div className="text-xs text-gray-500 truncate">{user.email}</div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">{user.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-300 truncate">{user.email}</div>
                   </div>
                   {completed && (
-                    <span className="text-xs font-medium text-green-600 flex items-center gap-1">
+                    <span className="text-xs font-medium text-green-600 dark:text-green-400 flex items-center gap-1">
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
@@ -205,7 +201,7 @@ function TargetPicker({
           <button
             type="button"
             onClick={onBack}
-            className="px-4 py-2.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-xl hover:bg-gray-50 cursor-pointer"
+            className="px-4 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-xl hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
           >
             {backLabel}
           </button>
@@ -500,7 +496,7 @@ export function TakeSurvey({
   if (loading || autoResolvingTarget) {
     return (
       <div className="flex items-center justify-center h-full min-h-[50vh] p-6">
-        <p className="text-sm text-gray-500">Загрузка опроса…</p>
+        <p className="text-sm text-gray-500 dark:text-gray-300">Загрузка опроса…</p>
       </div>
     )
   }
@@ -509,7 +505,7 @@ export function TakeSurvey({
     return (
       <div className="flex items-center justify-center h-full min-h-[50vh] p-6">
         <div className="text-center max-w-md">
-          <p className="text-sm text-gray-500">Для вас нет назначенных целей в этом опросе</p>
+          <p className="text-sm text-gray-500 dark:text-gray-300">Для вас нет назначенных целей в этом опросе</p>
         </div>
       </div>
     )
@@ -518,9 +514,9 @@ export function TakeSurvey({
   if (surveyClosed && !effectiveReadOnly && targetId !== null && assignmentChecked) {
     return (
       <div className="max-w-2xl mx-auto p-6 text-center">
-        <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-          <h2 className="text-xl font-semibold text-gray-900">{survey?.name ?? 'Опрос'}</h2>
-          <p className="text-sm text-gray-500 mt-3">
+        <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-8 shadow-sm">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">{survey?.name ?? 'Опрос'}</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-300 mt-3">
             {mapSurveyStatus(survey?.status ?? '') === 'closed'
               ? 'Этот опрос завершён. Новые ответы отправить нельзя — выберите цель с уже отправленными ответами для просмотра.'
               : 'Опрос ещё не опубликован. Дождитесь, пока организатор запустит его.'}
@@ -546,15 +542,15 @@ export function TakeSurvey({
     return (
       <>
         {thanksPopupOpen && (
-          <div className="fixed top-4 right-4 z-50 w-72 bg-white border border-gray-200 rounded-2xl shadow-lg p-4 flex items-start gap-3">
+          <div className="fixed top-4 right-4 z-50 w-72 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl shadow-lg p-4 flex items-start gap-3">
             <img src="/sobaka.webp" alt="" className="w-12 h-12 rounded-full object-cover shrink-0" />
-            <p className="flex-1 min-w-0 text-sm font-medium text-gray-900">
+            <p className="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100">
               Спасибо за помощь в улучшении работы! Ты крут!
             </p>
             <button
               type="button"
               onClick={() => setThanksPopupOpen(false)}
-              className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition cursor-pointer"
+              className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#303a48] transition cursor-pointer"
               aria-label="Закрыть"
             >
               ✕
@@ -562,12 +558,12 @@ export function TakeSurvey({
           </div>
         )}
         <div className="max-w-2xl mx-auto p-6 text-center">
-          <div className="bg-white border border-gray-200 rounded-2xl p-8 shadow-sm">
-            <div className="mx-auto w-20 h-20 rounded-full bg-green-100 flex items-center justify-center overflow-hidden">
+          <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-8 shadow-sm">
+            <div className="mx-auto w-20 h-20 rounded-full bg-green-100 dark:bg-green-500/15 flex items-center justify-center overflow-hidden">
               <img src="/cat_icon.webp" alt="Успешное завершение" className="w-full h-full object-cover" />
             </div>
-            <h2 className="text-xl font-semibold text-gray-900 mt-4">Спасибо!</h2>
-            <p className="text-sm text-gray-500 mt-1">Ваши ответы успешно сохранены в базе данных.</p>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-4">Спасибо!</h2>
+            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Ваши ответы успешно сохранены в базе данных.</p>
             <div className="mt-6 flex justify-center gap-3">
               <button
                 type="button"
@@ -576,7 +572,7 @@ export function TakeSurvey({
                   setTargetId(null)
                   if (!hideUserSwitch) setTargetModalOpen(true)
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-600 border-2 border-orange-300 rounded-xl hover:bg-orange-50 cursor-pointer"
+                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-200 border-2 border-orange-300 dark:border-[#FF8600]/45 rounded-xl hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 cursor-pointer"
               >
                 {standalone || userPickerLocked ? 'Оценить ещё' : 'Другой пользователь'}
               </button>
@@ -605,7 +601,7 @@ export function TakeSurvey({
           <button
             type="button"
             onClick={() => setTargetModalOpen(true)}
-            className="soft-press text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+            className="soft-press text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
           >
             Сменить цель
           </button>
@@ -617,7 +613,7 @@ export function TakeSurvey({
             <button
               type="button"
               onClick={onBack}
-              className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 cursor-pointer"
+              className="flex items-center gap-1 text-sm text-gray-500 dark:text-gray-300 hover:text-gray-700 dark:hover:text-gray-200 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -629,7 +625,7 @@ export function TakeSurvey({
               <button
                 type="button"
                 onClick={() => setUserModalOpen(true)}
-                className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+                className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
               >
                 Сменить пользователя
               </button>
@@ -637,7 +633,7 @@ export function TakeSurvey({
               <button
                 type="button"
                 onClick={() => setTargetModalOpen(true)}
-                className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+                className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
               >
                 Сменить цель
               </button>
@@ -651,7 +647,7 @@ export function TakeSurvey({
             <button
               type="button"
               onClick={() => setUserModalOpen(true)}
-              className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+              className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
             >
               Сменить пользователя
             </button>
@@ -659,7 +655,7 @@ export function TakeSurvey({
           <button
             type="button"
             onClick={() => setTargetModalOpen(true)}
-            className="text-xs font-medium text-gray-600 border border-gray-200 rounded-lg px-3 py-1.5 hover:bg-gray-50 cursor-pointer"
+            className="text-xs font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-lg px-3 py-1.5 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
           >
             Сменить цель
           </button>
@@ -667,10 +663,10 @@ export function TakeSurvey({
       )}
 
       {!preview && (
-        <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm mb-5">
+        <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-5 shadow-sm mb-5">
           {effectiveReadOnly && !preview && (
-            <div className="mt-3 flex items-center gap-2 rounded-xl bg-gray-100 border border-gray-200 px-4 py-2.5 text-sm text-gray-600">
-              <svg className="w-4 h-4 text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <div className="mt-3 flex items-center gap-2 rounded-xl bg-gray-100 dark:bg-[#303a48] border border-gray-200 dark:border-[#3a4250] px-4 py-2.5 text-sm text-gray-600 dark:text-gray-200">
+              <svg className="w-4 h-4 text-gray-400 dark:text-gray-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
               {surveyClosed
@@ -679,21 +675,21 @@ export function TakeSurvey({
             </div>
           )}
           {survey?.description && (
-            <p className="text-sm text-gray-500 mt-1">{survey.description}</p>
+            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">{survey.description}</p>
           )}
           {respondent && (
-            <p className="text-xs text-gray-400 mt-2">
-              Ответы записываются за пользователя: <span className="font-medium text-gray-600">{respondent.name}</span>
+            <p className="text-xs text-gray-400 dark:text-gray-400 mt-2">
+              Ответы записываются за пользователя: <span className="font-medium text-gray-600 dark:text-gray-200">{respondent.name}</span>
             </p>
           )}
           {!preview && (
-            <div className="mt-4 flex items-center gap-3 rounded-xl bg-orange-100 border-2 border-orange-300 px-4 py-3 shadow-sm">
+            <div className="mt-4 flex items-center gap-3 rounded-xl bg-orange-100 dark:bg-[#FF8600]/18 border-2 border-orange-300 dark:border-[#FF8600]/45 px-4 py-3 shadow-sm">
               <svg className="w-6 h-6 text-[#FF6B00] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
               </svg>
-            <span className="text-sm text-gray-600">
+            <span className="text-sm text-gray-600 dark:text-gray-200">
               Опрос по:{' '}
-              <span className="ml-1 text-lg font-bold text-gray-900">
+              <span className="ml-1 text-lg font-bold text-gray-900 dark:text-gray-100">
                 {target ? target.name : '— не задано —'}
               </span>
             </span>
@@ -704,12 +700,12 @@ export function TakeSurvey({
 
       <form onSubmit={handleSubmit} className={`space-y-4  ${effectiveReadOnly ? 'opacity-75' : ''}`}>
         {questions.length === 0 ? (
-          <p className="text-sm text-gray-400">В этом опросе пока нет вопросов.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-400">В этом опросе пока нет вопросов.</p>
         ) : (
           questions.map((question, index) => (
-            <div key={question.id} className="soft-lift bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-              <label className="block text-sm font-medium text-gray-900 mb-3">
-                <span className="text-gray-400 mr-1.5">{index + 1}.</span>
+            <div key={question.id} className="soft-lift bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-5 shadow-sm">
+              <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">
+                <span className="text-gray-400 dark:text-gray-400 mr-1.5">{index + 1}.</span>
                 {question.text}
                 {question.isRequired && (
                   <span className="ml-1.5 text-red-500" title="Обязательный вопрос">
@@ -752,7 +748,10 @@ export function TakeSurvey({
       )}
 
       {showTargetModal && lockedUserId !== null && (
-        <Modal title="Выбор цели опроса">
+        <Modal
+          title="Выбор цели опроса"
+          onClose={targetId !== null ? () => setTargetModalOpen(false) : undefined}
+        >
           <TargetPicker
             surveyId={surveyId}
             userId={lockedUserId}

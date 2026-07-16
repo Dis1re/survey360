@@ -113,7 +113,7 @@ export function ConfirmModal({
               type="button"
               onClick={onCancel}
               disabled={loading}
-              className="soft-press flex-1 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-50 rounded-xl cursor-pointer"
+              className="soft-press flex-1 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] disabled:opacity-50 rounded-xl cursor-pointer"
             >
               {cancelLabel}
             </button>
@@ -136,7 +136,7 @@ export function ConfirmModal({
         >
           <ConfirmIcon variant={variant} />
         </div>
-        <div className="text-sm text-gray-600 leading-relaxed pt-0.5">{message}</div>
+        <div className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed pt-0.5">{message}</div>
       </div>
     </Modal>
   )
