@@ -15,6 +15,10 @@ public class AiSummaryService
     private readonly AiSummaryOptions _options;
     private readonly ILogger<AiSummaryService> _logger;
 
+    private string? _cachedToken;
+    private DateTimeOffset _tokenExpiresAt = DateTimeOffset.MinValue;
+    private readonly SemaphoreSlim _tokenLock = new(1, 1);
+
     public AiSummaryService(
         ApplicationDbContext db,
         IHttpClientFactory httpFactory,
@@ -100,20 +104,23 @@ public class AiSummaryService
 
     private async Task<string?> CallLlmAsync(string prompt, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(_options.ApiKey))
+        if (string.IsNullOrWhiteSpace(_options.ClientId) || string.IsNullOrWhiteSpace(_options.ClientSecret))
         {
-            _logger.LogWarning("AI Summary API key is not configured");
+            _logger.LogWarning("AI Summary GigaChat credentials are not configured");
             return null;
         }
 
         try
         {
-            var client = _httpFactory.CreateClient();
-            var url = $"{_options.BaseUrl.TrimEnd('/')}/chat/completions";
+            var token = await GetAccessTokenAsync(ct);
+            if (token == null) return null;
+
+            var client = _httpFactory.CreateClient("GigaChat");
+            var url = $"{_options.ChatBaseUrl.TrimEnd('/')}/api/v3/chat/completions";
 
             var body = new
             {
-                model = _options.Model,
+                model = "GigaChat",
                 messages = new[]
                 {
                     new { role = "system", content = "Ты — опытный HR-аналитик. Анализируешь результаты 360° опросов. Отвечай на русском языке, структурированно, по существу. Используй markdown для форматирования." },
@@ -123,11 +130,17 @@ public class AiSummaryService
                 max_tokens = 2000,
             };
 
-            var response = await client.PostAsJsonAsync(url, body, ct);
+            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = JsonContent.Create(body)
+            };
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+
+            var response = await client.SendAsync(request, ct);
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync(ct);
-                _logger.LogWarning("LLM API returned {Status}: {Error}", response.StatusCode, error);
+                _logger.LogWarning("GigaChat API returned {Status}: {Error}", response.StatusCode, error);
                 return null;
             }
 
@@ -141,8 +154,59 @@ public class AiSummaryService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to call LLM API");
+            _logger.LogError(ex, "Failed to call GigaChat API");
             return null;
+        }
+    }
+
+    private async Task<string?> GetAccessTokenAsync(CancellationToken ct)
+    {
+        if (_cachedToken != null && DateTimeOffset.UtcNow < _tokenExpiresAt)
+            return _cachedToken;
+
+        await _tokenLock.WaitAsync(ct);
+        try
+        {
+            if (_cachedToken != null && DateTimeOffset.UtcNow < _tokenExpiresAt)
+                return _cachedToken;
+
+            var client = _httpFactory.CreateClient("GigaChat");
+            var url = $"{_options.OAuthBaseUrl.TrimEnd('/')}/api/v2/oauth";
+
+            var credentials = Convert.ToBase64String(
+                Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
+
+            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("scope", _options.Scope)
+                })
+            };
+            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
+            request.Headers.Add("RqUID", Guid.NewGuid().ToString());
+
+            var response = await client.SendAsync(request, ct);
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync(ct);
+                _logger.LogWarning("GigaChat OAuth returned {Status}: {Error}", response.StatusCode, error);
+                return null;
+            }
+
+            var json = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+            var accessToken = json.GetProperty("access_token").GetString();
+            var expiresIn = json.GetProperty("expires_in").GetInt32();
+
+            _cachedToken = accessToken;
+            _tokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresIn - 60);
+
+            _logger.LogInformation("GigaChat OAuth token obtained, expires in {ExpiresIn}s", expiresIn);
+            return _cachedToken;
+        }
+        finally
+        {
+            _tokenLock.Release();
         }
     }
 

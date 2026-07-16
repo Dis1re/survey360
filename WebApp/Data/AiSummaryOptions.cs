@@ -4,7 +4,9 @@ public class AiSummaryOptions
 {
     public const string SectionName = "AiSummary";
 
-    public string BaseUrl { get; set; } = "https://api.groq.com/openai/v1";
-    public string ApiKey { get; set; } = "";
-    public string Model { get; set; } = "llama-3.3-70b-versatile";
+    public string OAuthBaseUrl { get; set; } = "https://ngw.devices.sberbank.ru:9443";
+    public string ChatBaseUrl { get; set; } = "https://gigachat.devices.sberbank.ru";
+    public string ClientId { get; set; } = "";
+    public string ClientSecret { get; set; } = "";
+    public string Scope { get; set; } = "GIGACHAT_API_PERS";
 }

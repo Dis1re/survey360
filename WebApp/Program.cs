@@ -1,3 +1,5 @@
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -56,6 +58,38 @@ builder.Services.AddScoped<SurveyRespondentLinkService>();
 builder.Services.AddHttpClient<EmailService>();
 builder.Services.AddScoped<SurveyInviteEmailService>();
 builder.Services.AddScoped<AiSummaryService>();
+
+var russianCaCertPath = Path.Combine(builder.Environment.ContentRootPath, "russian_trusted_root_ca.pem");
+builder.Services.AddHttpClient("GigaChat").ConfigurePrimaryHttpMessageHandler(() =>
+{
+    var handler = new HttpClientHandler();
+    if (File.Exists(russianCaCertPath))
+    {
+        var caCertPem = File.ReadAllText(russianCaCertPath);
+        var caCert = new X509Certificate2(Convert.FromBase64String(
+            caCertPem.Replace("-----BEGIN CERTIFICATE-----", "")
+                     .Replace("-----END CERTIFICATE-----", "")
+                     .Replace("\n", "")
+                     .Replace("\r", "")
+                     .Trim()));
+
+        handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, errors) =>
+        {
+            if (errors == SslPolicyErrors.None) return true;
+            if (cert == null || chain == null) return false;
+
+            chain.ChainPolicy.ExtraStore.Add(caCert);
+            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            return chain.Build(new X509Certificate2(cert));
+        };
+    }
+    else
+    {
+        handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
+    }
+    return handler;
+});
 
 builder.Services.AddCors(options =>
 {
