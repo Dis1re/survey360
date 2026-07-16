@@ -51,6 +51,7 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddScoped<SurveyDocxReportService>();
 builder.Services.AddScoped<SurveyCsvReportService>();
+builder.Services.AddScoped<SurveyXlsxReportService>();
 builder.Services.AddScoped<SurveyRespondentLinkService>();
 builder.Services.AddHttpClient<EmailService>();
 builder.Services.AddScoped<SurveyInviteEmailService>();
