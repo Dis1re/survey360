@@ -8,6 +8,15 @@ public class SurveyCsvReportService(ApplicationDbContext context)
 {
     public async Task<(string Csv, string FileName)?> BuildCsvAsync(int surveyId, CancellationToken ct)
     {
+        return await BuildCsvAsync(surveyId, ct, null, null);
+    }
+
+    public async Task<(string Csv, string FileName)?> BuildCsvAsync(
+        int surveyId,
+        CancellationToken ct,
+        int? filterReviewerId = null,
+        int? filterTargetId = null)
+    {
         var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == surveyId, ct);
         if (survey is null)
             return null;
@@ -23,10 +32,16 @@ public class SurveyCsvReportService(ApplicationDbContext context)
             return null;
 
         var questionIds = questions.Select(q => q.Id).ToList();
-        var answers = await context.Answers
+        var answersQuery = context.Answers
             .AsNoTracking()
-            .Where(a => questionIds.Contains(a.QuestionId))
-            .ToListAsync(ct);
+            .Where(a => questionIds.Contains(a.QuestionId));
+
+        if (filterReviewerId.HasValue)
+            answersQuery = answersQuery.Where(a => a.UserId == filterReviewerId.Value);
+        if (filterTargetId.HasValue)
+            answersQuery = answersQuery.Where(a => a.TargetId == filterTargetId.Value);
+
+        var answers = await answersQuery.ToListAsync(ct);
 
         if (answers.Count == 0)
             return null;
