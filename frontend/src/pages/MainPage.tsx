@@ -822,6 +822,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
         <div className="flex-1 min-h-0 p-6 overflow-auto">
           <div className="max-w-6xl mx-auto">
             <AnalyticsTab
+              surveyId={surveyId}
               questions={questions}
               answers={answers}
               targets={targets}
@@ -830,6 +831,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               completedAssignments={completedAssignments}
               reportInfo={reportInfo}
               allUsers={allUsers}
+              onOpenExport={(filter) => setExportFormat({ kind: 'menu', filter })}
             />
           </div>
         </div>
