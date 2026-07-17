@@ -69,7 +69,7 @@ public class SurveyInviteEmailService(
             isFirstSend = false;
 
             var targets = targetsByReviewer.GetValueOrDefault(link.ReviewerId) ?? [];
-            var inviteUrl = $"{baseUrl}/survey/invite/{link.Token}";
+            var inviteUrl = $"{baseUrl.TrimEnd('/')}/?invite={link.Token}";
             var subject = InviteEmailTemplates.BuildSubject(survey);
             var textBody = InviteEmailTemplates.BuildTextBody(link.ReviewerName, survey, targets, inviteUrl);
             var htmlBody = InviteEmailTemplates.BuildHtmlBody(

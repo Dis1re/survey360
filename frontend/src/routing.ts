@@ -1,6 +1,26 @@
+const INVITE_TOKEN_RE = /^[a-f0-9]{32}$/i
+
+/** Invite token from `?invite=` (normal app entry from email). */
 export function getInviteToken(): string | null {
+  const raw = new URLSearchParams(window.location.search).get('invite')
+  return raw && INVITE_TOKEN_RE.test(raw) ? raw : null
+}
+
+/** Rewrite legacy `/survey/invite/{token}` links into the normal app URL. */
+export function normalizeLegacyInviteUrl(): void {
   const match = window.location.pathname.match(/^\/survey\/invite\/([a-f0-9]{32})\/?$/i)
-  return match?.[1] ?? null
+  if (!match) return
+  const url = new URL(window.location.href)
+  url.pathname = '/'
+  url.searchParams.set('invite', match[1])
+  window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}`)
+}
+
+export function clearInviteTokenFromUrl(): void {
+  const url = new URL(window.location.href)
+  if (!url.searchParams.has('invite')) return
+  url.searchParams.delete('invite')
+  window.history.replaceState(null, '', `${url.pathname}${url.search}${url.hash}` || '/')
 }
 
 export function getPublicSurveyId(): number | null {
@@ -120,13 +140,13 @@ export function buildSurveyResponseLink(surveyId: number, reviewerId: number, ta
 }
 
 export function buildRespondentInviteLink(token: string): string {
-  return `${window.location.origin}/survey/invite/${token}`
+  return `${window.location.origin}/?invite=${token}`
 }
 
 export function buildInviteMailto(email: string, surveyName: string, inviteLink: string): string {
   const subject = encodeURIComponent(`Приглашение к опросу: ${surveyName}`)
   const body = encodeURIComponent(
-    `Здравствуйте!\n\nВас приглашают пройти опрос «${surveyName}».\n\nПерейдите по персональной ссылке:\n${inviteLink}\n\nПо этой ссылке вам не нужно указывать свои данные — система уже знает, кто вы.`,
+    `Здравствуйте!\n\nВас приглашают пройти опрос «${surveyName}».\n\nОткройте приложение и войдите под своим аккаунтом:\n${inviteLink}\n\nПосле входа опрос откроется во вкладке «Участие».`,
   )
   return `mailto:${email}?subject=${subject}&body=${body}`
 }

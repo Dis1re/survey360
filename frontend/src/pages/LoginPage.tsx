@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
-import { userApi } from '../api'
+import { surveyApi, userApi } from '../api'
 import { Modal } from '../components/Modal'
 import { DEMO_PASSWORD, useAuth } from '../context/AuthContext'
-import { openDevPage } from '../routing'
+import { getInviteToken, openDevPage } from '../routing'
 import type { ApiUser } from '../types'
 import { getInitials } from '../utils'
 
@@ -22,6 +22,33 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [popupOpen, setPopupOpen] = useState(false)
+  const [inviteHint, setInviteHint] = useState<string | null>(null)
+
+  useEffect(() => {
+    const token = getInviteToken()
+    if (!token) return
+
+    let cancelled = false
+    surveyApi
+      .resolveInvite(token)
+      .then((info) => {
+        if (cancelled) return
+        const hint = info.reviewerEmail || info.reviewerName.trim()
+        setInviteHint(hint || null)
+        setMode('user')
+        setEmail(info.reviewerEmail || '')
+        setPassword(DEMO_PASSWORD)
+        setError(null)
+        setPopupOpen(true)
+      })
+      .catch(() => {
+        if (!cancelled) setInviteHint(null)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     if (!popupOpen || mode !== 'user') return
@@ -36,8 +63,13 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
 
   const openPopup = (nextMode: LoginMode) => {
     setMode(nextMode)
-    setEmail(nextMode === 'admin' ? 'Админ' : '')
-    setPassword('')
+    if (nextMode === 'admin') {
+      setEmail('Админ')
+      setPassword('')
+    } else if (!email) {
+      setEmail('')
+      setPassword('')
+    }
     setError(null)
     setPopupOpen(true)
   }
@@ -91,7 +123,9 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
         <img src="/Survey360Logo.webp" alt="" className="w-20 h-20 object-contain mx-auto mb-4" />
         <h1 className="text-3xl font-bold text-gray-900">Опросы 360</h1>
         <p className="text-sm text-gray-500 mt-2 max-w-sm">
-          Войдите по корпоративной почте, чтобы увидеть назначенные вам опросы
+          {inviteHint
+            ? `Войдите как ${inviteHint}, чтобы открыть опрос по приглашению`
+            : 'Войдите по корпоративной почте, чтобы увидеть назначенные вам опросы'}
         </p>
       </div>
 
@@ -102,13 +136,6 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
           className="soft-press bg-[#FF8600] hover:bg-[#FF6B00] text-white font-medium py-3 px-8 rounded-xl shadow-sm cursor-pointer"
         >
           Войти
-        </button>
-        <button
-          type="button"
-          onClick={() => openPopup('admin')}
-          className="soft-press bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-8 rounded-xl border border-gray-200 shadow-sm cursor-pointer"
-        >
-          Вход для администратора
         </button>
         <button
           type="button"
@@ -126,7 +153,9 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
           description={
             mode === 'admin'
               ? 'Нажмите «Войти» — логин уже подставлен'
-              : 'Выберите пользователя или введите email и пароль'
+              : inviteHint
+                ? `Для этой ссылки нужен аккаунт ${inviteHint}`
+                : 'Выберите пользователя или введите email и пароль'
           }
           size="lg"
           onClose={() => setPopupOpen(false)}
@@ -192,7 +221,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={mode === 'admin' ? 'Админ' : 'name@company.com'}
-                className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] ${
+                className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#FF8600] ${
                   mode === 'admin' ? 'bg-gray-50 text-gray-700' : ''
                 }`}
               />
@@ -210,7 +239,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Пароль"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#FF8600]"
                 />
                 <p className="mt-1.5 text-xs text-gray-400">Для демо пароль всех пользователей: {DEMO_PASSWORD}</p>
               </div>
