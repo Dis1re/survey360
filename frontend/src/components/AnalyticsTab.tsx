@@ -21,6 +21,7 @@ interface AnalyticsTabProps {
   completedAssignments: Record<string, Record<string, boolean>>
   reportInfo: SurveyReportInfo | null
   allUsers: ApiUser[]
+  onOpenExport?: (filter?: { reviewerId?: number; targetId?: number }) => void
 }
 
 function getNameMap(users: ApiUser[]): Record<number, string> {
@@ -385,6 +386,7 @@ export function AnalyticsTab({
   completedAssignments,
   reportInfo: _reportInfo,
   allUsers,
+  onOpenExport,
 }: AnalyticsTabProps) {
   const nameMap = useMemo(() => getNameMap(allUsers), [allUsers])
 
@@ -473,7 +475,29 @@ export function AnalyticsTab({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Аналитика</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Аналитика</h2>
+        {onOpenExport && (
+          <button
+            type="button"
+            onClick={() => {
+              if (activeTab === 'targets' && selectedPersonId != null) {
+                onOpenExport({ targetId: selectedPersonId })
+              } else if (activeTab === 'respondents' && selectedPersonId != null) {
+                onOpenExport({ reviewerId: selectedPersonId })
+              } else {
+                onOpenExport()
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 dark:text-gray-300 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-lg hover:border-[#FF8600] hover:text-[#FF8600] transition-colors cursor-pointer"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            Скачать отчёт
+          </button>
+        )}
+      </div>
 
       <div className="grid grid-cols-3 gap-3">
         <Card label="Прогресс" value={`${completionPct}%`} sub={`${totalCompleted} из ${totalAssigned}`} />

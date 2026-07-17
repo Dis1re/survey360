@@ -829,6 +829,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               completedAssignments={completedAssignments}
               reportInfo={reportInfo}
               allUsers={allUsers}
+              onOpenExport={(filter) => setExportFormat({ kind: 'menu', filter })}
             />
           </div>
         </div>
