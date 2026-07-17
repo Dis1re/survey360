@@ -14,6 +14,9 @@ interface TakeSurveyProps {
   hideUserSwitch?: boolean
   lockedReviewerId?: number
   preview?: boolean
+  /** Other surveys still available for the current user to take. */
+  pendingSurveys?: { id: number; title: string }[]
+  onOpenSurvey?: (id: number) => void
   /** Fired after answers are submitted and assignment is marked complete. */
   onCompleted?: () => void
 }
@@ -21,6 +24,17 @@ interface TakeSurveyProps {
 interface TargetEntry {
   user: ApiUser
   completed: boolean
+}
+
+async function loadReviewerTargets(surveyId: number, reviewerId: number): Promise<TargetEntry[]> {
+  const [details, userList] = await Promise.all([surveyApi.get(surveyId), userApi.list()])
+  return details.assignments
+    .filter((a) => a.isAssigned && a.reviewerId === reviewerId)
+    .map((a) => {
+      const user = userList.find((u) => u.id === a.targetId)
+      return user ? { user, completed: a.isCompleted } : null
+    })
+    .filter((e): e is TargetEntry => e !== null)
 }
 
 function UserPicker({
@@ -233,6 +247,8 @@ export function TakeSurvey({
   hideUserSwitch = false,
   lockedReviewerId,
   preview = false,
+  pendingSurveys = [],
+  onOpenSurvey,
   onCompleted,
 }: TakeSurveyProps) {
   const initialParams = parseSurveyResponseParams()
@@ -249,6 +265,9 @@ export function TakeSurvey({
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  /** Next incomplete target in the same survey after submit (same опрос, другой человек). */
+  const [nextTarget, setNextTarget] = useState<ApiUser | null>(null)
+  const [remainingTargetsCount, setRemainingTargetsCount] = useState(0)
   const [error, setError] = useState<string | null>(null)
 
   const [userId, setUserId] = useState<number | null>(initialReviewerId)
@@ -290,17 +309,9 @@ export function TakeSurvey({
 
     let cancelled = false
     setAutoResolvingTarget(true)
-    Promise.all([surveyApi.get(surveyId), userApi.list()])
-      .then(([details, userList]) => {
+    loadReviewerTargets(surveyId, lockedUserId)
+      .then((entries) => {
         if (cancelled) return
-        const entries = details.assignments
-          .filter((a) => a.isAssigned && a.reviewerId === lockedUserId)
-          .map((a) => {
-            const user = userList.find((u) => u.id === a.targetId)
-            return user ? { user, completed: a.isCompleted } : null
-          })
-          .filter((e): e is TargetEntry => e !== null)
-
         const pick = entries.find((t) => !t.completed) ?? entries[0]
         if (pick) {
           setTargetId(pick.user.id)
@@ -389,7 +400,8 @@ export function TakeSurvey({
 
   useEffect(() => {
     if (!storageKey) {
-      setAnswers({})
+      // Keep in-memory answers when switching to read-only (e.g. «Посмотреть ответы»).
+      if (lockedUserId === null || targetId === null) setAnswers({})
       return
     }
     try {
@@ -398,7 +410,7 @@ export function TakeSurvey({
     } catch {
       setAnswers({})
     }
-  }, [storageKey])
+  }, [storageKey, lockedUserId, targetId])
 
   useEffect(() => {
     if (!storageKey) return
@@ -490,6 +502,16 @@ export function TakeSurvey({
         })
       }
       await surveyApi.completeAssignment(surveyId, { reviewerId: lockedUserId, targetId })
+
+      let remaining: TargetEntry[] = []
+      try {
+        remaining = (await loadReviewerTargets(surveyId, lockedUserId)).filter((t) => !t.completed)
+      } catch (err) {
+        console.error(err)
+      }
+      setNextTarget(remaining[0]?.user ?? null)
+      setRemainingTargetsCount(remaining.length)
+
       setSubmitted(true)
       onCompleted?.()
       if (storageKey) {
@@ -561,24 +583,74 @@ export function TakeSurvey({
               <img src="/cat_icon.webp" alt="Успешное завершение" className="w-full h-full object-cover" />
             </div>
             <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mt-4">Спасибо!</h2>
-            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Ваши ответы успешно сохранены в базе данных.</p>
-            <div className="mt-6 flex justify-center gap-3">
+            <p className="text-sm text-gray-500 dark:text-gray-300 mt-1">Ваши ответы успешно сохранены.</p>
+            {nextTarget ? (
+              <p className="text-sm text-gray-600 dark:text-gray-200 mt-3">
+                В этом опросе ещё {remainingTargetsCount === 1 ? 'остался 1 человек' : `осталось ${remainingTargetsCount} чел.`} для оценки.
+              </p>
+            ) : pendingSurveys.length > 0 ? (
+              <p className="text-sm text-gray-600 dark:text-gray-200 mt-3">
+                В этом опросе больше некого оценивать. Есть другие опросы к прохождению.
+              </p>
+            ) : null}
+            <div className="mt-6 flex flex-col items-stretch gap-3 max-w-sm mx-auto">
+              {nextTarget ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSubmitted(false)
+                    setReadOnly(false)
+                    setAnswers({})
+                    setNextTarget(null)
+                    setRemainingTargetsCount(0)
+                    setTargetId(nextTarget.id)
+                  }}
+                  className="w-full px-4 py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl cursor-pointer"
+                >
+                  Пройти дальше: {nextTarget.name}
+                </button>
+              ) : (
+                pendingSurveys.length > 0 &&
+                onOpenSurvey && (
+                  <button
+                    type="button"
+                    onClick={() => onOpenSurvey(pendingSurveys[0].id)}
+                    className="w-full px-4 py-2.5 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl cursor-pointer"
+                  >
+                    Пройти следующий опрос: {pendingSurveys[0].title}
+                  </button>
+                )
+              )}
+              {!nextTarget && pendingSurveys.length > 1 && onOpenSurvey && (
+                <ul className="space-y-2 text-left">
+                  {pendingSurveys.slice(1).map((item) => (
+                    <li key={item.id}>
+                      <button
+                        type="button"
+                        onClick={() => onOpenSurvey(item.id)}
+                        className="w-full text-left px-3 py-2 text-sm font-medium text-[#FF6B00] dark:text-[#FF8600] bg-orange-50/70 dark:bg-[#FF8600]/10 border border-orange-200 dark:border-[#FF8600]/35 rounded-lg hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 cursor-pointer"
+                      >
+                        Пройти: {item.title}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
               <button
                 type="button"
                 onClick={() => {
                   setSubmitted(false)
-                  setTargetId(null)
-                  if (!hideUserSwitch) setTargetModalOpen(true)
+                  setReadOnly(true)
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-200 border-2 border-orange-300 dark:border-[#FF8600]/45 rounded-xl hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 cursor-pointer"
+                className="w-full px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-200 border-2 border-orange-300 dark:border-[#FF8600]/45 rounded-xl hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 cursor-pointer"
               >
-                {standalone || userPickerLocked ? 'Оценить ещё' : 'Другой пользователь'}
+                Посмотреть ответы
               </button>
               {!standalone && onBack && (
                 <button
                   type="button"
                   onClick={onBack}
-                  className="px-4 py-2 text-sm font-medium text-white bg-[#FF8600] hover:bg-[#FF6B00] rounded-xl cursor-pointer"
+                  className="w-full px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-200 border border-gray-200 dark:border-[#3a4250] rounded-xl hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
                 >
                   Вернуться к опросам
                 </button>
