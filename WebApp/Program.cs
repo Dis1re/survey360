@@ -76,6 +76,7 @@ builder.Services.AddScoped<SurveyXlsxReportService>();
 builder.Services.AddScoped<SurveyRespondentLinkService>();
 builder.Services.AddHttpClient<EmailService>();
 builder.Services.AddScoped<SurveyInviteEmailService>();
+builder.Services.AddSingleton<AiTokenCache>();
 builder.Services.AddScoped<AiSummaryService>();
 
 var russianCaCertPath = Path.Combine(builder.Environment.ContentRootPath, "russian_trusted_root_ca.pem");

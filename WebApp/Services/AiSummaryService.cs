@@ -14,21 +14,20 @@ public class AiSummaryService
     private readonly IHttpClientFactory _httpFactory;
     private readonly AiSummaryOptions _options;
     private readonly ILogger<AiSummaryService> _logger;
-
-    private string? _cachedToken;
-    private DateTimeOffset _tokenExpiresAt = DateTimeOffset.MinValue;
-    private readonly SemaphoreSlim _tokenLock = new(1, 1);
+    private readonly AiTokenCache _tokenCache;
 
     public AiSummaryService(
         ApplicationDbContext db,
         IHttpClientFactory httpFactory,
         IOptions<AiSummaryOptions> options,
-        ILogger<AiSummaryService> logger)
+        ILogger<AiSummaryService> logger,
+        AiTokenCache tokenCache)
     {
         _db = db;
         _httpFactory = httpFactory;
         _options = options.Value;
         _logger = logger;
+        _tokenCache = tokenCache;
     }
 
     public async Task<AiSummary?> GetAsync(int surveyId, string summaryType)
@@ -198,15 +197,8 @@ public class AiSummaryService
             return null;
         }
 
-        if (_cachedToken != null && DateTimeOffset.UtcNow < _tokenExpiresAt)
-            return new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _cachedToken);
-
-        await _tokenLock.WaitAsync(ct);
-        try
+        var token = await _tokenCache.GetAsync(async innerCt =>
         {
-            if (_cachedToken != null && DateTimeOffset.UtcNow < _tokenExpiresAt)
-                return new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _cachedToken);
-
             var client = _httpFactory.CreateClient("Ai");
             var url = $"{_options.OAuthBaseUrl.TrimEnd('/')}/api/v2/oauth";
 
@@ -225,8 +217,8 @@ public class AiSummaryService
             request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", credentials);
             request.Headers.Add("RqUID", Guid.NewGuid().ToString());
 
-            var response = await client.SendAsync(request, ct);
-            var body = await response.Content.ReadAsStringAsync(ct);
+            var response = await client.SendAsync(request, innerCt);
+            var body = await response.Content.ReadAsStringAsync(innerCt);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -237,33 +229,29 @@ public class AiSummaryService
             var json = JsonSerializer.Deserialize<JsonElement>(body);
             var accessToken = json.GetProperty("access_token").GetString();
 
+            DateTimeOffset expiresAt;
             if (json.TryGetProperty("expires_in", out var expiresInProp))
             {
-                _tokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInProp.GetInt32() - 60);
+                expiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInProp.GetInt32() - 60);
             }
             else if (json.TryGetProperty("expires_at", out var expiresAtProp))
             {
                 var expiresAtMs = expiresAtProp.GetInt64();
-                _tokenExpiresAt = DateTimeOffset.FromUnixTimeMilliseconds(expiresAtMs).AddSeconds(-60);
+                expiresAt = DateTimeOffset.FromUnixTimeMilliseconds(expiresAtMs).AddSeconds(-60);
             }
             else
             {
-                _tokenExpiresAt = DateTimeOffset.UtcNow.AddMinutes(29);
+                expiresAt = DateTimeOffset.UtcNow.AddMinutes(29);
             }
 
-            _cachedToken = accessToken;
-            _logger.LogInformation("OAuth token obtained, expires at {ExpiresAt}", _tokenExpiresAt);
-            return new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _cachedToken);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "OAuth request failed");
-            return null;
-        }
-        finally
-        {
-            _tokenLock.Release();
-        }
+            _tokenCache.Set(accessToken!, expiresAt);
+            _logger.LogInformation("OAuth token obtained, expires at {ExpiresAt}", expiresAt);
+            return accessToken;
+        }, ct);
+
+        return token != null
+            ? new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token)
+            : null;
     }
 
     private async Task<string> BuildOverallPromptAsync(int surveyId, CancellationToken ct)
