@@ -12,6 +12,7 @@ import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '..
 import { TakeSurvey } from './TakeSurvey'
 import { TabBar, type Tab } from '../components/TabBar'
 import { TemplatesModal } from '../components/TemplatesModal'
+import { useIsMobile } from '../hooks/useMediaQuery'
 import { TemplateEditor } from '../components/TemplateEditor'
 import { useSurveyLive } from '../hooks/useSurveyLive'
 import {
@@ -90,6 +91,7 @@ interface MainPageProps {
 }
 
 export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCollapsed = false }: MainPageProps) {
+  const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<Tab>(() => resolveInitialMainPageTab(surveyId))
   const prevSurveyIdRef = useRef<number | null>(null)
   const [matrixExpanded, setMatrixExpanded] = useState(false)
@@ -921,7 +923,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       {previewOpen && surveyId !== null && (
         <div
           className="fixed top-0 right-0 bottom-0 z-[60] bg-gray-100 dark:bg-[#303a48] flex flex-col border-l border-gray-200 dark:border-[#3a4250] transition-[left] duration-300 ease-out"
-          style={{ left: sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
+          style={{ left: isMobile ? 0 : (sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED) }}
         >
           <div className="bg-white dark:bg-[#1e222e] border-b border-gray-200 dark:border-[#3a4250] px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
             <div>
