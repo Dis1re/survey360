@@ -33,7 +33,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
       .resolveInvite(token)
       .then((info) => {
         if (cancelled) return
-        const hint = info.reviewerEmail || info.reviewerName.trim()
+        const hint = info.reviewerEmail || (info.reviewerName ?? '').trim()
         setInviteHint(hint || null)
         setMode('user')
         setEmail(info.reviewerEmail || '')

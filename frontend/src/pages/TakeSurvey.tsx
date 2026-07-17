@@ -265,7 +265,6 @@ export function TakeSurvey({
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [thanksPopupOpen, setThanksPopupOpen] = useState(true)
   /** Next incomplete target in the same survey after submit (same опрос, другой человек). */
   const [nextTarget, setNextTarget] = useState<ApiUser | null>(null)
   const [remainingTargetsCount, setRemainingTargetsCount] = useState(0)
