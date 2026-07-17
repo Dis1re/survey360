@@ -9,4 +9,7 @@ public class Question
     public bool IsRequired { get; set; }
     public string? Props { get; set; }
     public int Order { get; set; }
+
+    public Survey? Survey { get; set; }
+    public List<Answer> Answers { get; set; } = [];
 }

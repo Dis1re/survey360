@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Question } from '../types'
 
 interface QuestionListProps {
@@ -30,6 +30,7 @@ export function QuestionList({
 }: QuestionListProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const [overIndex, setOverIndex] = useState<number | null>(null)
+  const touchTargetIndex = useRef<number | null>(null)
 
   const handleDragStart = (index: number) => (e: React.DragEvent) => {
     if (readOnly) return
@@ -46,20 +47,53 @@ export function QuestionList({
 
   const handleDrop = (index: number) => async (e: React.DragEvent) => {
     e.preventDefault()
-    const from = dragIndex
-    setDragIndex(null)
-    setOverIndex(null)
-    if (readOnly || from === null || from === index) return
-
-    const next = [...questions]
-    const [moved] = next.splice(from, 1)
-    next.splice(index, 0, moved)
-    await onReorder(next.map((q) => q.id))
+    await commitMove(dragIndex, index)
   }
 
   const handleDragEnd = () => {
     setDragIndex(null)
     setOverIndex(null)
+  }
+
+  const commitMove = async (from: number | null, to: number) => {
+    setDragIndex(null)
+    setOverIndex(null)
+    if (readOnly || from === null || from === to) return
+    const next = [...questions]
+    const [moved] = next.splice(from, 1)
+    next.splice(to, 0, moved)
+    await onReorder(next.map((q) => q.id))
+  }
+
+  useEffect(() => {
+    if (dragIndex === null) return
+    const handler = (e: TouchEvent) => {
+      e.preventDefault()
+      const touch = e.touches[0]
+      if (!touch) return
+      const el = document.elementFromPoint(touch.clientX, touch.clientY)
+      if (!el) return
+      const item = el.closest('[data-question-index]')
+      if (!item) return
+      const i = parseInt(item.getAttribute('data-question-index') ?? '', 10)
+      if (!isNaN(i)) {
+        touchTargetIndex.current = i
+        setOverIndex(i)
+      }
+    }
+    document.addEventListener('touchmove', handler, { passive: false })
+    return () => document.removeEventListener('touchmove', handler)
+  }, [dragIndex])
+
+  const touchStartIndex = (index: number) => () => {
+    if (readOnly) return
+    setDragIndex(index)
+  }
+
+  const touchEndHandler = () => {
+    if (readOnly || dragIndex === null) return
+    commitMove(dragIndex, touchTargetIndex.current ?? dragIndex)
+    touchTargetIndex.current = null
   }
 
 
@@ -81,7 +115,7 @@ export function QuestionList({
         )}
       </div>
 
-      <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1">
+      <div className="space-y-2 flex-1 min-h-0 overflow-y-auto pr-1" style={{ touchAction: dragIndex !== null ? 'none' : undefined }}>
         {questions.length === 0 ? (
           <p className="text-sm text-gray-400 dark:text-gray-400 px-1 py-2">Вопросов пока нет</p>
         ) : (
@@ -97,6 +131,9 @@ export function QuestionList({
                 onDragOver={handleDragOver(index)}
                 onDrop={handleDrop(index)}
                 onDragEnd={handleDragEnd}
+                onTouchStart={touchStartIndex(index)}
+                onTouchEnd={touchEndHandler}
+                data-question-index={index}
                 onClick={() => onQuestionSelect(question.id)}
                 className={`soft-lift p-3 rounded-xl cursor-pointer text-sm font-medium flex items-center justify-between ${
                   isActive

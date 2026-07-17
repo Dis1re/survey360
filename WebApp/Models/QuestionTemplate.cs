@@ -8,4 +8,6 @@ public class QuestionTemplate
     public string Type { get; set; } = "";
     public bool IsRequired { get; set; }
     public string? Props { get; set; }
+
+    public SurveyTemplate? SurveyTemplate { get; set; }
 }

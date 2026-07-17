@@ -316,11 +316,11 @@ export function MatrixTable({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-[#3a4250] bg-gray-50/50 dark:bg-[#161a22]/50">
-                      <th className="p-4 text-xs font-bold text-gray-400 dark:text-gray-400 min-w-[120px] border-r border-b border-gray-200 dark:border-[#3a4250] sticky left-0 top-0 z-30 bg-gray-50 dark:bg-[#161a22] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                      <th className="p-2 sm:p-4 text-xs font-bold text-gray-400 dark:text-gray-400 min-w-[100px] sm:min-w-[120px] border-r border-b border-gray-200 dark:border-[#3a4250] sticky left-0 top-0 z-30 bg-gray-50 dark:bg-[#161a22] shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                         <span>Респондент \ Объект</span>
                       </th>
                     {targets.map((target) => (
-                      <th key={target.id} className="p-4 text-xs font-semibold text-gray-700 dark:text-gray-200 text-center min-w-[120px] sticky top-0 z-10 bg-gray-50 dark:bg-[#161a22] border-b border-r border-gray-200 dark:border-[#3a4250] shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
+                      <th key={target.id} className="p-2 sm:p-4 text-xs font-semibold text-gray-700 dark:text-gray-200 text-center min-w-[80px] sm:min-w-[120px] sticky top-0 z-10 bg-gray-50 dark:bg-[#161a22] border-b border-r border-gray-200 dark:border-[#3a4250] shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <div className="flex flex-col items-center gap-1">
                           <div className="flex items-center justify-center gap-1.5">
                             <span>{target.name}</span>
@@ -375,7 +375,7 @@ export function MatrixTable({
                       </th>
                     ))}
                     {!readOnly && (
-                      <th className="p-4 text-center min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 dark:bg-[#161a22] border-b border-r border-gray-200 dark:border-[#3a4250] shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
+                      <th className="p-2 sm:p-4 text-center min-w-[80px] sm:min-w-[120px] align-middle sticky top-0 z-10 bg-gray-50 dark:bg-[#161a22] border-b border-r border-gray-200 dark:border-[#3a4250] shadow-[0_2px_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
                           onClick={() => { setPickerRole('target') }}
@@ -396,7 +396,7 @@ export function MatrixTable({
 
                     return (
                       <tr key={respondent.id} className={`transition border-b border-gray-100 dark:border-[#303a48] hover:brightness-95 ${ri % 2 === 1 ? 'bg-gray-50 dark:bg-[#161a22]' : ''}`}>
-                        <td className="p-4 font-medium text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-[#3a4250] sticky left-0 bg-white dark:bg-[#1e222e] z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                        <td className="p-2 sm:p-4 font-medium text-gray-900 dark:text-gray-100 border-r border-gray-200 dark:border-[#3a4250] sticky left-0 bg-white dark:bg-[#1e222e] z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                           <div className="flex items-center gap-2">
                             <div className="min-w-0">
                               <div className="flex items-center gap-1.5">
@@ -494,7 +494,7 @@ export function MatrixTable({
                                 if ((e.target as HTMLElement).closest('button')) return
                                 toggle(reviewerKey, targetKey)
                               }}
-                              className={`p-4 text-center border-r border-gray-200 dark:border-[#3a4250] ${isSelf ? 'bg-purple-100/80 dark:bg-purple-500/20' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40 dark:hover:bg-[#FF8600]/12'}`}
+                               className={`p-2 sm:p-4 text-center border-r border-gray-200 dark:border-[#3a4250] ${isSelf ? 'bg-purple-100/80 dark:bg-purple-500/20' : ''} ${cellDisabled ? '' : 'cursor-pointer hover:bg-orange-50/40 dark:hover:bg-[#FF8600]/12'}`}
                             >
                               <div className="flex flex-col items-center gap-1.5">
                                 <span
@@ -555,7 +555,7 @@ export function MatrixTable({
 
                   {!readOnly && (
                     <tr className="hover:bg-blue-50/30 dark:hover:bg-blue-500/10 transition border-b border-gray-200">
-                      <td className="p-4 border-r-2 border-gray-300 dark:border-[#3a4250] sticky left-0 bg-white dark:bg-[#1e222e] z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
+                      <td className="p-2 sm:p-4 border-r-2 border-gray-300 dark:border-[#3a4250] sticky left-0 bg-white dark:bg-[#1e222e] z-10 shadow-[2px_0_4px_-2px_rgba(0,0,0,0.08)]">
                         <button
                           type="button"
                           onClick={() => { setPickerRole('respondent') }}
@@ -566,9 +566,9 @@ export function MatrixTable({
                         </button>
                       </td>
                       {targets.map((target) => (
-                        <td key={target.id} className="p-4 border-r border-b border-gray-200 dark:border-[#3a4250] min-w-[120px]" />
+                        <td key={target.id} className="p-2 sm:p-4 border-r border-b border-gray-200 dark:border-[#3a4250] min-w-[80px] sm:min-w-[120px]" />
                       ))}
-                      {!readOnly && <td className="p-4 border-b border-gray-200 dark:border-[#3a4250]" />}
+                      {!readOnly && <td className="p-2 sm:p-4 border-b border-gray-200 dark:border-[#3a4250]" />}
                     </tr>
                   )}
 
@@ -585,15 +585,15 @@ export function MatrixTable({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center justify-end gap-3 mt-4">
+        <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 mt-4">
           {!readOnly && saving && (
-            <span className="text-xs text-gray-400 dark:text-gray-400 flex items-center gap-1.5">
+            <span className="text-xs text-gray-400 dark:text-gray-400 flex items-center justify-center gap-1.5 sm:mr-auto">
               <span className="w-3 h-3 border-2 border-gray-300 dark:border-[#3a4250] border-t-[#FF8600] rounded-full animate-spin" />
               Сохранение…
             </span>
           )}
-          {!readOnly && (
-            <span className="text-xs text-gray-400 dark:text-gray-400">Изменения сохраняются автоматически</span>
+          {!readOnly && !saving && (
+            <span className="text-xs text-gray-400 dark:text-gray-400 text-center sm:text-right sm:mr-auto">Изменения сохраняются автоматически</span>
           )}
           {onOpenExport && canExport && (
             <button

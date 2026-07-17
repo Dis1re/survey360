@@ -10,4 +10,9 @@ public class Survey
     public DateTime StartedAt { get; set; }
     public DateTime ClosedAt { get; set; }
     public int? CreatedByUserId { get; set; }
+
+    public User? CreatedByUser { get; set; }
+    public List<Question> Questions { get; set; } = [];
+    public List<SurveyAssignment> Assignments { get; set; } = [];
+    public List<SurveyParticipant> Participants { get; set; } = [];
 }

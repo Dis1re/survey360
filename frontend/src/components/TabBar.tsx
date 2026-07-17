@@ -13,8 +13,8 @@ const tabs: { id: Tab; label: string }[] = [
 
 export function TabBar({ activeTab, onTabChange }: TabBarProps) {
   return (
-    <div className="px-6 flex-shrink-0 bg-white dark:bg-[#1e222e]">
-      <div className="max-w-6xl mx-auto flex gap-6 border-b border-gray-200 dark:border-[#3a4250]" style={{ borderColor: 'rgba(255,134,0,0.25)' }}>
+    <div className="px-3 sm:px-6 flex-shrink-0 bg-white dark:bg-[#1e222e]">
+      <div className="max-w-6xl mx-auto flex gap-3 sm:gap-6 overflow-x-auto border-b border-gray-200 dark:border-[#3a4250]" style={{ borderColor: 'rgba(255,134,0,0.25)' }}>
         {tabs.map((tab) => {
           const isActive = tab.id === activeTab
           return (

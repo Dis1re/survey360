@@ -3,6 +3,7 @@ import { surveyApi } from '../api'
 import { ConfirmModal } from '../components/ConfirmModal'
 import { Sidebar } from '../components/Sidebar'
 import { useAuth } from '../context/AuthContext'
+import { useIsMobile } from '../hooks/useMediaQuery'
 import { useSurveyLive } from '../hooks/useSurveyLive'
 import {
   apiSurveyToSurvey,
@@ -119,7 +120,10 @@ export function UserApp() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [createError, setCreateError] = useState<string | null>(null)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
+  const isMobile = useIsMobile()
   const [deletingId, setDeletingId] = useState<number | null>(null)
   const [inviteMismatch, setInviteMismatch] = useState<{
     email: string
@@ -183,7 +187,7 @@ export function UserApp() {
           // Keep ?invite= in the URL so after logout → login it still opens the survey.
           setInviteMismatch({
             email: info.reviewerEmail,
-            name: info.reviewerName.trim() || info.reviewerEmail,
+            name: (info.reviewerName ?? '').trim() || info.reviewerEmail,
           })
           return
         }
@@ -256,6 +260,9 @@ export function UserApp() {
       setSelectedSurveyId(id)
       setSidebarScope('mine')
     } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Неизвестная ошибка'
+      setCreateError(msg)
+      setTimeout(() => setCreateError(null), 5000)
       console.error(err)
     } finally {
       setCreating(false)
@@ -296,6 +303,21 @@ export function UserApp() {
 
   return (
     <div className="flex h-screen overflow-hidden dark:bg-[#161a22]">
+      {isMobile && !mobileNavOpen && (
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center px-3 h-14 bg-[#f3f4f6] dark:bg-[#1e222e] border-b border-gray-200 dark:border-[#303a48] shadow-sm">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Открыть меню"
+            className="rounded-xl border border-[#FF6B00] bg-transparent text-[#FF6B00] p-2 cursor-pointer transition hover:bg-[#FF6B00]/10"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <span className="ml-3 text-sm font-semibold text-gray-700 dark:text-gray-200 select-none">Survey360</span>
+        </div>
+      )}
       <Sidebar
         surveys={filteredSurveys}
         activeSurveyId={selectedSurveyId}
@@ -314,8 +336,11 @@ export function UserApp() {
         onDelete={(id) => setDeletingId(id)}
         collapsed={sidebarCollapsed}
         onToggleCollapsed={() => setSidebarCollapsed((v) => !v)}
+        isMobile={isMobile}
+        mobileOpen={mobileNavOpen}
+        onCloseMobile={() => setMobileNavOpen(false)}
       />
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto pt-14 sm:pt-0">
         {selectedSurveyId === null ? (
           <div className="flex items-center justify-center h-full p-6">
             <div className="text-center max-w-md">
@@ -353,6 +378,12 @@ export function UserApp() {
           />
         )}
       </main>
+
+      {createError && (
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 bg-red-600 text-white text-sm rounded-xl shadow-lg">
+          {createError}
+        </div>
+      )}
 
       {deletingId !== null && (
         <ConfirmModal

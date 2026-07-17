@@ -44,6 +44,12 @@ interface SidebarProps {
   onDelete?: (id: number) => void
   collapsed: boolean
   onToggleCollapsed: () => void
+  /** Whether the viewport is in mobile (drawer) mode. */
+  isMobile?: boolean
+  /** Mobile drawer open state (ignored on >=md screens) */
+  mobileOpen?: boolean
+  /** Close the mobile drawer */
+  onCloseMobile?: () => void
 }
 
 const statusConfig = {
@@ -309,7 +315,17 @@ export function Sidebar({
   onDelete,
   collapsed,
   onToggleCollapsed,
+  isMobile = false,
+  mobileOpen = false,
+  onCloseMobile,
 }: SidebarProps) {
+  const showCollapsed = collapsed && !isMobile
+
+  const handleSelect = (id: number, sc?: SurveyScope) => {
+    onSurveySelect(id, sc)
+    if (isMobile) onCloseMobile?.()
+  }
+
   const [query, setQuery] = useState('')
   const [internalScope, setInternalScope] = useState<SurveyScope>('mine')
   const [statusFilter, setStatusFilter] = useState<SurveyStatusFilter>(null)
@@ -407,28 +423,56 @@ export function Sidebar({
   const showProgress = hasUserScope && scope === 'participation'
 
   return (
-    <aside className={`flex flex-col flex-shrink-0 h-screen bg-white dark:bg-[#1e222e] transition-[width] duration-300 ease-out ${collapsed ? 'w-20' : 'w-80'}`}>
+    <>
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-30 bg-black/40"
+          onClick={onCloseMobile}
+          aria-hidden="true"
+        />
+      )}
+      <aside
+      className={`flex flex-col flex-shrink-0 h-full bg-white dark:bg-[#1e222e] transition-[width,transform] duration-300 ease-out z-40 ${
+        isMobile
+          ? `fixed inset-y-0 left-0 w-[84%] max-w-sm shadow-xl ${
+              mobileOpen ? 'translate-x-0' : '-translate-x-full'
+            }`
+          : `${showCollapsed ? 'w-20' : 'w-80'}`
+      }`}
+    >
       <div
         className={`flex bg-white dark:bg-[#1e222e] border-b border-gray-100 dark:border-[#303a48] ${
-          collapsed ? 'flex-col items-center gap-2 p-3' : 'items-center justify-between gap-3 p-4'
+          showCollapsed ? 'flex-col items-center gap-2 p-3' : 'items-center justify-between gap-3 p-4'
         }`}
       >
         <button
           type="button"
-          onClick={onToggleCollapsed}
-          className="shrink-0 rounded-xl border border-gray-200 dark:border-[#3a4250] bg-gray-100 dark:bg-[#303a48] text-gray-700 dark:text-gray-200 transition p-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-[#454f60]"
-          aria-label={collapsed ? 'Показать боковую панель' : 'Скрыть боковую панель'}
+          onClick={isMobile ? onCloseMobile : onToggleCollapsed}
+          className="inline-flex shrink-0 items-center justify-center rounded-xl border border-gray-200 dark:border-[#3a4250] bg-gray-100 dark:bg-[#303a48] text-gray-700 dark:text-gray-200 transition p-2 cursor-pointer hover:bg-gray-200 dark:hover:bg-[#454f60]"
+          aria-label={
+            isMobile
+              ? 'Закрыть боковую панель'
+              : showCollapsed
+                ? 'Показать боковую панель'
+                : 'Скрыть боковую панель'
+          }
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            {collapsed ? (
+          {isMobile ? (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          ) : showCollapsed ? (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4m11-7 5 7-5 7" />
-            ) : (
+            </svg>
+          ) : (
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M4 12h16M9 5l-5 7 5 7" />
-            )}
-          </svg>
+            </svg>
+          )}
         </button>
 
-        {!collapsed ? (
+        {!showCollapsed ? (
           <>
             <div className="flex items-center gap-2 min-w-0">
               <img
@@ -464,8 +508,8 @@ export function Sidebar({
         )}
       </div>
 
-      {!collapsed && (
-          <div className="p-4 border-b border-gray-100 dark:border-[#303a48] space-y-3">
+      {!showCollapsed && (
+        <div className="p-4 border-b border-gray-100 dark:border-[#303a48] space-y-3">
           {hasUserScope && (
               <div className="flex gap-1 p-0.5 bg-gray-100 dark:bg-[#303a48] rounded-lg">
               <button
@@ -557,18 +601,18 @@ export function Sidebar({
         <div
           key={
             hasUserScope && scope === 'participation'
-              ? `participation-${participationFilter}-${collapsed}`
-              : `mine-${statusFilter}-${collapsed}`
+              ? `participation-${participationFilter}-${showCollapsed}`
+              : `mine-${statusFilter}-${showCollapsed}`
           }
           className="space-y-1 view-fade"
         >
           {loading ? (
-            <p className={`py-2 text-sm text-gray-400 dark:text-gray-500 ${collapsed ? 'text-center' : 'px-3'}`}>
-              {collapsed ? '…' : 'Загрузка…'}
+            <p className={`py-2 text-sm text-gray-400 dark:text-gray-500 ${showCollapsed ? 'text-center' : 'px-3'}`}>
+              {showCollapsed ? '…' : 'Загрузка…'}
             </p>
           ) : filteredSurveys.length === 0 ? (
-            !collapsed &&             <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-400">{emptyMessage}</p>
-          ) : collapsed ? (
+            !showCollapsed && <p className="px-3 py-2 text-sm text-gray-400 dark:text-gray-400">{emptyMessage}</p>
+          ) : showCollapsed ? (
             filteredSurveys.map((survey) => {
               const allDone = showProgress && survey.status === 'active'
                 && (survey.myCompletedCount ?? 0) >= (survey.myAssignedCount ?? 0)
@@ -578,7 +622,7 @@ export function Sidebar({
                 key={survey.id}
                 survey={survey}
                 isSelected={survey.id === activeSurveyId}
-                onSelect={() => onSurveySelect(survey.id, scope)}
+                onSelect={() => handleSelect(survey.id, scope)}
                 showProgress={showProgress}
                 completedAll={allDone}
                 participationView={hasUserScope && scope === 'participation'}
@@ -595,7 +639,7 @@ export function Sidebar({
                 key={survey.id}
                 survey={survey}
                 isSelected={survey.id === activeSurveyId}
-                onSelect={() => onSurveySelect(survey.id, scope)}
+                onSelect={() => handleSelect(survey.id, scope)}
                 onDuplicate={onDuplicate && scope === 'mine' ? () => onDuplicate(survey.id) : undefined}
                 onDelete={onDelete && scope === 'mine' && survey.status !== 'active' ? () => onDelete(survey.id) : undefined}
                 showProgress={showProgress}
@@ -613,8 +657,8 @@ export function Sidebar({
         </div>
       </div>
 
-      {showCreateButton && !collapsed && (
-          <div className="p-4 border-t border-gray-100 dark:border-[#303a48]">
+      {showCreateButton && !showCollapsed && (
+        <div className="p-4 border-t border-gray-100 dark:border-[#303a48]">
           <button
             onClick={onCreateClick}
             disabled={creating}
@@ -628,8 +672,8 @@ export function Sidebar({
         </div>
       )}
 
-      {showCreateButton && collapsed && (
-          <div className="p-3 border-t border-gray-100 dark:border-[#303a48]">
+      {showCreateButton && showCollapsed && (
+        <div className="p-3 border-t border-gray-100 dark:border-[#303a48]">
           <button
             onClick={onCreateClick}
             disabled={creating}
@@ -643,5 +687,6 @@ export function Sidebar({
         </div>
       )}
     </aside>
+    </>
   )
 }

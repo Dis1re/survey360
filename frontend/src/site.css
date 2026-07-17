@@ -233,6 +233,66 @@ select {
     box-shadow var(--dur-fast) ease;
 }
 
+/* ——— Mobile / small-screen safety ——— */
+/* Prevent any element from forcing the page wider than the viewport
+   (the usual cause of text sliding out of bounds on narrow phones). */
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Make the flex app shell fill the viewport on mobile too. */
+#root {
+  min-height: 100dvh;
+}
+
+/* iOS Safari + older Android: use the real visible viewport height. */
+@supports (-webkit-touch-callout: none) {
+  .h-screen {
+    height: -webkit-fill-available;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* ——— Reduced motion ——— */
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-fade,
+  .anim-rise,
+  .anim-rise-soft,
+  .anim-scale-in,
+  .anim-slide-left,
+  .anim-panel,
+  .view-fade,
+  .modal-backdrop-enter,
+  .modal-panel-enter,
+  .desc-popover,
+  .header-actions-enter,
+  .dog-card,
+  .paw {
+    animation: none !important;
+  }
+
+  .soft-press:hover:not(:disabled),
+  .soft-press:active:not(:disabled) {
+    filter: none !important;
+  }
+
+  .tab-btn::after {
+    transition: none !important;
+  }
+}
+
 /* ——— Glowing orange ring around cat icon ——— */
 
 .cat-glow {
@@ -254,35 +314,5 @@ select {
     box-shadow:
       0 0 14px 5px rgba(255, 134, 0, 0.75),
       0 0 26px 9px rgba(255, 134, 0, 0.5);
-  }
-}
-
-/* ——— Reduced motion ——— */
-
-@media (prefers-reduced-motion: reduce) {
-  .anim-fade,
-  .anim-rise,
-  .anim-rise-soft,
-  .anim-scale-in,
-  .anim-slide-left,
-  .anim-panel,
-  .view-fade,
-  .modal-backdrop-enter,
-  .modal-panel-enter,
-  .desc-popover,
-  .header-actions-enter,
-  .dog-card,
-  .paw,
-  .cat-glow {
-    animation: none !important;
-  }
-
-  .soft-press:hover:not(:disabled),
-  .soft-press:active:not(:disabled) {
-    filter: none !important;
-  }
-
-  .tab-btn::after {
-    transition: none !important;
   }
 }

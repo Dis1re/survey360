@@ -265,7 +265,6 @@ export function TakeSurvey({
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [thanksPopupOpen, setThanksPopupOpen] = useState(true)
   /** Next incomplete target in the same survey after submit (same опрос, другой человек). */
   const [nextTarget, setNextTarget] = useState<ApiUser | null>(null)
   const [remainingTargetsCount, setRemainingTargetsCount] = useState(0)
@@ -514,7 +513,6 @@ export function TakeSurvey({
       setRemainingTargetsCount(remaining.length)
 
       setSubmitted(true)
-      setThanksPopupOpen(true)
       onCompleted?.()
       if (storageKey) {
         try {
@@ -579,22 +577,6 @@ export function TakeSurvey({
   if (submitted) {
     return (
       <>
-        {thanksPopupOpen && (
-          <div className="fixed top-4 right-4 z-50 w-72 bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl shadow-lg p-4 flex items-start gap-3">
-            <img src="/sobaka.webp" alt="" className="cat-glow w-12 h-12 rounded-full object-cover shrink-0" />
-            <p className="flex-1 min-w-0 text-sm font-medium text-gray-900 dark:text-gray-100">
-              Спасибо за помощь в улучшении работы! Ты крут!
-            </p>
-            <button
-              type="button"
-              onClick={() => setThanksPopupOpen(false)}
-              className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-gray-400 dark:text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-[#303a48] transition cursor-pointer"
-              aria-label="Закрыть"
-            >
-              ✕
-            </button>
-          </div>
-        )}
         <div className="max-w-2xl mx-auto p-6 text-center">
           <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-8 shadow-sm">
             <div className="cat-glow mx-auto w-20 h-20 rounded-full bg-green-100 dark:bg-green-500/15 flex items-center justify-center overflow-hidden">
@@ -683,7 +665,7 @@ export function TakeSurvey({
 
 
   return (
-    <div className="max-w-2xl mx-auto p-6">
+    <div className="max-w-2xl mx-auto p-4 sm:p-6">
       {!preview && hideUserSwitch && !standalone && lockedUserId !== null && targetId !== null && (
         <div className="flex justify-end mb-4">
           <button
@@ -697,7 +679,7 @@ export function TakeSurvey({
       )}
 
       {!preview && !standalone && onBack && (
-        <div className="flex items-start justify-between gap-3 mb-4">
+        <div className="flex flex-wrap items-start justify-between gap-2 mb-4">
             <button
               type="button"
               onClick={onBack}

@@ -93,9 +93,9 @@ export function QuestionInput({
           disabled={readOnly}
           className={`w-full ${readOnly ? inputReadOnly : `${inputBase} bg-white dark:bg-[#161a22] text-gray-800 dark:text-gray-100`}`}
         >
-          <option value="" className="bg-white dark:bg-[#1e222e] text-gray-800 dark:text-gray-100">Выберите вариант…</option>
+          <option value="">Выберите вариант…</option>
           {options.map((opt) => (
-            <option key={opt.value} value={String(opt.value)} className="bg-white dark:bg-[#1e222e] text-gray-800 dark:text-gray-100">
+            <option key={opt.value} value={String(opt.value)}>
               {opt.label || String(opt.value)}
             </option>
           ))}
@@ -211,7 +211,12 @@ export function QuestionInput({
         </div>
         {(minSel > 0 || maxSel > 0) && (
           <p className="text-[10px] text-gray-400 dark:text-gray-400 mt-1.5">
-            {`Выбрано ${selected.length}`}
+            {minSel > 0 && maxSel > 0
+              ? `Выберите от ${minSel} до ${maxSel} вариантов`
+              : minSel > 0
+                ? `Выберите минимум ${minSel} вариантов`
+                : `Можно выбрать не более ${maxSel}`}
+            {` · выбрано ${selected.length}`}
           </p>
         )}
       </div>
@@ -258,7 +263,7 @@ export function QuestionInput({
         readOnly={readOnly}
         disabled={readOnly}
         onChange={(e) => onChange(e.target.value)}
-        className={readOnly ? inputReadOnly : inputBase}
+        className={`${readOnly ? inputReadOnly : inputBase} dark:[color-scheme:dark]`}
       />
     )
   }
