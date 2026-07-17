@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Survey } from '../types'
+import { copyTextToClipboard } from '../utils'
 import { ConfirmModal } from './ConfirmModal'
 import { Modal } from './Modal'
 
@@ -182,7 +183,7 @@ export function SurveyHeader({
 
   const handleCopyLink = async (link: string, target: 'header' | 'modal') => {
     try {
-      await navigator.clipboard.writeText(link)
+      await copyTextToClipboard(link)
       if (target === 'header') {
         setLinkCopied(true)
         window.setTimeout(() => setLinkCopied(false), 2000)
@@ -192,6 +193,7 @@ export function SurveyHeader({
       }
     } catch (err) {
       console.error(err)
+      window.prompt('Скопируйте ссылку вручную:', link)
     }
   }
 

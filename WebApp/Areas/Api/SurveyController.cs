@@ -1051,7 +1051,7 @@ public class SurveyController(
             return accessError;
 
         var summary = await aiSummaryService.GetAsync(id, type);
-        if (summary == null) return NotFound();
+        if (summary == null) return NoContent();
 
         return new AiSummaryDto(summary.SummaryType, summary.Content, summary.CreatedAt, summary.UpdatedAt);
     }
@@ -1088,7 +1088,7 @@ public class SurveyController(
         }
 
         if (result == null)
-            return BadRequest(new { message = "Failed to generate summary. Check AI configuration." });
+            return BadRequest(new { message = aiSummaryService.LastError ?? "Failed to generate summary. Check AI configuration." });
 
         return new AiSummaryDto(result.SummaryType, result.Content, result.CreatedAt, result.UpdatedAt);
     }

@@ -81,29 +81,32 @@ builder.Services.AddScoped<AiSummaryService>();
 
 var russianCaCertPath = Path.Combine(builder.Environment.ContentRootPath, "russian_trusted_root_ca.pem");
 var aiOptions = builder.Configuration.GetSection(AiSummaryOptions.SectionName).Get<AiSummaryOptions>() ?? new();
+var useCurlForAi = OperatingSystem.IsMacOS()
+    && aiOptions.AuthType.Equals("oauth", StringComparison.OrdinalIgnoreCase)
+    && File.Exists(russianCaCertPath);
 
 builder.Services.AddHttpClient("Ai").ConfigurePrimaryHttpMessageHandler(() =>
 {
-    var handler = new HttpClientHandler();
-    if (aiOptions.AuthType == "oauth" && File.Exists(russianCaCertPath))
-    {
-        var caCertPem = File.ReadAllText(russianCaCertPath);
-        var caCert = new X509Certificate2(Convert.FromBase64String(
-            caCertPem.Replace("-----BEGIN CERTIFICATE-----", "")
-                     .Replace("-----END CERTIFICATE-----", "")
-                     .Replace("\n", "")
-                     .Replace("\r", "")
-                     .Trim()));
+    // macOS Apple Secure Transport rejects GigaChat/Sber certs with "bad certificate format"
+    // before ServerCertificateCustomValidationCallback runs. curl + OpenSSL works.
+    if (useCurlForAi)
+        return new CurlHttpMessageHandler(russianCaCertPath);
 
-        handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, errors) =>
+    var handler = new HttpClientHandler();
+    if (aiOptions.AuthType.Equals("oauth", StringComparison.OrdinalIgnoreCase)
+        && File.Exists(russianCaCertPath))
+    {
+        var caCert = X509Certificate2.CreateFromPem(File.ReadAllText(russianCaCertPath));
+        handler.ServerCertificateCustomValidationCallback = (_, cert, _, errors) =>
         {
             if (errors == SslPolicyErrors.None) return true;
-            if (cert == null || chain == null) return false;
+            if (cert == null) return false;
 
-            chain.ChainPolicy.ExtraStore.Add(caCert);
-            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+            using var chain = new X509Chain();
+            chain.ChainPolicy.TrustMode = X509ChainTrustMode.CustomRootTrust;
+            chain.ChainPolicy.CustomTrustStore.Add(caCert);
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
-            return chain.Build(new X509Certificate2(cert));
+            return chain.Build(cert is X509Certificate2 c ? c : new X509Certificate2(cert));
         };
     }
     return handler;
