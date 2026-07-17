@@ -1080,6 +1080,10 @@ public class SurveyController(
         {
             result = await aiSummaryService.GenerateTargetAsync(id, targetId.Value, ct);
         }
+        else if (type.StartsWith("reviewer_") && targetId.HasValue)
+        {
+            result = await aiSummaryService.GenerateReviewerAsync(id, targetId.Value, ct);
+        }
         else
         {
             return BadRequest(new { message = "Invalid summary type or missing targetId" });

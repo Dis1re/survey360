@@ -67,6 +67,21 @@ public class AiSummaryService
         return await UpsertAsync(surveyId, $"target_{targetId}", content, ct);
     }
 
+    public async Task<AiSummary?> GenerateReviewerAsync(int surveyId, int reviewerId, CancellationToken ct = default)
+    {
+        var survey = await _db.Surveys.FindAsync(surveyId);
+        if (survey == null) return null;
+
+        var reviewer = await _db.Users.FindAsync(reviewerId);
+        if (reviewer == null) return null;
+
+        var prompt = await BuildReviewerPromptAsync(surveyId, reviewerId, reviewer.Name, ct);
+        var content = await CallLlmAsync(prompt, ct);
+        if (content == null) return null;
+
+        return await UpsertAsync(surveyId, $"reviewer_{reviewerId}", content, ct);
+    }
+
     public async Task DeleteAsync(int surveyId, string summaryType, CancellationToken ct = default)
     {
         var existing = await _db.AiSummaries
@@ -344,6 +359,53 @@ public class AiSummaryService
         sb.AppendLine("2. Сильные стороны");
         sb.AppendLine("3. Зоны роста");
         sb.AppendLine("4. Рекомендации по развитию");
+
+        return sb.ToString();
+    }
+
+    private async Task<string> BuildReviewerPromptAsync(int surveyId, int reviewerId, string reviewerName, CancellationToken ct)
+    {
+        var questions = await _db.Questions
+            .Where(q => q.SurveyId == surveyId)
+            .OrderBy(q => q.Order)
+            .ToListAsync(ct);
+
+        var answers = await _db.Answers
+            .Where(a => a.UserId == reviewerId && questions.Select(q => q.Id).Contains(a.QuestionId))
+            .ToListAsync(ct);
+
+        var targetIds = answers.Select(a => a.TargetId).Distinct().ToList();
+        var targets = await _db.Users
+            .Where(u => targetIds.Contains(u.Id))
+            .ToDictionaryAsync(u => u.Id, ct);
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"Проанализируй стиль оценки респондента: {reviewerName}");
+        sb.AppendLine();
+        sb.AppendLine("=== Ответы рецензента ===");
+        sb.AppendLine();
+
+        foreach (var q in questions)
+        {
+            sb.AppendLine($"Вопрос: {q.Text} (тип: {q.Type})");
+
+            var qAnswers = answers.Where(a => a.QuestionId == q.Id).ToList();
+            foreach (var a in qAnswers)
+            {
+                var target = targets.TryGetValue(a.TargetId, out var tu) ? tu.Name : $"Объект #{a.TargetId}";
+                var formatted = SurveyAnswerFormatter.FormatPlain(q, a.Text);
+                sb.AppendLine($"  [{target}]: {formatted}");
+            }
+            sb.AppendLine();
+        }
+
+        sb.AppendLine("=== Конец данных ===");
+        sb.AppendLine();
+        sb.AppendLine($"Дай краткое саммари по стилю оценки {reviewerName} на русском языке:");
+        sb.AppendLine("1. Общий стиль оценки (сторонний/строгий/мягкий)");
+        sb.AppendLine("2. Типичные оценки (высокие/средние/низкие)");
+        sb.AppendLine("3. Особенности (тенденции, предвзятость, объективность)");
+        sb.AppendLine("4. Рекомендации по улучшению качества оценок");
 
         return sb.ToString();
     }
