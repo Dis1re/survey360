@@ -24,6 +24,7 @@ interface ResponseModalProps {
   onClose: () => void
   fullscreen?: boolean
   sidebarWidth?: number
+  onOpenExport?: (filter: { reviewerId?: number; targetId?: number }) => void
 }
 
 interface TargetResponseGroup {
@@ -47,6 +48,7 @@ export function ResponseModal({
   onClose,
   fullscreen = false,
   sidebarWidth = 320,
+  onOpenExport,
 }: ResponseModalProps) {
   const isMobile = useIsMobile()
   const mode: 'single' | 'target' | 'reviewer' =
@@ -229,16 +231,35 @@ export function ResponseModal({
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">Ответы</h2>
             <p className="text-sm text-gray-500 dark:text-gray-300 mt-0.5">{subtitle}</p>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="shrink-0 p-2 text-white bg-[#FF6B00] hover:bg-[#FF8600] rounded-lg shadow-sm transition cursor-pointer"
-            aria-label="Закрыть"
-          >
-            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {onOpenExport && (
+              <button
+                type="button"
+                onClick={() =>
+                  onOpenExport(
+                    mode === 'reviewer'
+                      ? { reviewerId: reviewerId }
+                      : mode === 'target'
+                        ? { targetId: targetId }
+                        : {},
+                  )
+                }
+                className="shrink-0 px-3 py-1.5 text-xs font-medium text-[#FF8600] bg-white dark:bg-[#1e222e] border border-[#FF8600]/40 hover:bg-orange-50 dark:hover:bg-[#FF8600]/12 rounded-lg transition cursor-pointer"
+              >
+                Сформировать результаты
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="shrink-0 p-2 text-white bg-[#FF6B00] hover:bg-[#FF8600] rounded-lg shadow-sm transition cursor-pointer"
+              aria-label="Закрыть"
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
         <div className="flex-1 overflow-y-auto p-6">{content}</div>
       </div>
