@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import Markdown from 'react-markdown'
 import { aiSummaryApi } from '../api'
 import type { AiSummary, ApiAnswer, ApiUser, Participant, Question, QuestionProps, SurveyReportInfo } from '../types'
 
@@ -402,8 +403,8 @@ export function AnalyticsTab({
           </div>
         )}
         {overallSummary && !summaryLoading && (
-          <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 whitespace-pre-wrap leading-relaxed text-sm">
-            {overallSummary.content}
+          <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
+            <Markdown>{overallSummary.content}</Markdown>
           </div>
         )}
         {!overallSummary && !summaryLoading && !summaryError && (

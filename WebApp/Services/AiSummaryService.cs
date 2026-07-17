@@ -40,7 +40,11 @@ public class AiSummaryService
     public async Task<AiSummary?> GenerateOverallAsync(int surveyId, CancellationToken ct = default)
     {
         var survey = await _db.Surveys.FindAsync(surveyId);
-        if (survey == null) return null;
+        if (survey == null)
+        {
+            _logger.LogWarning("Survey {Id} not found", surveyId);
+            return null;
+        }
 
         var prompt = await BuildOverallPromptAsync(surveyId, ct);
         var content = await CallLlmAsync(prompt, ct);
@@ -104,23 +108,33 @@ public class AiSummaryService
 
     private async Task<string?> CallLlmAsync(string prompt, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(_options.ClientId) || string.IsNullOrWhiteSpace(_options.ClientSecret))
+        if (!_options.Enabled)
         {
-            _logger.LogWarning("AI Summary GigaChat credentials are not configured");
+            _logger.LogDebug("AI Summary is disabled");
+            return null;
+        }
+
+        if (string.IsNullOrWhiteSpace(_options.ChatBaseUrl))
+        {
+            _logger.LogWarning("AI Summary ChatBaseUrl is not configured");
             return null;
         }
 
         try
         {
-            var token = await GetAccessTokenAsync(ct);
-            if (token == null) return null;
+            var authHeader = await ResolveAuthAsync(ct);
+            if (authHeader == null && _options.AuthType != "none")
+            {
+                _logger.LogWarning("Failed to resolve auth for AI provider");
+                return null;
+            }
 
-            var client = _httpFactory.CreateClient("GigaChat");
-            var url = $"{_options.ChatBaseUrl.TrimEnd('/')}/api/v3/chat/completions";
+            var client = _httpFactory.CreateClient("Ai");
+            var url = $"{_options.ChatBaseUrl.TrimEnd('/')}{_options.ChatEndpoint}";
 
             var body = new
             {
-                model = "GigaChat",
+                model = _options.Model,
                 messages = new[]
                 {
                     new { role = "system", content = "Ты — опытный HR-аналитик. Анализируешь результаты 360° опросов. Отвечай на русском языке, структурированно, по существу. Используй markdown для форматирования." },
@@ -134,13 +148,17 @@ public class AiSummaryService
             {
                 Content = JsonContent.Create(body)
             };
-            request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
 
+            if (authHeader != null)
+                request.Headers.Authorization = authHeader;
+
+            _logger.LogInformation("Calling AI provider: {Url}", url);
             var response = await client.SendAsync(request, ct);
+
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync(ct);
-                _logger.LogWarning("GigaChat API returned {Status}: {Error}", response.StatusCode, error);
+                _logger.LogWarning("AI provider returned {Status}: {Error}", response.StatusCode, error);
                 return null;
             }
 
@@ -154,27 +172,48 @@ public class AiSummaryService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to call GigaChat API");
+            _logger.LogError(ex, "Failed to call AI provider");
             return null;
         }
     }
 
-    private async Task<string?> GetAccessTokenAsync(CancellationToken ct)
+    private async Task<System.Net.Http.Headers.AuthenticationHeaderValue?> ResolveAuthAsync(CancellationToken ct)
     {
+        return _options.AuthType.ToLowerInvariant() switch
+        {
+            "none" => null,
+            "bearer" => new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _options.ApiKey),
+            "basic" => new System.Net.Http.Headers.AuthenticationHeaderValue("Basic",
+                Convert.ToBase64String(Encoding.UTF8.GetBytes(_options.ApiKey))),
+            "oauth" => await GetOAuthTokenAsync(ct),
+            _ => throw new InvalidOperationException($"Unknown AuthType: {_options.AuthType}")
+        };
+    }
+
+    private async Task<System.Net.Http.Headers.AuthenticationHeaderValue?> GetOAuthTokenAsync(CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(_options.ClientId) || string.IsNullOrWhiteSpace(_options.ClientSecret))
+        {
+            _logger.LogWarning("OAuth is configured but ClientId/ClientSecret are missing");
+            return null;
+        }
+
         if (_cachedToken != null && DateTimeOffset.UtcNow < _tokenExpiresAt)
-            return _cachedToken;
+            return new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _cachedToken);
 
         await _tokenLock.WaitAsync(ct);
         try
         {
             if (_cachedToken != null && DateTimeOffset.UtcNow < _tokenExpiresAt)
-                return _cachedToken;
+                return new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _cachedToken);
 
-            var client = _httpFactory.CreateClient("GigaChat");
+            var client = _httpFactory.CreateClient("Ai");
             var url = $"{_options.OAuthBaseUrl.TrimEnd('/')}/api/v2/oauth";
 
             var credentials = Convert.ToBase64String(
                 Encoding.UTF8.GetBytes($"{_options.ClientId}:{_options.ClientSecret}"));
+
+            _logger.LogInformation("Requesting OAuth token from {Url}", url);
 
             var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
@@ -187,22 +226,39 @@ public class AiSummaryService
             request.Headers.Add("RqUID", Guid.NewGuid().ToString());
 
             var response = await client.SendAsync(request, ct);
+            var body = await response.Content.ReadAsStringAsync(ct);
+
             if (!response.IsSuccessStatusCode)
             {
-                var error = await response.Content.ReadAsStringAsync(ct);
-                _logger.LogWarning("GigaChat OAuth returned {Status}: {Error}", response.StatusCode, error);
+                _logger.LogWarning("OAuth failed: {Status}: {Body}", response.StatusCode, body);
                 return null;
             }
 
-            var json = await response.Content.ReadFromJsonAsync<JsonElement>(ct);
+            var json = JsonSerializer.Deserialize<JsonElement>(body);
             var accessToken = json.GetProperty("access_token").GetString();
-            var expiresIn = json.GetProperty("expires_in").GetInt32();
+
+            if (json.TryGetProperty("expires_in", out var expiresInProp))
+            {
+                _tokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresInProp.GetInt32() - 60);
+            }
+            else if (json.TryGetProperty("expires_at", out var expiresAtProp))
+            {
+                var expiresAtMs = expiresAtProp.GetInt64();
+                _tokenExpiresAt = DateTimeOffset.FromUnixTimeMilliseconds(expiresAtMs).AddSeconds(-60);
+            }
+            else
+            {
+                _tokenExpiresAt = DateTimeOffset.UtcNow.AddMinutes(29);
+            }
 
             _cachedToken = accessToken;
-            _tokenExpiresAt = DateTimeOffset.UtcNow.AddSeconds(expiresIn - 60);
-
-            _logger.LogInformation("GigaChat OAuth token obtained, expires in {ExpiresIn}s", expiresIn);
-            return _cachedToken;
+            _logger.LogInformation("OAuth token obtained, expires at {ExpiresAt}", _tokenExpiresAt);
+            return new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", _cachedToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "OAuth request failed");
+            return null;
         }
         finally
         {

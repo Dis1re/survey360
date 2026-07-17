@@ -60,10 +60,12 @@ builder.Services.AddScoped<SurveyInviteEmailService>();
 builder.Services.AddScoped<AiSummaryService>();
 
 var russianCaCertPath = Path.Combine(builder.Environment.ContentRootPath, "russian_trusted_root_ca.pem");
-builder.Services.AddHttpClient("GigaChat").ConfigurePrimaryHttpMessageHandler(() =>
+var aiOptions = builder.Configuration.GetSection(AiSummaryOptions.SectionName).Get<AiSummaryOptions>() ?? new();
+
+builder.Services.AddHttpClient("Ai").ConfigurePrimaryHttpMessageHandler(() =>
 {
     var handler = new HttpClientHandler();
-    if (File.Exists(russianCaCertPath))
+    if (aiOptions.AuthType == "oauth" && File.Exists(russianCaCertPath))
     {
         var caCertPem = File.ReadAllText(russianCaCertPath);
         var caCert = new X509Certificate2(Convert.FromBase64String(
@@ -83,10 +85,6 @@ builder.Services.AddHttpClient("GigaChat").ConfigurePrimaryHttpMessageHandler(()
             chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
             return chain.Build(new X509Certificate2(cert));
         };
-    }
-    else
-    {
-        handler.ServerCertificateCustomValidationCallback = HttpClientHandler.DangerousAcceptAnyServerCertificateValidator;
     }
     return handler;
 });
