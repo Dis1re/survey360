@@ -136,8 +136,8 @@ export function ResponseModal({
   ) : (
     <div className="space-y-5">
       {groups.map((group, gi) => (
-        <div key={gi} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-          <div className="text-sm font-semibold text-gray-900 mb-3">
+        <div key={gi} className="soft-lift bg-white dark:bg-[#262d3a] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-4 shadow-sm dark:shadow-none">
+          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3">
             <span className="text-gray-400 mr-1.5">{gi + 1}.</span>
             {group.questionText}
           </div>
@@ -147,8 +147,8 @@ export function ResponseModal({
             ) : (
               group.answers.map((answer, ai) => (
                 <div key={ai} className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-gray-500">{answer.reviewerName}</span>
-                  <div className="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300">{answer.reviewerName}</span>
+                  <div className="text-sm text-gray-700 dark:text-gray-100 bg-gray-50 dark:bg-[#1e222e] border border-gray-100 dark:border-[#3a4250] rounded-xl px-3 py-2">
                     {answer.answerText?.trim() ? (
                       answer.answerText
                     ) : (
@@ -171,8 +171,8 @@ export function ResponseModal({
   ) : (
     <div className="space-y-6">
       {reviewerGroups.map((group, gi) => (
-        <div key={gi} className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm">
-          <div className="text-sm font-semibold text-gray-900 mb-3 flex items-center gap-2">
+        <div key={gi} className="soft-lift bg-white dark:bg-[#262d3a] border border-gray-200 dark:border-[#3a4250] rounded-2xl p-4 shadow-sm dark:shadow-none">
+          <div className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
             <span className="px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-medium">Объект</span>
             {group.targetName}
           </div>
@@ -182,11 +182,11 @@ export function ResponseModal({
             ) : (
               group.questions.map((question, qi) => (
                 <div key={qi} className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-gray-500">
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-300">
                     <span className="text-gray-400 mr-1.5">{qi + 1}.</span>
                     {question.questionText}
                   </span>
-                  <div className="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-xl px-3 py-2">
+                  <div className="text-sm text-gray-700 dark:text-gray-100 bg-gray-50 dark:bg-[#1e222e] border border-gray-100 dark:border-[#3a4250] rounded-xl px-3 py-2">
                     {question.answerText?.trim() ? (
                       question.answerText
                     ) : (
