@@ -359,7 +359,9 @@ export function MatrixTable({
                               )
                             })()
                           )}
-                          {onViewTargetResponses && !surveyDraft && (
+                          {onViewTargetResponses && !surveyDraft && Object.values(completedAssignments).some(
+                            (byTarget) => byTarget[String(target.id)],
+                          ) && (
                             <button
                               type="button"
                               onClick={() => onViewTargetResponses({ targetId: target.id, targetName: target.name })}
@@ -432,7 +434,9 @@ export function MatrixTable({
                                   </button>
                                 )
                               })()}
-                              {onViewReviewerResponses && !surveyDraft && (
+                              {onViewReviewerResponses && !surveyDraft && Object.values(
+                                completedAssignments[String(respondent.id)] ?? {},
+                              ).some(Boolean) && (
                                 <button
                                   type="button"
                                   onClick={() => onViewReviewerResponses({ reviewerId: respondent.id, reviewerName: respondent.name })}
