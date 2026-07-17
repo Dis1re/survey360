@@ -11,7 +11,7 @@ import {
   isParticipationPending,
   isParticipationSurvey,
 } from '../mappers'
-import { openDevPage, setMainPageTabState } from '../routing'
+import { setMainPageTabState } from '../routing'
 import { MainPage } from './MainPage'
 import { TakeSurvey } from './TakeSurvey'
 import type { Survey } from '../types'
@@ -41,13 +41,26 @@ function readStoredSidebarScope(): SidebarScope {
   }
 }
 
-function resolveScopeForSurvey(survey: Survey, userId: number): SidebarScope {
-  if (isParticipationSurvey(survey) && !isMySurvey(survey, userId)) return 'participation'
-  if (isMySurvey(survey, userId)) return 'mine'
-  if (isParticipationSurvey(survey)) return 'participation'
+function resolveScopeForSurvey(
+  survey: Survey,
+  userId: number,
+  preferredScope?: SidebarScope,
+): SidebarScope {
+  const canParticipate = isParticipationSurvey(survey)
+  const isMine = isMySurvey(survey, userId)
+
+  // Keep the user's current sidebar mode when the open survey still belongs there.
+  // Otherwise owners who also participate get kicked to «Мои опросы» after answering.
+  if (preferredScope === 'participation' && canParticipate) return 'participation'
+  if (preferredScope === 'mine' && isMine) return 'mine'
+
+  if (canParticipate && !isMine) return 'participation'
+  if (isMine) return 'mine'
+  if (canParticipate) return 'participation'
   return 'mine'
 }
 
+/** First-open / no stored selection: prefer pending participation, then own surveys. */
 function pickDefaultSurvey(
   surveys: Survey[],
   userId: number | null,
@@ -79,6 +92,25 @@ function pickDefaultSurvey(
   return { id: null, scope: 'mine' }
 }
 
+/** After delete / lost selection: stay on the current sidebar tab. */
+function pickSurveyInScope(
+  surveys: Survey[],
+  userId: number | null,
+  scope: SidebarScope,
+): number | null {
+  if (userId == null) return surveys[0]?.id ?? null
+
+  if (scope === 'mine') {
+    const mine = surveys.filter((s) => isMySurvey(s, userId))
+    return mine[0]?.id ?? null
+  }
+
+  const pending = surveys.filter((s) => isParticipationSurvey(s) && isParticipationPending(s))
+  if (pending.length > 0) return pending[0].id
+  const done = surveys.filter((s) => isParticipationSurvey(s) && isParticipationDone(s))
+  return done[0]?.id ?? null
+}
+
 export function UserApp() {
   const { user } = useAuth()
   const [surveys, setSurveys] = useState<Survey[]>([])
@@ -100,8 +132,7 @@ export function UserApp() {
       if (prev !== null && mapped.some((s) => s.id === prev)) {
         const survey = mapped.find((s) => s.id === prev)!
         if (userId != null) {
-          // Owner viewing their survey (incl. after start) → Мои; participant → Участие
-          setSidebarScope(resolveScopeForSurvey(survey, userId))
+          setSidebarScope((current) => resolveScopeForSurvey(survey, userId, current))
         }
         return prev
       }
@@ -112,6 +143,14 @@ export function UserApp() {
         } catch {
           // sessionStorage unavailable
         }
+
+        // Selection disappeared (deleted) — stay on the current tab, pick next there.
+        let nextId: number | null = null
+        setSidebarScope((current) => {
+          nextId = pickSurveyInScope(mapped, userId, current)
+          return current
+        })
+        return nextId
       }
 
       const pick = pickDefaultSurvey(mapped, userId)
@@ -182,8 +221,15 @@ export function UserApp() {
     }
   }
 
-  // Remount open page when list status changes (e.g. Активен → Завершен).
-  const openPageKey = `${selectedSurveyId ?? 'none'}-${selectedSurvey?.status ?? ''}`
+  // Remount editor when status changes (Активен → Завершен). Keep TakeSurvey mounted
+  // so the thanks / answers view is not wiped after submit.
+  const openPageKey = showEditor
+    ? `${selectedSurveyId ?? 'none'}-${selectedSurvey?.status ?? ''}`
+    : `${selectedSurveyId ?? 'none'}`
+
+  const otherPendingSurveys = surveys
+    .filter((s) => s.id !== selectedSurveyId && isParticipationSurvey(s) && isParticipationPending(s))
+    .map((s) => ({ id: s.id, title: s.title }))
 
   const handleDuplicate = async (id: number) => {
     try {
@@ -223,7 +269,6 @@ export function UserApp() {
         }}
         onCreateClick={handleCreateClick}
         onSearch={setSearchQuery}
-        onOpenDev={user?.isAdmin ? openDevPage : undefined}
         onDuplicate={handleDuplicate}
         onDelete={(id) => setDeletingId(id)}
         collapsed={sidebarCollapsed}
@@ -256,6 +301,11 @@ export function UserApp() {
             surveyId={selectedSurveyId}
             authUserId={user?.id ?? null}
             hideUserSwitch
+            pendingSurveys={otherPendingSurveys}
+            onOpenSurvey={(id) => {
+              setSelectedSurveyId(id)
+              setSidebarScope('participation')
+            }}
             onCompleted={() => {
               void loadSurveys().catch(console.error)
             }}

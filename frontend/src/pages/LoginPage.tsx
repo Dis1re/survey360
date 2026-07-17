@@ -105,13 +105,6 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
         </button>
         <button
           type="button"
-          onClick={() => openPopup('admin')}
-          className="soft-press bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-8 rounded-xl border border-gray-200 shadow-sm cursor-pointer"
-        >
-          Вход для администратора
-        </button>
-        <button
-          type="button"
           onClick={openDevPage}
           className="soft-press bg-white hover:bg-gray-50 text-gray-600 font-medium py-3 px-8 rounded-xl border border-dashed border-gray-300 shadow-sm cursor-pointer"
         >
