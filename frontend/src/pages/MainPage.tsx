@@ -110,7 +110,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [deletingQuestion, setDeletingQuestion] = useState(false)
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
-  const [exportFormat, setExportFormat] = useState<null | 'docx' | 'docx-question' | 'csv' | 'xlsx'>(null)
+  const [exportFormat, setExportFormat] = useState<null | 'menu' | 'docx' | 'docx-question' | 'csv' | 'xlsx'>(null)
   const [exporting, setExporting] = useState(false)
   const [sendingInvites, setSendingInvites] = useState(false)
   const [responseView, setResponseView] = useState<{
