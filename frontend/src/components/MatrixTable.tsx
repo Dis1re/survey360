@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { buildRespondentInviteLink } from '../routing'
 import type { ApiUser, Participant, RespondentLink } from '../types'
+import { copyTextToClipboard } from '../utils'
 import { ConfirmModal } from './ConfirmModal'
 import { UserPickerModal } from './UserPickerModal'
 
@@ -109,13 +110,14 @@ export function MatrixTable({
   const inviteEmailCount = respondentLinks.filter((l) => l.reviewerEmail?.trim()).length
   const hasInviteEmails = inviteEmailCount > 0
 
-  const handleCopyInviteLink = async (reviewerId: number, token: string) => {
+  const handleCopyInviteLink = async (reviewerId: number, token: string, inviteUrl?: string) => {
     try {
-      await navigator.clipboard.writeText(buildRespondentInviteLink(token))
+      await copyTextToClipboard(buildRespondentInviteLink(token, inviteUrl))
       setCopiedReviewerId(reviewerId)
       window.setTimeout(() => setCopiedReviewerId(null), 2000)
     } catch (err) {
       console.error(err)
+      window.prompt('Скопируйте ссылку вручную:', buildRespondentInviteLink(token, inviteUrl))
     }
   }
 
@@ -392,7 +394,9 @@ export function MatrixTable({
                 <tbody className="divide-y divide-gray-100 dark:divide-[#303a48] text-sm">
                   {respondents.map((respondent, ri) => {
                     const invite = linkByReviewerId[respondent.id]
-                    const inviteLink = invite ? buildRespondentInviteLink(invite.token) : null
+                    const inviteLink = invite
+                      ? buildRespondentInviteLink(invite.token, invite.inviteUrl)
+                      : null
 
                     return (
                       <tr key={respondent.id} className={`transition border-b border-gray-100 dark:border-[#303a48] hover:brightness-95 ${ri % 2 === 1 ? 'bg-gray-50 dark:bg-[#161a22]' : ''}`}>
@@ -450,9 +454,9 @@ export function MatrixTable({
                                 <div className="flex flex-wrap items-center gap-2 mt-1.5">
                                   <button
                                     type="button"
-                                    onClick={() => handleCopyInviteLink(respondent.id, invite.token)}
+                                    onClick={() => handleCopyInviteLink(respondent.id, invite.token, invite.inviteUrl)}
                                     className="inline-flex items-center gap-1 text-[11px] font-medium text-[#FF8600] hover:text-[#FF6B00] cursor-pointer"
-                                    title="Скопировать персональную ссылку"
+                                    title={inviteLink}
                                   >
                                     <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />

@@ -391,8 +391,27 @@ export const userGroupApi = {
 }
 
 export const aiSummaryApi = {
-  get: (surveyId: number, type = 'overall') =>
-    sendRequest<AiSummary>(`${API}/survey/${surveyId}/ai-summary?type=${type}`),
+  get: async (surveyId: number, type = 'overall'): Promise<AiSummary | null> => {
+    const token = getAuthToken()
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    }
+    if (token) headers.Authorization = `Bearer ${token}`
+
+    const response = await fetch(`${API}/survey/${surveyId}/ai-summary?type=${type}`, {
+      credentials: 'include',
+      headers,
+    })
+
+    if (response.status === 204 || response.status === 404) return null
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`API /api/survey/${surveyId}/ai-summary [${response.status}]:`, errorText)
+      throw new Error(errorText || `Ошибка API [${response.status}]`)
+    }
+
+    return response.json()
+  },
 
   generate: (surveyId: number, type = 'overall', targetId?: number) => {
     let url = `${API}/survey/${surveyId}/ai-summary/generate?type=${type}`

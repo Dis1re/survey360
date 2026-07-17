@@ -416,8 +416,11 @@ export function AnalyticsTab({
     try {
       const s = await aiSummaryApi.generate(surveyId)
       setOverallSummary(s)
-    } catch {
-      setSummaryError('Не удалось сгенерировать саммари. Проверьте настройки AI.')
+    } catch (err) {
+      const msg = err instanceof Error && err.message
+        ? err.message
+        : 'Не удалось сгенерировать саммари. Проверьте настройки AI.'
+      setSummaryError(msg)
     } finally {
       setSummaryLoading(false)
     }

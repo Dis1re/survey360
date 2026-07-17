@@ -16,6 +16,9 @@ public class AiSummaryService
     private readonly ILogger<AiSummaryService> _logger;
     private readonly AiTokenCache _tokenCache;
 
+    /// <summary>Last failure reason for the current scope (generate call).</summary>
+    public string? LastError { get; private set; }
+
     public AiSummaryService(
         ApplicationDbContext db,
         IHttpClientFactory httpFactory,
@@ -122,15 +125,19 @@ public class AiSummaryService
 
     private async Task<string?> CallLlmAsync(string prompt, CancellationToken ct)
     {
+        LastError = null;
+
         if (!_options.Enabled)
         {
             _logger.LogDebug("AI Summary is disabled");
+            LastError = "AI Summary is disabled (AiSummary:Enabled=false)";
             return null;
         }
 
         if (string.IsNullOrWhiteSpace(_options.ChatBaseUrl))
         {
             _logger.LogWarning("AI Summary ChatBaseUrl is not configured");
+            LastError = "AiSummary:ChatBaseUrl is not configured";
             return null;
         }
 
@@ -140,6 +147,7 @@ public class AiSummaryService
             if (authHeader == null && _options.AuthType != "none")
             {
                 _logger.LogWarning("Failed to resolve auth for AI provider");
+                LastError ??= "Failed to resolve AI auth (check ClientId/ClientSecret or ApiKey)";
                 return null;
             }
 
@@ -173,6 +181,7 @@ public class AiSummaryService
             {
                 var error = await response.Content.ReadAsStringAsync(ct);
                 _logger.LogWarning("AI provider returned {Status}: {Error}", response.StatusCode, error);
+                LastError = $"AI provider returned {(int)response.StatusCode}: {Truncate(error, 300)}";
                 return null;
             }
 
@@ -182,11 +191,13 @@ public class AiSummaryService
                 .GetProperty("content")
                 .GetString();
 
+            LastError = null;
             return text?.Trim();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to call AI provider");
+            LastError = ex.InnerException?.Message ?? ex.Message;
             return null;
         }
     }
@@ -209,6 +220,7 @@ public class AiSummaryService
         if (string.IsNullOrWhiteSpace(_options.ClientId) || string.IsNullOrWhiteSpace(_options.ClientSecret))
         {
             _logger.LogWarning("OAuth is configured but ClientId/ClientSecret are missing");
+            LastError = "OAuth ClientId/ClientSecret are missing (set via user-secrets)";
             return null;
         }
 
@@ -238,6 +250,7 @@ public class AiSummaryService
             if (!response.IsSuccessStatusCode)
             {
                 _logger.LogWarning("OAuth failed: {Status}: {Body}", response.StatusCode, body);
+                LastError = $"OAuth failed ({(int)response.StatusCode}): {Truncate(body, 300)}";
                 return null;
             }
 
@@ -409,4 +422,7 @@ public class AiSummaryService
 
         return sb.ToString();
     }
+
+    private static string Truncate(string value, int max)
+        => value.Length <= max ? value : value[..max] + "…";
 }

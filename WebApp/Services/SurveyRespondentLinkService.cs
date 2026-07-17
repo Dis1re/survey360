@@ -1,15 +1,24 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 using WebApp.Data;
 using WebApp.Models;
 
 namespace WebApp.Services;
 
-public record RespondentLinkDto(int ReviewerId, string ReviewerName, string ReviewerEmail, string Token);
+public record RespondentLinkDto(
+    int ReviewerId,
+    string ReviewerName,
+    string ReviewerEmail,
+    string Token,
+    string InviteUrl);
 
 public record InviteInfoDto(int SurveyId, int ReviewerId, string ReviewerEmail, string ReviewerName);
 
-public class SurveyRespondentLinkService(ApplicationDbContext context)
+public class SurveyRespondentLinkService(
+    ApplicationDbContext context,
+    IOptions<EmailSettings> emailOptions)
 {
+    private string InviteBaseUrl => emailOptions.Value.PublicBaseUrl.TrimEnd('/');
     private async Task<HashSet<int>> GetAssignedReviewerIdsAsync(int surveyId, CancellationToken ct)
     {
         var ids = await context.SurveyAssignments
@@ -65,7 +74,8 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
         if (assignedReviewerIds.Count == 0)
             return [];
 
-        return await context.SurveyRespondentLinks
+        var baseUrl = InviteBaseUrl;
+        var rows = await context.SurveyRespondentLinks
             .AsNoTracking()
             .Where(l => l.SurveyId == surveyId && assignedReviewerIds.Contains(l.ReviewerId))
             .Join(
@@ -74,8 +84,16 @@ public class SurveyRespondentLinkService(ApplicationDbContext context)
                 u => u.Id,
                 (l, u) => new { u.Id, u.Name, u.Email, l.Token })
             .OrderBy(x => x.Name)
-            .Select(x => new RespondentLinkDto(x.Id, x.Name, x.Email, x.Token))
             .ToListAsync(ct);
+
+        return rows
+            .Select(x => new RespondentLinkDto(
+                x.Id,
+                x.Name,
+                x.Email,
+                x.Token,
+                $"{baseUrl}/?invite={x.Token}"))
+            .ToList();
     }
 
     public async Task<InviteInfoDto?> ResolveTokenAsync(string token, CancellationToken ct)

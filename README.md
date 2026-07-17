@@ -148,6 +148,8 @@ dotnet user-secrets set "AiSummary:Model" "my-model"
 
 Если AI-провайдер использует нестандартный SSL-сертификат (например, Russian Trusted Root CA для GigaChat), положите PEM-файл в `WebApp/russian_trusted_root_ca.pem`. Сервис автоматически подхватит его при `AuthType: "oauth"`.
 
+**macOS:** .NET использует Apple Secure Transport, который отклоняет сертификаты GigaChat/Sber с ошибкой `bad certificate format` (кастомный CA-callback даже не вызывается). На macOS при oauth приложение автоматически ходит в GigaChat через `curl` + этот PEM. Нужен установленный `curl` в PATH.
+
 ## Сборка
 
 ```bash

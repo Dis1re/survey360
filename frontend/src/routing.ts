@@ -139,7 +139,9 @@ export function buildSurveyResponseLink(surveyId: number, reviewerId: number, ta
   return url.toString()
 }
 
-export function buildRespondentInviteLink(token: string): string {
+/** Prefer backend `inviteUrl` (Email:PublicBaseUrl); fallback to current origin. */
+export function buildRespondentInviteLink(token: string, inviteUrl?: string | null): string {
+  if (inviteUrl?.trim()) return inviteUrl.trim()
   return `${window.location.origin}/?invite=${token}`
 }
 

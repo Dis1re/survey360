@@ -234,6 +234,8 @@ export interface RespondentLink {
   reviewerName: string
   reviewerEmail: string
   token: string
+  /** Full invite URL from backend Email:PublicBaseUrl */
+  inviteUrl: string
 }
 
 export interface InviteInfo {
