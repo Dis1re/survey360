@@ -110,7 +110,10 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [deletingQuestion, setDeletingQuestion] = useState(false)
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
-  const [exportFormat, setExportFormat] = useState<null | 'docx' | 'docx-question' | 'csv' | 'xlsx'>(null)
+  const [exportFormat, setExportFormat] = useState<{
+    kind: 'menu'
+    filter?: { reviewerId?: number; targetId?: number }
+  } | null>(null)
   const [exporting, setExporting] = useState(false)
   const [sendingInvites, setSendingInvites] = useState(false)
   const [responseView, setResponseView] = useState<{
@@ -559,23 +562,28 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
     await onSurveyDeleted?.()
   }
 
-  const handleExport = async (format: 'docx' | 'docx-question' | 'csv' | 'xlsx') => {
+  const handleExport = async (
+    format: 'docx' | 'docx-question' | 'csv' | 'xlsx',
+    filter?: { reviewerId?: number; targetId?: number },
+  ) => {
     if (surveyId === null) return
     setExporting(true)
     try {
-      const info = await surveyApi.getReportInfo(surveyId)
-      if (info.answerCount === 0) {
-        alert('Нет ответов для формирования отчёта.')
-        return
+      if (!filter) {
+        const info = await surveyApi.getReportInfo(surveyId)
+        if (info.answerCount === 0) {
+          alert('Нет ответов для формирования отчёта.')
+          return
+        }
       }
       if (format === 'docx') {
-        await surveyApi.downloadReport(surveyId)
+        await surveyApi.downloadReport(surveyId, filter)
       } else if (format === 'docx-question') {
-        await surveyApi.downloadReportByQuestion(surveyId)
+        await surveyApi.downloadReportByQuestion(surveyId, filter)
       } else if (format === 'csv') {
-        await surveyApi.downloadCsv(surveyId)
+        await surveyApi.downloadCsv(surveyId, filter)
       } else if (format === 'xlsx') {
-        await surveyApi.downloadXlsx(surveyId)
+        await surveyApi.downloadXlsx(surveyId, filter)
       }
     } catch (err) {
       console.error(err)
@@ -756,7 +764,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               surveyDraft={surveyStatus === 'draft'}
               surveyName={survey?.name ?? ''}
               respondentLinks={respondentLinks}
-              onOpenExport={() => setExportFormat('menu')}
+              onOpenExport={() => setExportFormat({ kind: 'menu' })}
               onSendInvites={handleSendInvites}
               onViewResponse={openResponseView}
               onViewTargetResponses={openTargetResponseView}
@@ -792,7 +800,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                   surveyDraft={surveyStatus === 'draft'}
                   surveyName={survey?.name ?? ''}
                   respondentLinks={respondentLinks}
-                  onOpenExport={() => setExportFormat('menu')}
+                  onOpenExport={() => setExportFormat({ kind: 'menu' })}
                   onSendInvites={handleSendInvites}
                   onViewResponse={openResponseView}
                   onViewTargetResponses={openTargetResponseView}
@@ -812,6 +820,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
         <div className="flex-1 min-h-0 p-6 overflow-auto">
           <div className="max-w-6xl mx-auto">
             <AnalyticsTab
+              surveyId={surveyId}
               questions={questions}
               answers={answers}
               targets={targets}
@@ -820,6 +829,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               completedAssignments={completedAssignments}
               reportInfo={reportInfo}
               allUsers={allUsers}
+              onOpenExport={(filter) => setExportFormat({ kind: 'menu', filter })}
             />
           </div>
         </div>
@@ -878,25 +888,25 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
               label="Word (.docx)"
               hint="Сводный отчёт по объектам"
               disabled={exporting}
-              onClick={() => handleExport('docx')}
+              onClick={() => handleExport('docx', exportFormat.filter)}
             />
             <ExportOption
               label="Word (.docx) по вопросам"
               hint="Отчёт, сгруппированный по вопросам"
               disabled={exporting}
-              onClick={() => handleExport('docx-question')}
+              onClick={() => handleExport('docx-question', exportFormat.filter)}
             />
             <ExportOption
               label="Excel (.xlsx)"
               hint="Таблица с ответами"
               disabled={exporting}
-              onClick={() => handleExport('xlsx')}
+              onClick={() => handleExport('xlsx', exportFormat.filter)}
             />
             <ExportOption
               label="CSV (.csv)"
               hint="Таблица с ответами"
               disabled={exporting}
-              onClick={() => handleExport('csv')}
+              onClick={() => handleExport('csv', exportFormat.filter)}
             />
           </div>
           {exporting && (
@@ -915,6 +925,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
           fullscreen
           sidebarWidth={sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED}
           onClose={closeResponseView}
+          onOpenExport={(filter) => setExportFormat({ kind: 'menu', filter })}
         />
       )}
 
