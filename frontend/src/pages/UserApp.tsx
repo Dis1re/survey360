@@ -11,7 +11,7 @@ import {
   isParticipationPending,
   isParticipationSurvey,
 } from '../mappers'
-import { setMainPageTabState } from '../routing'
+import { clearInviteTokenFromUrl, getInviteToken, setMainPageTabState } from '../routing'
 import { MainPage } from './MainPage'
 import { TakeSurvey } from './TakeSurvey'
 import type { Survey } from '../types'
@@ -112,7 +112,7 @@ function pickSurveyInScope(
 }
 
 export function UserApp() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const [surveys, setSurveys] = useState<Survey[]>([])
   const [selectedSurveyId, setSelectedSurveyId] = useState<number | null>(() => readStoredSurveyId())
   const [sidebarScope, setSidebarScope] = useState<SidebarScope>(() => readStoredSidebarScope())
@@ -121,6 +121,11 @@ export function UserApp() {
   const [creating, setCreating] = useState(false)
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [inviteMismatch, setInviteMismatch] = useState<{
+    email: string
+    name: string
+  } | null>(null)
+  const [switchingAccount, setSwitchingAccount] = useState(false)
 
   const loadSurveys = useCallback(async () => {
     const list = await surveyApi.list()
@@ -163,6 +168,42 @@ export function UserApp() {
     setLoading(true)
     loadSurveys().catch(console.error).finally(() => setLoading(false))
   }, [loadSurveys])
+
+  // Email invite (?invite=token or legacy /survey/invite/…) → open that survey in «Участие».
+  useEffect(() => {
+    const token = getInviteToken()
+    if (!token || user == null) return
+
+    let cancelled = false
+    surveyApi
+      .resolveInvite(token)
+      .then((info) => {
+        if (cancelled) return
+        if (info.reviewerId !== user.id) {
+          // Keep ?invite= in the URL so after logout → login it still opens the survey.
+          setInviteMismatch({
+            email: info.reviewerEmail,
+            name: info.reviewerName.trim() || info.reviewerEmail,
+          })
+          return
+        }
+        clearInviteTokenFromUrl()
+        setInviteMismatch(null)
+        setSelectedSurveyId(info.surveyId)
+        setSidebarScope('participation')
+      })
+      .catch(() => {
+        if (!cancelled) {
+          clearInviteTokenFromUrl()
+          setInviteMismatch(null)
+          alert('Ссылка-приглашение недействительна или устарела.')
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [user])
 
   useEffect(() => {
     try {
@@ -321,6 +362,50 @@ export function UserApp() {
           message="Опрос и все его ответы будут безвозвратно удалены. Действие нельзя отменить."
           onConfirm={handleDeleteConfirm}
           onCancel={() => setDeletingId(null)}
+        />
+      )}
+
+      {inviteMismatch && (
+        <ConfirmModal
+          title="Чужая ссылка"
+          variant="warning"
+          confirmLabel="Сменить аккаунт"
+          cancelLabel="Остаться в текущем"
+          loading={switchingAccount}
+          loadingLabel="Выход…"
+          message={
+            <>
+              Эта ссылка предназначена для{' '}
+              <span className="font-medium text-gray-800 dark:text-gray-100">
+                {inviteMismatch.name}
+              </span>
+              {inviteMismatch.email ? (
+                <>
+                  {' '}
+                  (<span className="text-gray-700 dark:text-gray-200">{inviteMismatch.email}</span>)
+                </>
+              ) : null}
+              . Вы вошли как{' '}
+              <span className="font-medium text-gray-800 dark:text-gray-100">
+                {user?.name.trim() || user?.email}
+              </span>
+              . Чтобы пройти опрос, войдите под нужным аккаунтом.
+            </>
+          }
+          onConfirm={async () => {
+            setSwitchingAccount(true)
+            try {
+              // Keep ?invite= so LoginPage can prefill and UserApp can open the survey after login.
+              await logout()
+            } finally {
+              setSwitchingAccount(false)
+              setInviteMismatch(null)
+            }
+          }}
+          onCancel={() => {
+            clearInviteTokenFromUrl()
+            setInviteMismatch(null)
+          }}
         />
       )}
     </div>

@@ -29,10 +29,11 @@ internal static class InviteEmailTemplates
             $"{greeting}\n\n" +
             $"Опрос: «{survey.Name}»\n\n" +
             $"{about}{descriptionBlock}\n\n" +
-            "Пройти опрос:\n" +
+            "Откройте приложение и войдите под своим аккаунтом:\n" +
             $"{inviteUrl}\n\n" +
+            "После входа опрос будет доступен во вкладке «Участие».\n\n" +
             "—\n" +
-            "Ссылка персональная — не пересылайте письмо.";
+            "Не пересылайте письмо — ссылка предназначена для вас.";
     }
 
     public static string BuildHtmlBody(
@@ -115,7 +116,7 @@ internal static class InviteEmailTemplates
                       <tr>
                         <td style="padding:0 32px 28px;">
                           <p style="margin:0;font-size:13px;line-height:1.5;color:#6b7280;">
-                            Персональная ссылка (если кнопка не открывается):<br>
+                            Если кнопка не открывается, перейдите по ссылке и войдите в приложение:<br>
                             <a href="{inviteUrlEncoded}" style="color:{BrandOrange};word-break:break-all;">{inviteUrlEncoded}</a>
                           </p>
                         </td>
@@ -126,7 +127,7 @@ internal static class InviteEmailTemplates
                             Опросы 360 · Директум
                           </p>
                           <p style="margin:0;font-size:12px;line-height:1.5;color:#9ca3af;text-align:center;">
-                            Ссылка персональная — не пересылайте письмо.
+                            Не пересылайте письмо — ссылка предназначена для вас.
                           </p>
                         </td>
                       </tr>
