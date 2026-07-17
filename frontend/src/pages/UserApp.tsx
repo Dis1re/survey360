@@ -217,16 +217,19 @@ export function UserApp() {
   return (
     <div className="flex h-screen overflow-hidden dark:bg-[#161a22]">
       {isMobile && !mobileNavOpen && (
-        <button
-          type="button"
-          onClick={() => setMobileNavOpen(true)}
-          aria-label="Открыть меню"
-          className="fixed top-3 left-3 z-50 rounded-xl border border-[#FF6B00] bg-transparent text-[#FF6B00] p-2 cursor-pointer transition hover:bg-[#FF6B00]/10"
-        >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+        <div className="fixed top-0 left-0 right-0 z-50 flex items-center px-3 h-14 bg-[#f3f4f6] dark:bg-[#1e222e] border-b border-gray-200 dark:border-[#303a48] shadow-sm">
+          <button
+            type="button"
+            onClick={() => setMobileNavOpen(true)}
+            aria-label="Открыть меню"
+            className="rounded-xl border border-[#FF6B00] bg-transparent text-[#FF6B00] p-2 cursor-pointer transition hover:bg-[#FF6B00]/10"
+          >
+            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+          <span className="ml-3 text-sm font-semibold text-gray-700 dark:text-gray-200 select-none">Survey360</span>
+        </div>
       )}
       <Sidebar
         surveys={filteredSurveys}
