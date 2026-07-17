@@ -3,6 +3,14 @@ import Markdown from 'react-markdown'
 import { aiSummaryApi } from '../api'
 import type { AiSummary, ApiAnswer, ApiUser, Participant, Question, QuestionProps, SurveyReportInfo } from '../types'
 
+type TabKey = 'overall' | 'targets' | 'respondents'
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'overall', label: 'Общая' },
+  { key: 'targets', label: 'По оцениваемым' },
+  { key: 'respondents', label: 'По респондентам' },
+]
+
 interface AnalyticsTabProps {
   surveyId: number | null
   questions: Question[]
@@ -298,6 +306,9 @@ export function AnalyticsTab({
 }: AnalyticsTabProps) {
   const nameMap = useMemo(() => getNameMap(allUsers), [allUsers])
 
+  const [activeTab, setActiveTab] = useState<TabKey>('overall')
+  const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null)
+
   const [overallSummary, setOverallSummary] = useState<AiSummary | null>(null)
   const [summaryLoading, setSummaryLoading] = useState(false)
   const [summaryError, setSummaryError] = useState('')
@@ -346,6 +357,30 @@ export function AnalyticsTab({
     return map
   }, [answers])
 
+  const filteredAnswersByQuestion = useMemo(() => {
+    if (activeTab === 'overall' || selectedPersonId == null) return answersByQuestion
+
+    const map = new Map<number, ApiAnswer[]>()
+    for (const a of answers) {
+      const matches = activeTab === 'targets'
+        ? a.targetId === selectedPersonId
+        : a.userId === selectedPersonId
+      if (matches) {
+        const list = map.get(a.questionId) ?? []
+        list.push(a)
+        map.set(a.questionId, list)
+      }
+    }
+    return map
+  }, [answers, answersByQuestion, activeTab, selectedPersonId])
+
+  const personList = activeTab === 'targets' ? targets : respondents
+
+  const handleTabChange = (tab: TabKey) => {
+    setActiveTab(tab)
+    setSelectedPersonId(null)
+  }
+
   if (questions.length === 0) {
     return (
       <div className="text-center py-16 text-gray-400 text-sm">
@@ -364,66 +399,122 @@ export function AnalyticsTab({
         <Card label="Респондентов" value={String(respondents.length)} />
       </div>
 
-      <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-xl p-5">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
-            <svg className="w-4 h-4 text-[#FF8600]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            AI-саммари
-          </h3>
-          {surveyId != null && (
-            <div className="flex items-center gap-2">
-              {overallSummary && (
-                <span className="text-[10px] text-gray-400">
-                  {new Date(overallSummary.updatedAt).toLocaleString('ru-RU')}
-                </span>
-              )}
-              <button
-                type="button"
-                onClick={generateSummary}
-                disabled={summaryLoading}
-                className="text-xs font-medium text-[#FF8600] hover:text-[#FF6B00] disabled:opacity-50 cursor-pointer"
-              >
-                {summaryLoading ? 'Генерация…' : overallSummary ? 'Обновить' : 'Сгенерировать'}
-              </button>
-            </div>
-          )}
-        </div>
-        {summaryError && (
-          <p className="text-xs text-red-500 mb-2">{summaryError}</p>
-        )}
-        {summaryLoading && !overallSummary && (
-          <div className="flex items-center gap-2 py-6 text-gray-400 text-sm">
-            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-            </svg>
-            AI анализирует результаты опроса…
-          </div>
-        )}
-        {overallSummary && !summaryLoading && (
-          <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
-            <Markdown>{overallSummary.content}</Markdown>
-          </div>
-        )}
-        {!overallSummary && !summaryLoading && !summaryError && (
-          <p className="text-sm text-gray-400 py-4">
-            Нажмите «Сгенерировать», чтобы AI проанализировал результаты опроса.
-          </p>
-        )}
+      {/* Tabs */}
+      <div className="flex gap-1 bg-gray-100 dark:bg-[#303a48] rounded-lg p-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => handleTabChange(tab.key)}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+              activeTab === tab.key
+                ? 'bg-white dark:bg-[#1e222e] text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
+      {/* Person selector for non-overall tabs */}
+      {activeTab !== 'overall' && (
+        <div className="flex flex-wrap gap-2">
+          {personList.map((p) => {
+            const name = nameMap[p.id] ?? `#${p.id}`
+            const count = answers.filter((a) =>
+              activeTab === 'targets' ? a.targetId === p.id : a.userId === p.id
+            ).length
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelectedPersonId(selectedPersonId === p.id ? null : p.id)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
+                  selectedPersonId === p.id
+                    ? 'bg-[#FF8600] text-white border-[#FF8600]'
+                    : 'bg-white dark:bg-[#1e222e] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#3a4250] hover:border-[#FF8600] dark:hover:border-[#FF8600]'
+                }`}
+              >
+                {name}
+                <span className="ml-1.5 text-[10px] opacity-60">{count}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* AI Summary */}
+      {activeTab === 'overall' && (
+        <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#FF8600]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              AI-саммари
+            </h3>
+            {surveyId != null && (
+              <div className="flex items-center gap-2">
+                {overallSummary && (
+                  <span className="text-[10px] text-gray-400">
+                    {new Date(overallSummary.updatedAt).toLocaleString('ru-RU')}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={generateSummary}
+                  disabled={summaryLoading}
+                  className="text-xs font-medium text-[#FF8600] hover:text-[#FF6B00] disabled:opacity-50 cursor-pointer"
+                >
+                  {summaryLoading ? 'Генерация…' : overallSummary ? 'Обновить' : 'Сгенерировать'}
+                </button>
+              </div>
+            )}
+          </div>
+          {summaryError && (
+            <p className="text-xs text-red-500 mb-2">{summaryError}</p>
+          )}
+          {summaryLoading && !overallSummary && (
+            <div className="flex items-center gap-2 py-6 text-gray-400 text-sm">
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              AI анализирует результаты опроса…
+            </div>
+          )}
+          {overallSummary && !summaryLoading && (
+            <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
+              <Markdown>{overallSummary.content}</Markdown>
+            </div>
+          )}
+          {!overallSummary && !summaryLoading && !summaryError && (
+            <p className="text-sm text-gray-400 py-4">
+              Нажмите «Сгенерировать», чтобы AI проанализировал результаты опроса.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Questions */}
       <div className="space-y-4">
-        {questions.map((q, i) => (
-          <QuestionCard
-            key={q.id}
-            index={i + 1}
-            question={q}
-            qAnswers={answersByQuestion.get(q.id) ?? []}
-            nameMap={nameMap}
-          />
-        ))}
+        {activeTab !== 'overall' && selectedPersonId == null && (
+          <p className="text-sm text-gray-400 py-4 text-center">
+            Выберите {activeTab === 'targets' ? 'оцениваемого' : 'респондента'} выше для просмотра аналитики.
+          </p>
+        )}
+        {(activeTab === 'overall' || selectedPersonId != null) &&
+          questions.map((q, i) => (
+            <QuestionCard
+              key={q.id}
+              index={i + 1}
+              question={q}
+              qAnswers={filteredAnswersByQuestion.get(q.id) ?? []}
+              nameMap={nameMap}
+            />
+          ))
+        }
       </div>
     </div>
   )
