@@ -19,7 +19,7 @@ export function UserPickerModal({
   title,
   allUsers,
   existingIds,
-  initialSelectedIds = [],
+  initialSelectedIds: _initialSelectedIds = [],
   adding = false,
   onClose,
   onAdd,
@@ -31,7 +31,7 @@ export function UserPickerModal({
   const [removingIds, setRemovingIds] = useState<number[]>([])
 
   const [groups, setGroups] = useState<UserGroup[]>([])
-  const [expandedGroupId, setExpandedGroupId] = useState<number | null>(null)
+  const [expandedGroupId, setExpandedGroupId] = useState<string | number | null>(null)
   const [selectedGroupIds, setSelectedGroupIds] = useState<number[]>([])
 
   const [isCreatingGroup, setIsCreatingGroup] = useState(false)
@@ -538,7 +538,7 @@ export function UserPickerModal({
                   <div className={`flex items-center gap-1.5 px-2 py-2 ${isFull ? 'bg-[#FF8600]/10' : 'bg-[#FF8600]/5'}`}>
                     <button
                       type="button"
-                      onClick={() => setExpandedGroupId(isExpanded ? null : (`sel-${group.id}`) as unknown as number)}
+                      onClick={() => setExpandedGroupId(isExpanded ? null : `sel-${group.id}`)}
                       className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer shrink-0"
                     >
                       <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>

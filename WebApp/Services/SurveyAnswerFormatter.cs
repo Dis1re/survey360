@@ -41,6 +41,38 @@ public static class SurveyAnswerFormatter
     public static string FormatPlain(Question question, string answerText) =>
         string.Concat(FormatRuns(question, answerText).Select(run => run.Text));
 
+    public static string FormatSelectedPlain(Question question, string answerText)
+    {
+        var trimmed = answerText?.Trim() ?? "";
+        if (string.IsNullOrEmpty(trimmed))
+            return "— нет ответа —";
+
+        var type = NormalizeType(question.Type);
+        if (type is "text")
+            return trimmed;
+
+        if (type is "scale")
+        {
+            var selected = ParseSelectedValues(trimmed);
+            var config = ParseScaleConfig(question.Props);
+            var values = config.GetValues();
+            var chosen = values.FirstOrDefault(v => IsScaleValueSelected(v, selected), values.Count > 0 ? values[0] : 0);
+            return chosen.ToString();
+        }
+
+        var options = ParseRadioOptions(question.Props);
+        if (options.Count == 0)
+            return trimmed;
+
+        var selectedOptions = ParseSelectedValues(trimmed);
+        var labels = options
+            .Where(option => IsOptionSelected(option, selectedOptions))
+            .Select(option => option.Label)
+            .ToList();
+
+        return labels.Count > 0 ? string.Join(", ", labels) : trimmed;
+    }
+
     public static IReadOnlyList<FormattedTextRun> FormatRuns(Question question, string answerText)
     {
         var trimmed = answerText?.Trim() ?? "";

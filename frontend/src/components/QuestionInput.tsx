@@ -1,10 +1,23 @@
 import { useState } from 'react'
 import type { Question } from '../types'
 
+const inputBase =
+  'border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 text-sm text-gray-800 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500 focus:outline-none focus:border-[#FF8600] dark:focus:border-[#FF8600]'
+const inputReadOnly = `${inputBase} bg-gray-50 dark:bg-[#161a22] text-gray-600 dark:text-gray-300 cursor-default`
+const optionSelected = 'border-2 border-[#FF8600] bg-transparent'
+const optionDefault = 'border-gray-200 dark:border-[#3a4250]'
+const optionHover = 'hover:bg-gray-50 dark:hover:bg-[#262d3a]'
+const optionText = 'text-sm text-gray-800 dark:text-gray-100 min-w-0 flex-1 break-words'
+const scaleSelected = 'border-2 border-[#FF8600] bg-transparent text-[#FF6B00] dark:text-[#FF8600]'
+const scaleUnselectedReadOnly =
+  'border-gray-200 dark:border-[#3a4250] text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-[#161a22]'
+const scaleUnselected =
+  'border-gray-200 dark:border-[#3a4250] text-gray-600 dark:text-gray-200 bg-transparent'
+
 function getRadioOptions(props?: Record<string, string | number>): { value: number; label: string }[] {
   if (!props) return []
   return Object.entries(props)
-    .filter(([k]) => !['min', 'max', 'step', 'maxStars'].includes(k))
+    .filter(([k]) => !['min', 'max', 'step', 'maxStars', 'minSelect', 'maxSelect'].includes(k))
     .map(([k, v]) => ({ value: Number(k), label: String(v) }))
     .sort((a, b) => a.value - b.value)
 }
@@ -56,10 +69,10 @@ export function QuestionInput({
               readOnly ? 'cursor-default' : 'cursor-pointer'
             } ${
               selected === n
-                ? 'border-[#FF8600] bg-orange-50 text-[#FF6B00]'
+                ? scaleSelected
                 : readOnly
-                  ? 'border-gray-200 text-gray-400 bg-gray-50'
-                  : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                  ? scaleUnselectedReadOnly
+                  : scaleUnselected
             }`}
           >
             {n}
@@ -78,13 +91,11 @@ export function QuestionInput({
           value={selectedVal}
           onChange={(e) => onChange(e.target.value)}
           disabled={readOnly}
-          className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] ${
-            readOnly ? 'bg-gray-50 text-gray-600 cursor-default' : 'bg-white'
-          }`}
+          className={`w-full ${readOnly ? inputReadOnly : `${inputBase} bg-white dark:bg-[#161a22] text-gray-800 dark:text-gray-100`}`}
         >
-          <option value="">Выберите вариант…</option>
+          <option value="" className="bg-white dark:bg-[#1e222e] text-gray-800 dark:text-gray-100">Выберите вариант…</option>
           {options.map((opt) => (
-            <option key={opt.value} value={String(opt.value)}>
+            <option key={opt.value} value={String(opt.value)} className="bg-white dark:bg-[#1e222e] text-gray-800 dark:text-gray-100">
               {opt.label || String(opt.value)}
             </option>
           ))}
@@ -100,9 +111,7 @@ export function QuestionInput({
           disabled={readOnly}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Ваш ответ"
-          className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] ${
-            readOnly ? 'bg-gray-50 text-gray-600 cursor-default' : ''
-          }`}
+          className={readOnly ? inputReadOnly : inputBase}
         />
       )
     }
@@ -114,8 +123,12 @@ export function QuestionInput({
             className={`soft-lift flex items-start gap-3 p-3 rounded-xl border ${
               readOnly ? 'cursor-default' : 'cursor-pointer'
             } ${
-              value === String(opt.value) ? 'border-[#FF8600] bg-orange-50' : 'border-gray-100 hover:bg-gray-50'
-            } ${readOnly ? 'opacity-80' : ''}`}
+              value === String(opt.value)
+                ? optionSelected
+                : readOnly
+                  ? `${optionDefault} bg-gray-50 dark:bg-[#161a22]`
+                  : `${optionDefault} ${optionHover}`
+            } ${readOnly && value !== String(opt.value) ? 'opacity-80' : ''}`}
           >
             <input
               type="radio"
@@ -125,7 +138,7 @@ export function QuestionInput({
               onChange={() => onChange(String(opt.value))}
               className="w-4 h-4 text-[#FF8600] mt-0.5 shrink-0"
             />
-            <span className="text-sm text-gray-800 min-w-0 flex-1 break-words">
+            <span className={optionText}>
               {opt.label || String(opt.value)}
             </span>
           </label>
@@ -158,9 +171,7 @@ export function QuestionInput({
           disabled={readOnly}
           onChange={(e) => onChange(e.target.value)}
           placeholder="Ваш ответ"
-          className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] ${
-            readOnly ? 'bg-gray-50 text-gray-600 cursor-default' : ''
-          }`}
+          className={readOnly ? inputReadOnly : inputBase}
         />
       )
     }
@@ -175,8 +186,14 @@ export function QuestionInput({
                 className={`soft-lift flex items-start gap-3 p-3 rounded-xl border ${
                   readOnly ? 'cursor-default' : 'cursor-pointer'
                 } ${
-                  checked ? 'border-[#FF8600] bg-orange-50' : atMax && !checked ? 'border-gray-100 opacity-50' : 'border-gray-100 hover:bg-gray-50'
-                } ${readOnly ? 'opacity-80' : ''}`}
+                  checked
+                    ? optionSelected
+                    : readOnly
+                      ? `${optionDefault} bg-gray-50 dark:bg-[#161a22]`
+                      : atMax && !checked
+                        ? `${optionDefault} opacity-50`
+                        : `${optionDefault} ${optionHover}`
+                } ${readOnly && !checked ? 'opacity-80' : ''}`}
               >
                 <input
                   type="checkbox"
@@ -185,7 +202,7 @@ export function QuestionInput({
                   onChange={() => toggle(String(opt.value))}
                   className="w-4 h-4 text-[#FF8600] mt-0.5 shrink-0 rounded"
                 />
-                <span className="text-sm text-gray-800 min-w-0 flex-1 break-words">
+                <span className={optionText}>
                   {opt.label || String(opt.value)}
                 </span>
               </label>
@@ -193,13 +210,8 @@ export function QuestionInput({
           })}
         </div>
         {(minSel > 0 || maxSel > 0) && (
-          <p className="text-[10px] text-gray-400 mt-1.5">
-            {minSel > 0 && maxSel > 0
-              ? `Выберите от ${minSel} до ${maxSel} вариантов`
-              : minSel > 0
-                ? `Выберите минимум ${minSel} вариантов`
-                : `Можно выбрать не более ${maxSel}`}
-            {` · выбрано ${selected.length}`}
+          <p className="text-[10px] text-gray-400 dark:text-gray-400 mt-1.5">
+            {`Выбрано ${selected.length}`}
           </p>
         )}
       </div>
@@ -229,7 +241,7 @@ export function QuestionInput({
             <StarIcon
               filled={n <= (hovered || selected)}
               className={`w-8 h-8 ${
-                n <= (hovered || selected) ? 'text-[#FF8600]' : 'text-gray-300'
+                n <= (hovered || selected) ? 'text-[#FF8600]' : 'text-gray-300 dark:text-gray-600'
               }`}
             />
           </button>
@@ -246,9 +258,7 @@ export function QuestionInput({
         readOnly={readOnly}
         disabled={readOnly}
         onChange={(e) => onChange(e.target.value)}
-        className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] ${
-          readOnly ? 'bg-gray-50 text-gray-600 cursor-default' : ''
-        }`}
+        className={readOnly ? inputReadOnly : inputBase}
       />
     )
   }
@@ -261,9 +271,7 @@ export function QuestionInput({
       onChange={(e) => onChange(e.target.value)}
       rows={4}
       placeholder="Ваш развёрнутый ответ…"
-      className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] resize-none ${
-        readOnly ? 'bg-gray-50 text-gray-600 cursor-default' : ''
-      }`}
+      className={`w-full ${inputBase} resize-none ${readOnly ? 'bg-gray-50 dark:bg-[#161a22] text-gray-600 dark:text-gray-200 cursor-default' : 'bg-white dark:bg-[#161a22] text-gray-800 dark:text-gray-100'}`}
     />
   )
 }

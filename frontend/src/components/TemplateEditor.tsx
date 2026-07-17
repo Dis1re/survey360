@@ -78,8 +78,8 @@ export function TemplateEditor({ templateId, onBack }: TemplateEditorProps) {
   const handleCreateQuestion = async () => {
     setCreatingQuestion(true)
     try {
-      const id = await templateApi.createQuestion(templateId, { text: 'Новый вопрос', type: 'rating' })
-      const newQ = templateQuestionToQuestion({ id, surveyTemplateId: templateId, text: 'Новый вопрос', type: 'rating', isRequired: false, props: null })
+      const id = await templateApi.createQuestion(templateId, { text: 'Новый вопрос', type: 'text' })
+      const newQ = templateQuestionToQuestion({ id, surveyTemplateId: templateId, text: 'Новый вопрос', type: 'text', isRequired: false, props: null })
       setQuestions((prev) => [...prev, newQ])
       setActiveQuestionId(id)
     } catch (err) {
