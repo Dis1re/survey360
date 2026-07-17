@@ -12,6 +12,7 @@ import { SurveyHeader, type SurveyHeaderForm, type StartSurveyPayload } from '..
 import { TakeSurvey } from './TakeSurvey'
 import { TabBar, type Tab } from '../components/TabBar'
 import { TemplatesModal } from '../components/TemplatesModal'
+import { useIsMobile } from '../hooks/useMediaQuery'
 import { TemplateEditor } from '../components/TemplateEditor'
 import { useSurveyLive } from '../hooks/useSurveyLive'
 import {
@@ -90,6 +91,7 @@ interface MainPageProps {
 }
 
 export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCollapsed = false }: MainPageProps) {
+  const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState<Tab>(() => resolveInitialMainPageTab(surveyId))
   const prevSurveyIdRef = useRef<number | null>(null)
   const [matrixExpanded, setMatrixExpanded] = useState(false)
@@ -111,7 +113,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   const [savingMatrix, setSavingMatrix] = useState(false)
   const [addingMatrixParticipant, setAddingMatrixParticipant] = useState(false)
   const [exportFormat, setExportFormat] = useState<{
-    kind: 'menu'
+    kind: 'menu' | 'docx' | 'docx-question' | 'csv' | 'xlsx'
     filter?: { reviewerId?: number; targetId?: number }
   } | null>(null)
   const [exporting, setExporting] = useState(false)
@@ -673,7 +675,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
   )
 
   return (
-    <div className="relative h-screen flex flex-col overflow-hidden">
+    <div className="relative h-full flex flex-col overflow-hidden">
       <SurveyHeader
         surveyId={surveyId}
         initial={surveyHeaderInitial}
@@ -693,9 +695,9 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       <TabBar activeTab={activeTab} onTabChange={handleTabChange} />
 
       {activeTab === 'editor' && (
-        <div className="flex-1 min-h-0 p-6 overflow-hidden flex flex-col">
-          <div className="max-w-6xl mx-auto flex-1 min-h-0 flex flex-col w-full gap-3">
-            <div className="flex justify-start gap-2">
+        <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-y-auto flex flex-col">
+          <div className="max-w-6xl mx-auto flex-1 lg:min-h-0 flex flex-col w-full gap-3">
+            <div className="flex flex-wrap justify-start gap-2">
               <button
                 type="button"
                 onClick={() => setTemplateModal('save')}
@@ -715,7 +717,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 min-h-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:flex-1 lg:min-h-0">
               <div className="lg:col-span-1 min-h-0 h-full">
                 <QuestionList
                   questions={questions}
@@ -745,7 +747,7 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
       )}
 
       {activeTab === 'matrix' && (
-        <div className="flex-1 min-h-0 p-6 overflow-hidden">
+        <div className="flex-1 min-h-0 p-4 sm:p-6 overflow-hidden">
           <div className="max-w-6xl mx-auto h-full overflow-hidden">
             
             <MatrixTable
@@ -931,8 +933,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
 
       {previewOpen && surveyId !== null && (
         <div
-          className="fixed top-0 right-0 bottom-0 z-40 bg-gray-100 dark:bg-[#303a48] flex flex-col border-l border-gray-200 dark:border-[#3a4250] transition-[left] duration-300 ease-out"
-          style={{ left: sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED }}
+          className="fixed top-0 right-0 bottom-0 z-[60] bg-gray-100 dark:bg-[#303a48] flex flex-col border-l border-gray-200 dark:border-[#3a4250] transition-[left] duration-300 ease-out"
+          style={{ left: isMobile ? 0 : (sidebarCollapsed ? SIDEBAR_WIDTH_COLLAPSED : SIDEBAR_WIDTH_EXPANDED) }}
         >
           <div className="bg-white dark:bg-[#1e222e] border-b border-gray-200 dark:border-[#3a4250] px-6 py-4 flex items-center justify-between shadow-sm shrink-0">
             <div>

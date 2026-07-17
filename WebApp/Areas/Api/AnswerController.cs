@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WebApp.Data;
@@ -5,11 +6,12 @@ using WebApp.Models;
 
 namespace WebApp.Areas.Api;
 
-public record CreateAnswerRequest(int QuestionId, int UserId, int TargetId, string Text, string Type);
+public record CreateAnswerRequest(int QuestionId, int UserId, int TargetId, string Text);
 
 [Area("api")]
 [ApiController]
 [Route("/api/[controller]")]
+[Authorize]
 public class AnswerController(ApplicationDbContext context) : Controller
 {
     [HttpPost]
@@ -30,13 +32,23 @@ public class AnswerController(ApplicationDbContext context) : Controller
         if (!targetExists)
             return NotFound($"Пользователь с id {request.TargetId} не найден");
 
+        var existing = await context.Answers
+            .FirstOrDefaultAsync(a => a.QuestionId == request.QuestionId
+                && a.UserId == request.UserId && a.TargetId == request.TargetId, ct);
+
+        if (existing is not null)
+        {
+            existing.Text = request.Text;
+            await context.SaveChangesAsync(ct);
+            return existing.Id;
+        }
+
         var answer = new Answer
         {
             QuestionId = request.QuestionId,
             UserId = request.UserId,
             TargetId = request.TargetId,
             Text = request.Text,
-            Type = request.Type,
         };
         await context.Answers.AddAsync(answer, ct);
         await context.SaveChangesAsync(ct);

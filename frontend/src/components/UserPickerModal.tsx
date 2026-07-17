@@ -27,7 +27,7 @@ export function UserPickerModal({
 }: UserPickerModalProps) {
   const [tab, setTab] = useState<'users' | 'groups'>('users')
   const [search, setSearch] = useState('')
-  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([])
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>(_initialSelectedIds)
   const [removingIds, setRemovingIds] = useState<number[]>([])
 
   const [groups, setGroups] = useState<UserGroup[]>([])
@@ -234,7 +234,7 @@ export function UserPickerModal({
 
   return (
     <Modal title={title} size="xl" onClose={onClose} preventClose={adding}>
-      <div className="flex gap-4 min-h-[400px]">
+      <div className="flex flex-col md:flex-row gap-4 min-h-0 md:min-h-[400px]">
         <div className="flex-1 min-w-0 flex flex-col">
           <div className="flex gap-1 mb-3 border-b border-gray-100 dark:border-[#303a48]">
             <button
@@ -499,7 +499,7 @@ export function UserPickerModal({
           )}
         </div>
 
-        <div className="w-60 shrink-0 border-l border-gray-100 dark:border-[#303a48] pl-4 flex flex-col">
+        <div className="w-full md:w-60 shrink-0 md:border-l md:pl-4 border-t md:border-t-0 pt-4 md:pt-0 border-gray-100 dark:border-[#303a48] flex flex-col">
           <div className="flex items-center justify-between mb-2">
             <h4 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">
               Выбрано ({selectedUserIds.length + selectedIndividuals.filter((u) => existingIds.includes(u.id)).length})
@@ -531,14 +531,14 @@ export function UserPickerModal({
               const selectedMemberIds = memberIds.filter((id) => selectedUserIds.includes(id) && !existingIds.includes(id))
               const totalShown = existingMemberIds.length + selectedMemberIds.length
               const isFull = totalShown === memberIds.length
-              const isExpanded = expandedGroupId === `sel-${group.id}`
+              const isExpanded = expandedGroupId === group.id
 
               return (
                 <div key={group.id} className="rounded-lg border border-gray-100 dark:border-[#303a48] overflow-hidden">
                   <div className={`flex items-center gap-1.5 px-2 py-2 ${isFull ? 'bg-[#FF8600]/10' : 'bg-[#FF8600]/5'}`}>
                     <button
                       type="button"
-                      onClick={() => setExpandedGroupId(isExpanded ? null : `sel-${group.id}`)}
+                      onClick={() => setExpandedGroupId(isExpanded ? null : group.id)}
                       className="w-4 h-4 flex items-center justify-center text-gray-400 hover:text-gray-600 cursor-pointer shrink-0"
                     >
                       <svg className={`w-3 h-3 transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
