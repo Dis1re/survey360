@@ -192,7 +192,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={mode === 'admin' ? 'Админ' : 'name@company.com'}
-                className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600] ${
+                className={`w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#FF8600] ${
                   mode === 'admin' ? 'bg-gray-50 text-gray-700' : ''
                 }`}
               />
@@ -210,7 +210,7 @@ export function LoginPage({ initialMode = 'user' }: LoginPageProps) {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Пароль"
-                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#FF8600]"
+                  className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:border-[#FF8600]"
                 />
                 <p className="mt-1.5 text-xs text-gray-400">Для демо пароль всех пользователей: {DEMO_PASSWORD}</p>
               </div>

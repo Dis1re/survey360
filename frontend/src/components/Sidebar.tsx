@@ -122,7 +122,7 @@ function SurveyCard({
       }}
       className={`sidebar-card relative p-3 rounded-xl cursor-pointer border ${
         isSelected
-          ? 'bg-white dark:bg-[#1e222e] border-l-4 border-l-[#FF8600] border-gray-200 dark:border-[#3a4250] shadow-sm'
+          ? 'bg-white dark:bg-[#1e222e] border-gray-200 dark:border-[#3a4250] border-r-4 border-r-[#FF8600] dark:border-r-[#FF8600] shadow-sm'
           : highlightPending
             ? 'bg-white dark:bg-[#1e222e] border-l-4 border-l-amber-400 border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] hover:border-gray-300 dark:hover:border-[#3a4250]'
             : 'bg-white dark:bg-[#1e222e] border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] hover:border-gray-300 dark:hover:border-[#3a4250]'
