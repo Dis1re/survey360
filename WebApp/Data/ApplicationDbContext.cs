@@ -103,6 +103,16 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
             .WithMany()
             .HasForeignKey(g => g.CreatedByUserId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AiSummary>()
+            .HasOne<Survey>()
+            .WithMany()
+            .HasForeignKey(a => a.SurveyId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<AiSummary>()
+            .HasIndex(a => new { a.SurveyId, a.SummaryType })
+            .IsUnique();
     }
 
     // Тут указываются все сущности БД, с которыми нужно уметь работать
@@ -116,4 +126,5 @@ public class ApplicationDbContext(DbContextOptions options) : DbContext(options)
     public DbSet<QuestionTemplate> QuestionTemplates { get; set; }
     public DbSet<SurveyRespondentLink> SurveyRespondentLinks => Set<SurveyRespondentLink>();
     public DbSet<UserGroup> UserGroups { get; set; }
+    public DbSet<AiSummary> AiSummaries { get; set; }
 }

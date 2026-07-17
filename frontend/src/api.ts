@@ -1,5 +1,6 @@
 import type {
   AddSurveyParticipantRequest,
+  AiSummary,
   ApiAnswer,
   ApiQuestionDetails,
   ApiSurvey,
@@ -387,4 +388,18 @@ export const userGroupApi = {
 
   delete: (id: number) =>
     sendRequest<void>(`${API}/usergroup/${id}`, { method: 'DELETE' }),
+}
+
+export const aiSummaryApi = {
+  get: (surveyId: number, type = 'overall') =>
+    sendRequest<AiSummary>(`${API}/survey/${surveyId}/ai-summary?type=${type}`),
+
+  generate: (surveyId: number, type = 'overall', targetId?: number) => {
+    let url = `${API}/survey/${surveyId}/ai-summary/generate?type=${type}`
+    if (targetId != null) url += `&targetId=${targetId}`
+    return sendRequest<AiSummary>(url, { method: 'POST' })
+  },
+
+  delete: (surveyId: number, type = 'overall') =>
+    sendRequest<void>(`${API}/survey/${surveyId}/ai-summary?type=${type}`, { method: 'DELETE' }),
 }
