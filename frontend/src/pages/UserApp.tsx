@@ -187,7 +187,7 @@ export function UserApp() {
           // Keep ?invite= in the URL so after logout → login it still opens the survey.
           setInviteMismatch({
             email: info.reviewerEmail,
-            name: info.reviewerName.trim() || info.reviewerEmail,
+            name: (info.reviewerName ?? '').trim() || info.reviewerEmail,
           })
           return
         }
