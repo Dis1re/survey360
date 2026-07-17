@@ -414,7 +414,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
             Количество звёзд
           </label>
           <select
-            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 bg-white focus:outline-none focus:border-blue-500 text-sm shadow-sm disabled:bg-gray-50 disabled:cursor-default"
+            className="w-full border border-gray-200 dark:border-[#3a4250] rounded-xl px-4 py-2.5 bg-white dark:bg-[#1e222e] focus:outline-none focus:border-blue-500 dark:focus:border-[#FF8600] text-sm text-gray-800 dark:text-gray-100 shadow-sm disabled:bg-gray-50 dark:disabled:bg-[#2b323f] dark:disabled:text-gray-300 disabled:cursor-default"
             value={maxStars}
             onChange={(e) => {
               setMaxStars(Number(e.target.value))
@@ -423,7 +423,7 @@ export function QuestionEditor({ question, saving = false, readOnly = false, onS
             disabled={readOnly}
           >
             {[3, 4, 5, 7, 10].map((n) => (
-              <option key={n} value={n}>{n}</option>
+              <option key={n} value={n} className="bg-white dark:bg-[#1e222e] text-gray-800 dark:text-gray-100">{n}</option>
             ))}
           </select>
         </div>
