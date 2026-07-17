@@ -1,3 +1,5 @@
+using System.Net.Security;
+using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +19,7 @@ builder.Services.AddDbContextPool<ApplicationDbContext>(options => options.UseSq
 var mySettingsSection = builder.Configuration.GetSection("MySettings");
 builder.Services.Configure<MySettings>(mySettingsSection);
 builder.Services.Configure<EmailSettings>(builder.Configuration.GetSection(EmailSettings.SectionName));
+builder.Services.Configure<AiSummaryOptions>(builder.Configuration.GetSection(AiSummaryOptions.SectionName));
 
 builder.Services.AddTransient<TransientTime>();
 builder.Services.AddScoped<ScopedTime>();
@@ -73,6 +76,38 @@ builder.Services.AddScoped<SurveyXlsxReportService>();
 builder.Services.AddScoped<SurveyRespondentLinkService>();
 builder.Services.AddHttpClient<EmailService>();
 builder.Services.AddScoped<SurveyInviteEmailService>();
+builder.Services.AddSingleton<AiTokenCache>();
+builder.Services.AddScoped<AiSummaryService>();
+
+var russianCaCertPath = Path.Combine(builder.Environment.ContentRootPath, "russian_trusted_root_ca.pem");
+var aiOptions = builder.Configuration.GetSection(AiSummaryOptions.SectionName).Get<AiSummaryOptions>() ?? new();
+
+builder.Services.AddHttpClient("Ai").ConfigurePrimaryHttpMessageHandler(() =>
+{
+    var handler = new HttpClientHandler();
+    if (aiOptions.AuthType == "oauth" && File.Exists(russianCaCertPath))
+    {
+        var caCertPem = File.ReadAllText(russianCaCertPath);
+        var caCert = new X509Certificate2(Convert.FromBase64String(
+            caCertPem.Replace("-----BEGIN CERTIFICATE-----", "")
+                     .Replace("-----END CERTIFICATE-----", "")
+                     .Replace("\n", "")
+                     .Replace("\r", "")
+                     .Trim()));
+
+        handler.ServerCertificateCustomValidationCallback = (sender, cert, chain, errors) =>
+        {
+            if (errors == SslPolicyErrors.None) return true;
+            if (cert == null || chain == null) return false;
+
+            chain.ChainPolicy.ExtraStore.Add(caCert);
+            chain.ChainPolicy.VerificationFlags = X509VerificationFlags.AllowUnknownCertificateAuthority;
+            chain.ChainPolicy.RevocationMode = X509RevocationMode.NoCheck;
+            return chain.Build(new X509Certificate2(cert));
+        };
+    }
+    return handler;
+});
 
 builder.Services.AddCors(options =>
 {
