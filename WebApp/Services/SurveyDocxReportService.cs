@@ -171,6 +171,19 @@ public class SurveyDocxReportService(ApplicationDbContext context, ILogger<Surve
                 foreach (var element in BuildTitleElements(report.Survey, "Результаты опроса (по вопросам)"))
                     body.Append(element);
 
+                if (filterTargetId.HasValue)
+                {
+                    var targetName = report.UsersById.GetValueOrDefault(filterTargetId.Value)?.Name
+                        ?? $"Пользователь #{filterTargetId.Value}";
+                    body.Append(CreateSectionHeading($"Оцениваемый: {targetName}"));
+                }
+                else if (filterReviewerId.HasValue)
+                {
+                    var reviewerName = report.UsersById.GetValueOrDefault(filterReviewerId.Value)?.Name
+                        ?? $"Пользователь #{filterReviewerId.Value}";
+                    body.Append(CreateSectionHeading($"Респондент: {reviewerName}"));
+                }
+
                 var questionIndex = 1;
                 foreach (var question in report.Questions)
                 {
@@ -193,11 +206,20 @@ public class SurveyDocxReportService(ApplicationDbContext context, ILogger<Surve
                     {
                         foreach (var answer in questionAnswers)
                         {
-                            var reviewerName = report.UsersById.GetValueOrDefault(answer.UserId)?.Name
-                                ?? $"Пользователь #{answer.UserId}";
-                            var targetName = report.UsersById.GetValueOrDefault(answer.TargetId)?.Name
-                                ?? $"Пользователь #{answer.TargetId}";
-                            body.Append(CreateSubsectionHeading($"Респондент: {reviewerName} · Объект: {targetName}"));
+                            if (!filterTargetId.HasValue)
+                            {
+                                var targetName = report.UsersById.GetValueOrDefault(answer.TargetId)?.Name
+                                    ?? $"Пользователь #{answer.TargetId}";
+                                body.Append(CreateSubsectionHeading($"Объект: {targetName}"));
+                            }
+
+                            if (!filterReviewerId.HasValue)
+                            {
+                                var reviewerName = report.UsersById.GetValueOrDefault(answer.UserId)?.Name
+                                    ?? $"Пользователь #{answer.UserId}";
+                                body.Append(CreateSubsectionHeading($"Респондент: {reviewerName}"));
+                            }
+
                             body.Append(CreateAnswerParagraph(answer.Text, question));
                         }
                     }
