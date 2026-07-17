@@ -122,6 +122,13 @@ public class SurveyXlsxReportService(ApplicationDbContext context)
             workbookPart.Workbook = new Workbook();
 
             var worksheetPart = workbookPart.AddNewPart<WorksheetPart>();
+
+            var columns = new Columns(
+                new Column { Min = 1, Max = 1, Width = 22, CustomWidth = true },
+                new Column { Min = 2, Max = 2, Width = 22, CustomWidth = true },
+                new Column { Min = 3, Max = 3, Width = 40, CustomWidth = true },
+                new Column { Min = 4, Max = 4, Width = 50, CustomWidth = true });
+
             var sheetData = new SheetData();
 
             var headerRow = new Row();
@@ -143,7 +150,7 @@ public class SurveyXlsxReportService(ApplicationDbContext context)
                 sheetData.Append(dataRow);
             }
 
-            worksheetPart.Worksheet = new Worksheet(sheetData);
+            worksheetPart.Worksheet = new Worksheet(columns, sheetData);
 
             var sheets = workbookPart.Workbook.AppendChild(new Sheets());
             sheets.Append(new Sheet
