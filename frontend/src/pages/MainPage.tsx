@@ -877,19 +877,25 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
         />
       )}
 
-      {exportFormat && surveyId !== null && (
+      {exportFormat && surveyId !== null && (() => {
+        const perResponseView =
+          exportFormat.filter?.targetId !== undefined ||
+          exportFormat.filter?.reviewerId !== undefined
+        return (
         <Modal
           title="Сформировать результаты"
           description="Выберите формат выгрузки"
           onClose={() => !exporting && setExportFormat(null)}
         >
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <ExportOption
-              label="Word (.docx)"
-              hint="Сводный отчёт по объектам"
-              disabled={exporting}
-              onClick={() => handleExport('docx', exportFormat.filter)}
-            />
+            {!perResponseView && (
+              <ExportOption
+                label="Word (.docx)"
+                hint="Сводный отчёт по объектам"
+                disabled={exporting}
+                onClick={() => handleExport('docx', exportFormat.filter)}
+              />
+            )}
             <ExportOption
               label="Word (.docx) по вопросам"
               hint="Отчёт, сгруппированный по вопросам"
@@ -913,7 +919,8 @@ export function MainPage({ surveyId, onSurveyUpdated, onSurveyDeleted, sidebarCo
             <p className="text-xs text-gray-400 mt-3 text-center">Формирование…</p>
           )}
         </Modal>
-      )}
+        )
+      })()}
 
       {responseView && surveyId !== null && (
         <ResponseModal

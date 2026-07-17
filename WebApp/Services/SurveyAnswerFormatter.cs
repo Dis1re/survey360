@@ -51,6 +51,9 @@ public static class SurveyAnswerFormatter
         if (type is "text")
             return trimmed;
 
+        if (type is "date")
+            return FormatDateValue(trimmed);
+
         if (type is "scale")
         {
             var selected = ParseSelectedValues(trimmed);
@@ -70,7 +73,24 @@ public static class SurveyAnswerFormatter
             .Select(option => option.Label)
             .ToList();
 
-        return labels.Count > 0 ? string.Join(", ", labels) : trimmed;
+        if (labels.Count == 0)
+            return trimmed;
+
+        var separator = type is "checkbox" ? "; " : ", ";
+        return string.Join(separator, labels);
+    }
+
+    private static string FormatDateValue(string answerText)
+    {
+        var trimmed = answerText?.Trim() ?? "";
+        if (string.IsNullOrEmpty(trimmed))
+            return trimmed;
+
+        var raw = trimmed.Length >= 10 ? trimmed[..10] : trimmed;
+        if (DateTime.TryParse(raw, out var date) && date.Year > 1)
+            return date.ToString("dd.MM.yyyy");
+
+        return trimmed;
     }
 
     public static IReadOnlyList<FormattedTextRun> FormatRuns(Question question, string answerText)
@@ -83,8 +103,20 @@ public static class SurveyAnswerFormatter
         if (type is "text")
             return [new FormattedTextRun(trimmed, true)];
 
+        if (type is "date")
+            return [new FormattedTextRun(FormatDateValue(trimmed), false)];
+
         if (type is "scale")
             return FormatScaleRuns(question.Props, trimmed);
+
+        if (type is "checkbox")
+        {
+            var checkboxOptions = ParseRadioOptions(question.Props);
+            if (checkboxOptions.Count == 0)
+                return [new FormattedTextRun(trimmed, true)];
+
+            return FormatCheckboxRuns(checkboxOptions, trimmed);
+        }
 
         var options = ParseRadioOptions(question.Props);
         if (options.Count == 0)
@@ -98,37 +130,37 @@ public static class SurveyAnswerFormatter
         var config = ParseScaleConfig(propsJson);
         var values = config.GetValues();
         var selected = ParseSelectedValues(answerText);
+        var chosen = values.FirstOrDefault(v => IsScaleValueSelected(v, selected), values.Count > 0 ? values[0] : 0);
 
-        var runs = new List<FormattedTextRun>
-        {
-            new($"мин. {config.Min}, макс. {config.Max}, шаг {config.Step}: ", false),
-        };
-
-        for (var i = 0; i < values.Count; i++)
-        {
-            if (i > 0)
-                runs.Add(new FormattedTextRun(" / ", false));
-
-            var valueText = values[i].ToString();
-            runs.Add(new FormattedTextRun(valueText, IsScaleValueSelected(values[i], selected)));
-        }
-
-        return runs;
+        return [new FormattedTextRun(chosen.ToString(), true)];
     }
 
     private static List<FormattedTextRun> FormatChoiceRuns(List<QuestionOption> options, string answerText)
     {
         var selected = ParseSelectedValues(answerText);
-        var runs = new List<FormattedTextRun>();
+        var chosen = options.FirstOrDefault(option => IsOptionSelected(option, selected));
 
-        for (var i = 0; i < options.Count; i++)
+        return [new FormattedTextRun(chosen?.Label ?? answerText, false)];
+    }
+
+    private static List<FormattedTextRun> FormatCheckboxRuns(List<QuestionOption> options, string answerText)
+    {
+        var selected = ParseSelectedValues(answerText);
+        var chosenLabels = options
+            .Where(option => IsOptionSelected(option, selected))
+            .Select(option => option.Label)
+            .ToList();
+
+        if (chosenLabels.Count == 0)
+            return [new FormattedTextRun(answerText, true)];
+
+        var runs = new List<FormattedTextRun>();
+        for (var i = 0; i < chosenLabels.Count; i++)
         {
             if (i > 0)
-                runs.Add(new FormattedTextRun(" / ", false));
+                runs.Add(new FormattedTextRun("; ", false));
 
-            var option = options[i];
-            var formatted = $"{option.Value}) {option.Label}";
-            runs.Add(new FormattedTextRun(formatted, IsOptionSelected(option, selected)));
+            runs.Add(new FormattedTextRun(chosenLabels[i], false));
         }
 
         return runs;
@@ -189,7 +221,7 @@ public static class SurveyAnswerFormatter
         {
             "single" => "radio",
             "rating" => "scale",
-            "checkbox" or "multiple" or "multi" => "checkbox",
+            "checkbox" or "checkboxes" or "multiple" or "multi" => "checkbox",
             _ => normalized,
         };
     }

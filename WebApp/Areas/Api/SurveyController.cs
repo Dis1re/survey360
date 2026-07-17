@@ -933,9 +933,8 @@ public class SurveyController(
             .Where(x => x.TargetId == targetId && x.Question.SurveyId == id)
             .ToListAsync(ct);
 
-        var respondents = await context.SurveyParticipants.AsNoTracking()
-            .Where(p => p.SurveyId == id && !p.IsTarget)
-            .Join(context.Users.AsNoTracking(), p => p.UserId, u => u.Id, (p, u) => new { u.Id, u.Name })
+        var respondents = await context.Users.AsNoTracking()
+            .Select(u => new { u.Id, u.Name })
             .ToListAsync(ct);
 
         var nameById = respondents.ToDictionary(r => r.Id, r => r.Name);
@@ -972,9 +971,8 @@ public class SurveyController(
             .Where(x => x.UserId == reviewerId && x.Question.SurveyId == id)
             .ToListAsync(ct);
 
-        var targets = await context.SurveyParticipants.AsNoTracking()
-            .Where(p => p.SurveyId == id && p.IsTarget)
-            .Join(context.Users.AsNoTracking(), p => p.UserId, u => u.Id, (p, u) => new { u.Id, u.Name })
+        var targets = await context.Users.AsNoTracking()
+            .Select(u => new { u.Id, u.Name })
             .ToListAsync(ct);
 
         var nameById = targets.ToDictionary(t => t.Id, t => t.Name);
