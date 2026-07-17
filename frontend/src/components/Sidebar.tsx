@@ -121,7 +121,7 @@ function SurveyCard({
       }}
       className={`sidebar-card relative p-3 rounded-xl cursor-pointer border ${
         isSelected
-          ? 'bg-white dark:bg-[#1e222e] border-l-4 border-l-[#FF8600] border-gray-200 dark:border-[#3a4250] shadow-sm'
+          ? 'bg-white dark:bg-[#1e222e] border-gray-200 dark:border-[#3a4250] border-r-4 border-r-[#FF8600] dark:border-r-[#FF8600] shadow-sm'
           : highlightPending
             ? 'bg-white dark:bg-[#1e222e] border-l-4 border-l-amber-400 border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] hover:border-gray-300 dark:hover:border-[#3a4250]'
             : 'bg-white dark:bg-[#1e222e] border-gray-200 dark:border-[#3a4250] hover:bg-gray-50 dark:hover:bg-[#262d3a] hover:border-gray-300 dark:hover:border-[#3a4250]'
@@ -182,7 +182,7 @@ function SurveyCard({
           <>
             <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
             <div
-              className="fixed z-50 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[140px]"
+              className="fixed z-50 bg-white dark:bg-[#262d3a] border border-gray-200 dark:border-[#3a4250] rounded-lg shadow-lg py-1 min-w-[140px]"
               style={{ top: menuPos.top, left: menuPos.left }}
             >
               {onDuplicate && (
@@ -193,7 +193,7 @@ function SurveyCard({
                     setMenuOpen(false)
                     onDuplicate()
                   }}
-                  className="w-full text-left px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 text-sm text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-[#1e222e] cursor-pointer"
                 >
                   Дублировать
                 </button>
@@ -206,7 +206,7 @@ function SurveyCard({
                     setMenuOpen(false)
                     onDelete()
                   }}
-                  className="w-full text-left px-3 py-1.5 text-sm text-red-600 hover:bg-red-50 cursor-pointer"
+                  className="w-full text-left px-3 py-1.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 cursor-pointer"
                 >
                   Удалить
                 </button>
