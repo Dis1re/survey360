@@ -4,11 +4,13 @@ import { AuthProvider, useAuth } from './context/AuthContext.tsx'
 import { DevRoutePage } from './pages/DevRoutePage.tsx'
 import { LoginPage } from './pages/LoginPage.tsx'
 import { UserApp } from './pages/UserApp.tsx'
-import { InviteSurveyPage } from './pages/InviteSurveyPage.tsx'
 import { PublicSurveyPage } from './pages/PublicSurveyPage.tsx'
-import { getInviteToken, getPublicSurveyId, isDevRoute } from './routing.ts'
+import { getPublicSurveyId, isDevRoute, normalizeLegacyInviteUrl } from './routing.ts'
 import { ThemeProvider } from './theme.tsx'
 import './site.css'
+
+// Old email links: /survey/invite/{token} → /?invite={token} (normal app)
+normalizeLegacyInviteUrl()
 
 function AuthenticatedApp() {
   const { user, loading } = useAuth()
@@ -32,17 +34,12 @@ function AuthenticatedApp() {
   return <UserApp />
 }
 
-const inviteToken = getInviteToken()
-const publicSurveyId = inviteToken === null ? getPublicSurveyId() : null
+const publicSurveyId = getPublicSurveyId()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ThemeProvider>
-      {inviteToken !== null ? (
-        <AuthProvider>
-          <InviteSurveyPage token={inviteToken} />
-        </AuthProvider>
-      ) : publicSurveyId !== null ? (
+      {publicSurveyId !== null ? (
         <PublicSurveyPage surveyId={publicSurveyId} />
       ) : (
         <AuthProvider>
