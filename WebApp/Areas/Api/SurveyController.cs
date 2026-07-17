@@ -778,14 +778,18 @@ public class SurveyController(
 
     [Authorize]
     [HttpGet("{id:int}/report.docx")]
-    public async Task<IActionResult> DownloadReport(int id, CancellationToken ct)
+    public async Task<IActionResult> DownloadReport(
+        int id,
+        CancellationToken ct,
+        [FromQuery] int? reviewerId,
+        [FromQuery] int? targetId)
     {
         var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
         var accessError = RequireManageSurvey(survey);
         if (accessError is not null)
             return accessError;
 
-        var result = await reportService.BuildReportAsync(id, ct);
+        var result = await reportService.BuildReportAsync(id, ct, reviewerId, targetId);
         if (result is null)
         {
             var exists = await context.Surveys.AnyAsync(s => s.Id == id, ct);
@@ -801,14 +805,18 @@ public class SurveyController(
 
     [Authorize]
     [HttpGet("{id:int}/report-by-question.docx")]
-    public async Task<IActionResult> DownloadReportByQuestion(int id, CancellationToken ct)
+    public async Task<IActionResult> DownloadReportByQuestion(
+        int id,
+        CancellationToken ct,
+        [FromQuery] int? reviewerId,
+        [FromQuery] int? targetId)
     {
         var survey = await context.Surveys.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id, ct);
         var accessError = RequireManageSurvey(survey);
         if (accessError is not null)
             return accessError;
 
-        var result = await reportService.BuildReportByQuestionAsync(id, ct);
+        var result = await reportService.BuildReportByQuestionAsync(id, ct, reviewerId, targetId);
         if (result is null)
         {
             var exists = await context.Surveys.AnyAsync(s => s.Id == id, ct);
@@ -823,9 +831,13 @@ public class SurveyController(
     }
 
     [HttpGet("{id:int}/report.csv")]
-    public async Task<IActionResult> DownloadCsvReport(int id, CancellationToken ct)
+    public async Task<IActionResult> DownloadCsvReport(
+        int id,
+        CancellationToken ct,
+        [FromQuery] int? reviewerId,
+        [FromQuery] int? targetId)
     {
-        var result = await csvReportService.BuildCsvAsync(id, ct);
+        var result = await csvReportService.BuildCsvAsync(id, ct, reviewerId, targetId);
         if (result is null)
         {
             var exists = await context.Surveys.AnyAsync(s => s.Id == id, ct);
@@ -845,9 +857,13 @@ public class SurveyController(
     }
 
     [HttpGet("{id:int}/report.xlsx")]
-    public async Task<IActionResult> DownloadXlsxReport(int id, CancellationToken ct)
+    public async Task<IActionResult> DownloadXlsxReport(
+        int id,
+        CancellationToken ct,
+        [FromQuery] int? reviewerId,
+        [FromQuery] int? targetId)
     {
-        var result = await xlsxReportService.BuildXlsxAsync(id, ct);
+        var result = await xlsxReportService.BuildXlsxAsync(id, ct, reviewerId, targetId);
         if (result is null)
         {
             var exists = await context.Surveys.AnyAsync(s => s.Id == id, ct);
