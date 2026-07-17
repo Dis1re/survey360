@@ -67,6 +67,87 @@ npm run dev
 1. Откройте http://localhost:5173 — главная страница с дизайном опросов.
 2. Или вручную: http://localhost:5175/api/survey → `[]` (пустой массив, если нет данных).
 
+## Настройка AI ( саммари опросов)
+
+AI-анализ результатов опросов работает через OpenAI-совместимый API. Провайдер настраивается через `appsettings.json` или `dotnet user-secrets`.
+
+### Поля конфигурации
+
+| Поле | Описание | Примеры |
+|------|----------|---------|
+| `Enabled` | Включить/выключить AI | `true` / `false` |
+| `ChatBaseUrl` | Базовый URL API | `https://api.openai.com` |
+| `ChatEndpoint` | Путь к chat completions | `/v1/chat/completions` |
+| `Model` | Название модели | `gpt-4o`, `GigaChat` |
+| `AuthType` | Тип авторизации | `none`, `bearer`, `basic`, `oauth` |
+| `ApiKey` | Ключ API (для bearer/basic) | `sk-...` |
+| `OAuthBaseUrl` | URL OAuth (для oauth) | `https://ngw.devices.sberbank.ru:9443` |
+| `ClientId` | Client ID (для oauth) | UUID |
+| `ClientSecret` | Client Secret (для oauth) | UUID |
+| `Scope` | OAuth scope (для oauth) | `GIGACHAT_API_PERS` |
+
+### Примеры провайдеров
+
+**GigaChat** (текущий):
+```json
+{
+  "ChatBaseUrl": "https://gigachat.devices.sberbank.ru",
+  "ChatEndpoint": "/api/v1/chat/completions",
+  "Model": "GigaChat",
+  "AuthType": "oauth",
+  "OAuthBaseUrl": "https://ngw.devices.sberbank.ru:9443",
+  "ClientId": "ваш-client-id",
+  "ClientSecret": "ваш-client-secret",
+  "Scope": "GIGACHAT_API_PERS"
+}
+```
+
+**OpenAI / Azure / Groq** (bearer token):
+```json
+{
+  "ChatBaseUrl": "https://api.openai.com",
+  "ChatEndpoint": "/v1/chat/completions",
+  "Model": "gpt-4o",
+  "AuthType": "bearer",
+  "ApiKey": "sk-..."
+}
+```
+
+**локальное ИИ без авторизации**:
+```json
+{
+  "ChatBaseUrl": "http://localhost:8080",
+  "ChatEndpoint": "/chat/completions",
+  "Model": "my-model",
+  "AuthType": "none"
+}
+```
+
+### Настройка через user-secrets
+
+Секреты не коммитятся в git. Настройте через:
+
+```bash
+cd WebApp
+
+# GigaChat
+dotnet user-secrets set "AiSummary:ClientId" "ваш-client-id"
+dotnet user-secrets set "AiSummary:ClientSecret" "ваш-client-secret"
+
+# OpenAI
+dotnet user-secrets set "AiSummary:ApiKey" "sk-..."
+
+# Локальный ИИ
+dotnet user-secrets set "AiSummary:ChatBaseUrl" "http://corporate-ai.internal:8080"
+dotnet user-secrets set "AiSummary:Model" "my-model"
+```
+
+Не-секретные поля (`ChatBaseUrl`, `Model`, `AuthType`, `Enabled`) задаются в `appsettings.json`.
+
+### SSL-сертификаты
+
+Если AI-провайдер использует нестандартный SSL-сертификат (например, Russian Trusted Root CA для GigaChat), положите PEM-файл в `WebApp/russian_trusted_root_ca.pem`. Сервис автоматически подхватит его при `AuthType: "oauth"`.
+
 ## Сборка
 
 ```bash

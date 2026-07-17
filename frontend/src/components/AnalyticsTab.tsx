@@ -1,7 +1,18 @@
-import { useMemo } from 'react'
-import type { ApiAnswer, ApiUser, Participant, Question, QuestionProps, SurveyReportInfo } from '../types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import Markdown from 'react-markdown'
+import { aiSummaryApi } from '../api'
+import type { AiSummary, ApiAnswer, ApiUser, Participant, Question, QuestionProps, SurveyReportInfo } from '../types'
+
+type TabKey = 'overall' | 'targets' | 'respondents'
+
+const TABS: { key: TabKey; label: string }[] = [
+  { key: 'overall', label: 'Общая' },
+  { key: 'targets', label: 'По оцениваемым' },
+  { key: 'respondents', label: 'По респондентам' },
+]
 
 interface AnalyticsTabProps {
+  surveyId: number | null
   questions: Question[]
   answers: ApiAnswer[]
   targets: Participant[]
@@ -10,6 +21,7 @@ interface AnalyticsTabProps {
   completedAssignments: Record<string, Record<string, boolean>>
   reportInfo: SurveyReportInfo | null
   allUsers: ApiUser[]
+  onOpenExport?: (filter?: { reviewerId?: number; targetId?: number }) => void
 }
 
 function getNameMap(users: ApiUser[]): Record<number, string> {
@@ -280,9 +292,92 @@ function QuestionCard({ index, question, qAnswers, nameMap }: { index: number; q
   )
 }
 
+/* ─── Person AI Summary Card ─── */
+
+function PersonSummaryCard({ surveyId, personId, summaryType, label }: {
+  surveyId: number
+  personId: number
+  summaryType: 'target' | 'reviewer'
+  label: string
+}) {
+  const [summary, setSummary] = useState<AiSummary | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+
+  const typeKey = `${summaryType}_${personId}`
+
+  useEffect(() => {
+    let cancelled = false
+    aiSummaryApi.get(surveyId, typeKey)
+      .then((s) => { if (!cancelled) setSummary(s) })
+      .catch(() => { if (!cancelled) setSummary(null) })
+    return () => { cancelled = true }
+  }, [surveyId, typeKey])
+
+  const handleGenerate = async () => {
+    setLoading(true)
+    setError('')
+    try {
+      const s = await aiSummaryApi.generate(surveyId, typeKey, personId)
+      setSummary(s)
+    } catch {
+      setError('Не удалось сгенерировать саммари.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-xl p-5 mb-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+          <svg className="w-4 h-4 text-[#FF8600]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+          </svg>
+          AI-саммари: {label}
+        </h3>
+        <div className="flex items-center gap-2">
+          {summary && (
+            <span className="text-[10px] text-gray-400">
+              {new Date(summary.updatedAt).toLocaleString('ru-RU')}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={loading}
+            className="text-xs font-medium text-[#FF8600] hover:text-[#FF6B00] disabled:opacity-50 cursor-pointer"
+          >
+            {loading ? 'Генерация…' : summary ? 'Обновить' : 'Сгенерировать'}
+          </button>
+        </div>
+      </div>
+      {error && <p className="text-xs text-red-500 mb-2">{error}</p>}
+      {loading && !summary && (
+        <div className="flex items-center gap-2 py-4 text-gray-400 text-sm">
+          <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          AI анализирует…
+        </div>
+      )}
+      {summary && !loading && (
+        <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
+          <Markdown>{summary.content}</Markdown>
+        </div>
+      )}
+      {!summary && !loading && !error && (
+        <p className="text-sm text-gray-400 py-2">Нажмите «Сгенерировать» для AI-анализа.</p>
+      )}
+    </div>
+  )
+}
+
 /* ─── Main Component ─── */
 
 export function AnalyticsTab({
+  surveyId,
   questions,
   answers,
   targets,
@@ -291,8 +386,42 @@ export function AnalyticsTab({
   completedAssignments,
   reportInfo: _reportInfo,
   allUsers,
+  onOpenExport,
 }: AnalyticsTabProps) {
   const nameMap = useMemo(() => getNameMap(allUsers), [allUsers])
+
+  const [activeTab, setActiveTab] = useState<TabKey>('overall')
+  const [selectedPersonId, setSelectedPersonId] = useState<number | null>(null)
+
+  const [overallSummary, setOverallSummary] = useState<AiSummary | null>(null)
+  const [summaryLoading, setSummaryLoading] = useState(false)
+  const [summaryError, setSummaryError] = useState('')
+
+  const loadSummary = useCallback(async () => {
+    if (surveyId == null) return
+    try {
+      const s = await aiSummaryApi.get(surveyId)
+      setOverallSummary(s)
+    } catch {
+      setOverallSummary(null)
+    }
+  }, [surveyId])
+
+  useEffect(() => { loadSummary() }, [loadSummary])
+
+  const generateSummary = async () => {
+    if (surveyId == null) return
+    setSummaryLoading(true)
+    setSummaryError('')
+    try {
+      const s = await aiSummaryApi.generate(surveyId)
+      setOverallSummary(s)
+    } catch {
+      setSummaryError('Не удалось сгенерировать саммари. Проверьте настройки AI.')
+    } finally {
+      setSummaryLoading(false)
+    }
+  }
 
   const totalAssigned = Object.values(assignments).reduce(
     (sum, row) => sum + Object.values(row).filter(Boolean).length, 0,
@@ -312,6 +441,30 @@ export function AnalyticsTab({
     return map
   }, [answers])
 
+  const filteredAnswersByQuestion = useMemo(() => {
+    if (activeTab === 'overall' || selectedPersonId == null) return answersByQuestion
+
+    const map = new Map<number, ApiAnswer[]>()
+    for (const a of answers) {
+      const matches = activeTab === 'targets'
+        ? a.targetId === selectedPersonId
+        : a.userId === selectedPersonId
+      if (matches) {
+        const list = map.get(a.questionId) ?? []
+        list.push(a)
+        map.set(a.questionId, list)
+      }
+    }
+    return map
+  }, [answers, answersByQuestion, activeTab, selectedPersonId])
+
+  const personList = activeTab === 'targets' ? targets : respondents
+
+  const handleTabChange = (tab: TabKey) => {
+    setActiveTab(tab)
+    setSelectedPersonId(null)
+  }
+
   if (questions.length === 0) {
     return (
       <div className="text-center py-16 text-gray-400 text-sm">
@@ -322,7 +475,9 @@ export function AnalyticsTab({
 
   return (
     <div className="space-y-6">
-      <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Аналитика</h2>
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Аналитика</h2>
+      </div>
 
       <div className="grid grid-cols-3 gap-3">
         <Card label="Прогресс" value={`${completionPct}%`} sub={`${totalCompleted} из ${totalAssigned}`} />
@@ -330,17 +485,167 @@ export function AnalyticsTab({
         <Card label="Респондентов" value={String(respondents.length)} />
       </div>
 
-      <div className="space-y-4">
-        {questions.map((q, i) => (
-          <QuestionCard
-            key={q.id}
-            index={i + 1}
-            question={q}
-            qAnswers={answersByQuestion.get(q.id) ?? []}
-            nameMap={nameMap}
-          />
+      {/* Tabs */}
+      <div className="flex gap-1 bg-gray-100 dark:bg-[#303a48] rounded-lg p-1">
+        {TABS.map((tab) => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => handleTabChange(tab.key)}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+              activeTab === tab.key
+                ? 'bg-white dark:bg-[#1e222e] text-gray-900 dark:text-gray-100 shadow-sm'
+                : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200'
+            }`}
+          >
+            {tab.label}
+          </button>
         ))}
       </div>
+
+      {/* Person selector for non-overall tabs */}
+      {activeTab !== 'overall' && (
+        <div className="flex flex-wrap gap-2">
+          {personList.map((p) => {
+            const name = nameMap[p.id] ?? `#${p.id}`
+            const count = answers.filter((a) =>
+              activeTab === 'targets' ? a.targetId === p.id : a.userId === p.id
+            ).length
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelectedPersonId(selectedPersonId === p.id ? null : p.id)}
+                className={`px-3 py-1.5 text-xs font-medium rounded-lg border transition-colors cursor-pointer ${
+                  selectedPersonId === p.id
+                    ? 'bg-[#FF8600] text-white border-[#FF8600]'
+                    : 'bg-white dark:bg-[#1e222e] text-gray-700 dark:text-gray-300 border-gray-200 dark:border-[#3a4250] hover:border-[#FF8600] dark:hover:border-[#FF8600]'
+                }`}
+              >
+                {name}
+                <span className="ml-1.5 text-[10px] opacity-60">{count}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+
+      {/* AI Summary */}
+      {activeTab === 'overall' && (
+        <div className="bg-white dark:bg-[#1e222e] border border-gray-200 dark:border-[#3a4250] rounded-xl p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#FF8600]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+              </svg>
+              AI-саммари
+            </h3>
+            {surveyId != null && (
+              <div className="flex items-center gap-2">
+                {overallSummary && (
+                  <span className="text-[10px] text-gray-400">
+                    {new Date(overallSummary.updatedAt).toLocaleString('ru-RU')}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={generateSummary}
+                  disabled={summaryLoading}
+                  className="text-xs font-medium text-[#FF8600] hover:text-[#FF6B00] disabled:opacity-50 cursor-pointer"
+                >
+                  {summaryLoading ? 'Генерация…' : overallSummary ? 'Обновить' : 'Сгенерировать'}
+                </button>
+              </div>
+            )}
+          </div>
+          {summaryError && (
+            <p className="text-xs text-red-500 mb-2">{summaryError}</p>
+          )}
+          {summaryLoading && !overallSummary && (
+            <div className="flex items-center gap-2 py-6 text-gray-400 text-sm">
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              AI анализирует результаты опроса…
+            </div>
+          )}
+          {overallSummary && !summaryLoading && (
+            <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed text-sm">
+              <Markdown>{overallSummary.content}</Markdown>
+            </div>
+          )}
+          {!overallSummary && !summaryLoading && !summaryError && (
+            <p className="text-sm text-gray-400 py-4">
+              Нажмите «Сгенерировать», чтобы AI проанализировал результаты опроса.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Person AI Summary */}
+      {activeTab !== 'overall' && selectedPersonId != null && surveyId != null && (
+        <PersonSummaryCard
+          surveyId={surveyId}
+          personId={selectedPersonId}
+          summaryType={activeTab === 'targets' ? 'target' : 'reviewer'}
+          label={nameMap[selectedPersonId] ?? `#${selectedPersonId}`}
+        />
+      )}
+
+      {/* Questions */}
+      <div className="space-y-4">
+        {activeTab !== 'overall' && selectedPersonId == null && (
+          <p className="text-sm text-gray-400 py-4 text-center">
+            Выберите {activeTab === 'targets' ? 'оцениваемого' : 'респондента'} выше для просмотра аналитики.
+          </p>
+        )}
+        {(activeTab === 'overall' || selectedPersonId != null) &&
+          questions.map((q, i) => (
+            <QuestionCard
+              key={q.id}
+              index={i + 1}
+              question={q}
+              qAnswers={filteredAnswersByQuestion.get(q.id) ?? []}
+              nameMap={nameMap}
+            />
+          ))
+        }
+      </div>
+
+      {/* Export section */}
+      {onOpenExport && (activeTab === 'overall' || selectedPersonId != null) && (
+        <div
+          className="bg-white dark:bg-[#1e222e] border border-dashed border-gray-300 dark:border-[#3a4250] rounded-xl p-5 flex items-center justify-between gap-4 hover:border-[#FF8600] dark:hover:border-[#FF8600] transition-colors cursor-pointer group"
+          onClick={() => {
+            if (activeTab === 'targets' && selectedPersonId != null) {
+              onOpenExport({ targetId: selectedPersonId })
+            } else if (activeTab === 'respondents' && selectedPersonId != null) {
+              onOpenExport({ reviewerId: selectedPersonId })
+            } else {
+              onOpenExport()
+            }
+          }}
+        >
+          <div>
+            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 group-hover:text-[#FF8600] transition-colors">
+              {activeTab === 'overall'
+                ? 'Скачать полный отчёт'
+                : `Скачать отчёт: ${nameMap[selectedPersonId!] ?? `#${selectedPersonId}`}`}
+            </p>
+            <p className="text-xs text-gray-400 mt-0.5">
+              {activeTab === 'overall'
+                ? 'Word, Excel или CSV со всеми ответами'
+                : activeTab === 'targets'
+                  ? 'Ответы рецензентов об этом оцениваемом'
+                  : 'Все ответы этого респондента'}
+            </p>
+          </div>
+          <svg className="w-5 h-5 text-gray-400 group-hover:text-[#FF8600] transition-colors shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        </div>
+      )}
     </div>
   )
 }

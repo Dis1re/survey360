@@ -256,3 +256,10 @@ export interface SendInvitesResult {
   failed: number
   items: SendInviteItemResult[]
 }
+
+export interface AiSummary {
+  summaryType: string
+  content: string
+  createdAt: string
+  updatedAt: string
+}
